@@ -8,31 +8,31 @@ export default function Home() {
   return (
     <>
       {/* HERO */}
-      {/* Fills the first screen on wide displays so the headline and booking button are always visible. */}
+      {/* Full-bleed photo; the text sits on a solid panel rather than a fade, so the image stays clean. */}
       <section id="top" className="relative overflow-hidden bg-forest min-[861px]:flex min-[861px]:min-h-[min(calc(100svh-80px),900px)] min-[861px]:items-center">
-        {/* Photo sits beside the text on wide screens and above it on phones, never behind it. */}
-        <div className="relative h-80 overflow-hidden min-[640px]:h-[28rem] min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:right-0 min-[861px]:h-auto min-[861px]:w-[50%]">
+        {/* On wide screens the photo is wider than the hero and anchored left, which moves the client's face clear of the text panel. */}
+        <div className="relative h-[52svh] min-h-80 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:left-0 min-[861px]:h-auto min-[861px]:w-[135%]">
           <Image
             src="/images/hero-massage.jpg"
             alt="Client relaxing during a back massage"
             fill
             priority
-            sizes="(max-width: 860px) 100vw, 50vw"
-            className="object-cover object-[60%_30%] motion-safe:animate-[hero-settle_2.4s_cubic-bezier(.2,.7,.2,1)_both]"
+            sizes="(max-width: 860px) 100vw, 135vw"
+            className="object-cover object-[50%_30%] motion-safe:animate-[hero-settle_2.4s_cubic-bezier(.2,.7,.2,1)_both]"
           />
         </div>
 
-        <div className="wrap relative w-full pt-14 pb-16 min-[861px]:py-20">
-          <div className="flex max-w-[600px] flex-col gap-7 min-[861px]:max-w-[44%]">
-            <span className="eyebrow text-brand-light motion-safe:animate-[hero-rise_1s_ease-out_.1s_both]">Wellness · Skincare · Training</span>
-            <h1 className="m-0 font-serif text-[clamp(46px,5.4vw,80px)] leading-[1] font-light tracking-[-.015em] text-white motion-safe:animate-[hero-rise_1s_ease-out_.25s_both]">
+        <div className="wrap relative w-full max-[860px]:-mt-20 max-[860px]:px-4 max-[860px]:pb-4 min-[861px]:py-16">
+          <div className="flex max-w-[580px] flex-col gap-6 bg-forest/95 p-8 shadow-[0_30px_60px_-30px_rgba(0,0,0,.6)] backdrop-blur-sm min-[861px]:gap-7 min-[861px]:p-12 motion-safe:animate-[hero-rise_1.1s_ease-out_.15s_both]">
+            <span className="eyebrow text-brand-light">Wellness · Skincare · Training</span>
+            <h1 className="m-0 font-serif text-[clamp(40px,4.6vw,68px)] leading-[1] font-light tracking-[-.015em] text-white">
               Wellness Today,
               <span className="mt-1 block text-brand-light italic">a Brighter Tomorrow</span>
             </h1>
-            <p className="m-0 max-w-[470px] text-[16px] leading-[1.85] text-[#cdd5cf] motion-safe:animate-[hero-rise_1s_ease-out_.4s_both]">
+            <p className="m-0 text-[15.5px] leading-[1.85] text-[#cdd5cf]">
               Professional wellness, advanced skincare, corporate wellness and accredited training in Durban, for healthier individuals, stronger workplaces and empowered communities.
             </p>
-            <div className="flex flex-wrap items-center gap-x-8 gap-y-5 pt-1 motion-safe:animate-[hero-rise_1s_ease-out_.55s_both]">
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-4 pt-1">
               <Link className="btn btn-light" href="/book">
                 Book a treatment
               </Link>
@@ -43,20 +43,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Solid card on the seam between text and photo: no fade over the image. */}
-        <div className="absolute bottom-10 left-1/2 hidden flex-col gap-1 border-l-2 border-gold bg-cream px-6 py-4 shadow-[0_18px_40px_-20px_rgba(0,0,0,.45)] min-[861px]:flex motion-safe:animate-[hero-rise_1s_ease-out_.8s_both]">
+        <div className="absolute right-[max(2.5rem,calc((100vw-1240px)/2+2.5rem))] bottom-10 hidden flex-col gap-1 border-l-2 border-gold bg-cream px-6 py-4 shadow-[0_18px_40px_-20px_rgba(0,0,0,.45)] min-[861px]:flex motion-safe:animate-[hero-rise_1s_ease-out_.8s_both]">
           <span className="text-[10px] font-medium tracking-[.3em] text-gold-deep uppercase">Est. {business.founded}</span>
           <span className="font-serif text-[19px] leading-tight text-ink-strong">Musgrave Park, Durban</span>
         </div>
-
-        <a
-          href="#services"
-          aria-label="Scroll to our services"
-          className="absolute bottom-10 left-[max(2.5rem,calc((100vw-1240px)/2+2.5rem))] hidden items-center gap-4 text-[10px] tracking-[.32em] text-[#9aa79f] uppercase no-underline hover:text-white min-[861px]:flex"
-        >
-          <span className="h-px w-10 bg-current" />
-          Scroll
-        </a>
       </section>
 
       {/* TRUST STRIP */}
