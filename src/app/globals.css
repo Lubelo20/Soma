@@ -86,4 +86,29 @@ body {
   .field {
     @apply min-h-[48px] rounded-[2px] border border-[#d6cfc2] bg-white px-4 text-[15px] font-normal tracking-normal text-ink normal-case outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand/30;
   }
+  /* Dashboard */
+  .card {
+    @apply rounded-[3px] border border-line bg-white p-6;
+  }
+  .page-title {
+    @apply m-0 font-serif text-[38px] leading-tight font-light tracking-[-.01em] text-ink-strong;
+  }
+  .label {
+    @apply flex flex-col gap-2 text-[10.5px] font-medium tracking-[.22em] text-ink-body uppercase;
+  }
+  .hint {
+    @apply font-normal tracking-normal text-ink-subtle normal-case;
+  }
+  .pill {
+    @apply inline-flex items-center rounded-[2px] px-2.5 py-1 text-[10px] font-semibold tracking-[.18em] uppercase;
+  }
+  .tab {
+    @apply inline-flex min-h-10 items-center rounded-[2px] border border-line bg-white px-3.5 text-[11.5px] font-medium tracking-[.16em] text-ink uppercase no-underline transition-colors hover:border-brand hover:text-brand-dark;
+  }
+  .tab-underline {
+    @apply -mb-px border-b-2 border-transparent px-1 py-3 text-[11.5px] font-medium tracking-[.16em] text-ink-muted uppercase no-underline transition-colors hover:text-ink-strong aria-[current=page]:border-brand aria-[current=page]:text-ink-strong;
+  }
+  .note {
+    @apply m-0 rounded-[3px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900;
+  }
 }

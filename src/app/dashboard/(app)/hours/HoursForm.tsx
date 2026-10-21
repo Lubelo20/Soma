@@ -10,7 +10,7 @@ const ORDER = [1, 2, 3, 4, 5, 6, 0];
 export function HoursForm({ weekly }: { weekly: DayHours[] }) {
   const [state, action, pending] = useActionState(saveHours, {});
   return (
-    <form action={action} className="flex flex-col gap-3 rounded-[18px] border border-line bg-white p-6">
+    <form action={action} className="flex flex-col gap-3 card">
       {ORDER.map((d) => {
         const h = weekly[d];
         return (
@@ -29,7 +29,7 @@ export function HoursForm({ weekly }: { weekly: DayHours[] }) {
         );
       })}
       <div className="flex items-center gap-4 border-t border-line-soft pt-4">
-        <button type="submit" disabled={pending} className="btn btn-solid min-h-10 border-none px-5">
+        <button type="submit" disabled={pending} className="btn btn-solid min-h-10 px-5">
           {pending ? "Saving…" : "Save opening hours"}
         </button>
         {state.error && <span className="text-sm font-medium text-red-700">{state.error}</span>}

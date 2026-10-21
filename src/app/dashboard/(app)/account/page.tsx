@@ -3,22 +3,22 @@
 import { useActionState } from "react";
 import { updatePassword } from "../../actions";
 
-const labelClass = "flex flex-col gap-1.5 text-[13px] font-semibold text-ink-body";
+const labelClass = "label";
 
 export default function AccountPage() {
   const [state, action, pending] = useActionState(updatePassword, {});
   return (
     <div className="flex max-w-md flex-col gap-6">
-      <h1 className="m-0 font-serif text-[34px] font-normal">Account</h1>
-      <form action={action} className="flex flex-col gap-4 rounded-[18px] border border-line bg-white p-6">
-        <h2 className="m-0 text-lg font-bold text-ink-strong">Change password</h2>
+      <h1 className="page-title">Account</h1>
+      <form action={action} className="flex flex-col gap-4 card">
+        <h2 className="m-0 font-serif text-[24px] leading-tight text-ink-strong">Change password</h2>
         <label className={labelClass}>
           Current password
           <input type="password" name="current" autoComplete="current-password" required className="field" />
         </label>
         <label className={labelClass}>
           <span>
-            New password <span className="font-normal text-ink-subtle">(at least 10 characters)</span>
+            New password <span className="hint">(at least 10 characters)</span>
           </span>
           <input type="password" name="next" autoComplete="new-password" minLength={10} required className="field" />
         </label>

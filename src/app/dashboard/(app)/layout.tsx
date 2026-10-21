@@ -14,11 +14,11 @@ async function Sidebar() {
   return (
     <>
       <DashboardNav counts={{ pending, enquiries }} />
-      <div className="mt-auto flex flex-col gap-2 border-t border-line pt-4 text-sm max-lg:hidden">
-        <span className="text-ink-subtle">Signed in as</span>
-        <span className="font-semibold text-ink-strong">{staff.name}</span>
-        <form action={logout}>
-          <button type="submit" className="cursor-pointer p-0 text-sm font-semibold text-brand hover:text-brand-dark">
+      <div className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-5 text-sm max-lg:hidden">
+        <span className="text-[10.5px] tracking-[.22em] text-[#8fa394] uppercase">Signed in as</span>
+        <span className="font-serif text-[19px] text-white">{staff.name}</span>
+        <form action={logout} className="pt-2">
+          <button type="submit" className="cursor-pointer p-0 text-[11.5px] font-medium tracking-[.16em] text-brand-light uppercase hover:text-white">
             Sign out
           </button>
         </form>
@@ -30,19 +30,19 @@ async function Sidebar() {
 export default function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="flex flex-col gap-6 border-b border-line bg-white p-5 lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:flex-none lg:border-r lg:border-b-0">
+      <aside className="flex flex-col gap-6 bg-forest-deep p-5 text-white lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:flex-none lg:p-6">
         <Link href="/dashboard" className="flex items-center gap-3 no-underline">
           <Image src="/images/logo.png" alt="" width={31} height={32} className="h-8 w-auto" />
-          <span className="flex flex-col leading-tight">
-            <span className="text-sm font-bold tracking-[.06em] text-ink-strong">INFINITY SOMA</span>
-            <span className="text-[11px] text-ink-subtle">Staff dashboard</span>
+          <span className="flex flex-col leading-[1.15]">
+            <span className="text-[13px] font-semibold tracking-[.2em] text-white">INFINITY SOMA</span>
+            <span className="text-[9.5px] tracking-[.3em] text-[#8fa394] uppercase">Staff dashboard</span>
           </span>
         </Link>
         <Suspense fallback={<div className="h-40" />}>
           <Sidebar />
         </Suspense>
       </aside>
-      <div className="min-w-0 flex-1 p-5 lg:p-10">
+      <div className="min-w-0 flex-1 p-5 lg:p-12">
         <Suspense fallback={<p className="text-ink-subtle">Loading…</p>}>{children}</Suspense>
       </div>
     </div>

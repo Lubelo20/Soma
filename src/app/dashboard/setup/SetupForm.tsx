@@ -8,9 +8,9 @@ export function SetupForm() {
   const [state, action, pending] = useActionState(setupFirstStaff, {});
   return (
     <form action={action} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-ink-body">
+      <label className="label">
         <span>
-          Setup code <span className="font-normal text-ink-subtle">(SETUP_CODE in Vercel → Settings → Environment Variables)</span>
+          Setup code <span className="hint">(SETUP_CODE in Vercel → Settings → Environment Variables)</span>
         </span>
         <input name="code" defaultValue={state.values?.code} autoComplete="off" required className="field" />
       </label>

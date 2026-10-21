@@ -29,15 +29,15 @@ async function SetupGate() {
 export default function SetupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-5 py-12">
-      <div className="flex w-full max-w-[440px] flex-col gap-5 rounded-[18px] border border-line bg-white p-8">
+      <div className="flex w-full max-w-[440px] flex-col gap-5 card p-8">
         <div className="flex items-center gap-3">
           <Image src="/images/logo.png" alt="" width={35} height={36} className="h-9 w-auto" />
           <div className="flex flex-col leading-tight">
-            <span className="text-[15px] font-bold tracking-[.06em] text-ink-strong">INFINITY SOMA</span>
-            <span className="text-xs text-ink-subtle">Staff dashboard</span>
+            <span className="text-[13px] font-semibold tracking-[.2em] text-ink-strong">INFINITY SOMA</span>
+            <span className="text-[9.5px] tracking-[.3em] text-ink-subtle uppercase">Staff dashboard</span>
           </div>
         </div>
-        <h1 className="m-0 font-serif text-[28px] font-normal">Create the first staff account</h1>
+        <h1 className="m-0 font-serif text-[32px] leading-tight font-light">Create the first staff account</h1>
         <Suspense fallback={<p className="text-ink-subtle">Loading…</p>}>
           <SetupGate />
         </Suspense>

@@ -15,35 +15,35 @@ export default async function HoursPage() {
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <h1 className="m-0 font-serif text-[34px] font-normal">Opening hours</h1>
+      <h1 className="page-title">Opening hours</h1>
       <p className="m-0 text-[15px] leading-relaxed text-ink-muted">
         Clients can only book times within these hours. Changing them doesn&rsquo;t affect bookings already made.
       </p>
       <HoursForm weekly={weekly} />
 
-      <h2 className="m-0 mt-4 font-serif text-[26px] font-normal">Closed days</h2>
+      <h2 className="m-0 mt-4 font-serif text-[28px] leading-tight font-light">Closed days</h2>
       <p className="m-0 text-[15px] leading-relaxed text-ink-muted">
         Public holidays, training days or leave. No bookings can be made on these dates. Check the bookings list for anything already booked that day.
       </p>
-      <form action={addClosure} className="flex flex-wrap items-end gap-3 rounded-[18px] border border-line bg-white p-6">
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-ink-body">
+      <form action={addClosure} className="flex flex-wrap items-end gap-3 card">
+        <label className="label">
           Date
           <input type="date" name="day" required className="field min-h-10" />
         </label>
-        <label className="flex min-w-[200px] flex-1 flex-col gap-1.5 text-[13px] font-semibold text-ink-body">
+        <label className="label min-w-[200px] flex-1">
           <span>
-            Note <span className="font-normal text-ink-subtle">(optional)</span>
+            Note <span className="hint">(optional)</span>
           </span>
           <input name="note" maxLength={120} placeholder="e.g. Public holiday" className="field min-h-10" />
         </label>
-        <button type="submit" className="btn btn-solid min-h-10 border-none px-5">
+        <button type="submit" className="btn btn-solid min-h-10 px-5">
           Add closed day
         </button>
       </form>
       {closures.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {closures.map((c) => (
-            <li key={c.day} className="flex items-center justify-between gap-4 rounded-xl border border-line bg-white px-5 py-3">
+            <li key={c.day} className="flex items-center justify-between gap-4 card px-5 py-3">
               <span>
                 <strong className="text-ink-strong">{formatDate(c.day)}</strong>
                 {c.note && <span className="text-ink-muted"> · {c.note}</span>}

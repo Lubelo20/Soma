@@ -13,7 +13,7 @@ export type EditableTreatment = {
   active: boolean;
 };
 
-const labelClass = "flex flex-col gap-1.5 text-[13px] font-semibold text-ink-body";
+const labelClass = "label";
 
 export function TreatmentEditor({ treatment, isNew = false }: { treatment: EditableTreatment; isNew?: boolean }) {
   const [state, action, pending] = useActionState(saveTreatment, {});
@@ -54,7 +54,7 @@ export function TreatmentEditor({ treatment, isNew = false }: { treatment: Edita
           <input type="checkbox" name="active" defaultChecked={treatment.active} className="size-4 accent-brand" />
           Show on website &amp; allow bookings
         </label>
-        <button type="submit" disabled={pending} className="btn btn-solid min-h-10 border-none px-5">
+        <button type="submit" disabled={pending} className="btn btn-solid min-h-10 px-5">
           {pending ? "Saving…" : isNew ? "Add treatment" : "Save"}
         </button>
         {state.error && <span className="text-sm font-medium text-red-700">{state.error}</span>}
