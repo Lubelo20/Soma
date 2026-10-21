@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { business } from "@/lib/site";
 
-/** Dark green banner at the top of inner pages. */
+/** Dark evergreen banner at the top of inner pages. */
 export function PageHero({ eyebrow, title, intro, img, alt }: { eyebrow: string; title: string; intro: string; img?: string; alt?: string }) {
   return (
     <section className="relative overflow-hidden bg-forest">
@@ -12,23 +12,23 @@ export function PageHero({ eyebrow, title, intro, img, alt }: { eyebrow: string;
           <Image src={img} alt={alt ?? ""} fill priority sizes="(max-width: 860px) 100vw, 50vw" className="object-cover" />
         </div>
       )}
-      <div className="wrap relative py-12 min-[861px]:py-24">
-        <div className={`flex max-w-[580px] flex-col gap-5 ${img ? "min-[861px]:max-w-[46%]" : ""}`}>
-          <span className="text-xs font-semibold tracking-[.28em] text-brand-light">{eyebrow}</span>
-          <h1 className="m-0 font-serif text-[clamp(36px,5vw,56px)] leading-[1.08] font-normal text-white">{title}</h1>
-          <p className="m-0 text-[17px] leading-[1.6] text-[#dce8df]">{intro}</p>
+      <div className="wrap relative py-16 min-[861px]:py-32">
+        <div className={`flex max-w-[620px] flex-col gap-6 ${img ? "min-[861px]:max-w-[44%]" : ""}`}>
+          <span className="eyebrow text-brand-light">{eyebrow}</span>
+          <h1 className="m-0 font-serif text-[clamp(40px,5.4vw,68px)] leading-[1.04] font-light tracking-[-.01em] text-white">{title}</h1>
+          <p className="m-0 text-[16px] leading-[1.8] text-[#cdd5cf]">{intro}</p>
         </div>
       </div>
     </section>
   );
 }
 
-export function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) {
+export function SectionHeading({ eyebrow, title, intro, center }: { eyebrow: string; title: string; intro?: string; center?: boolean }) {
   return (
-    <div className="flex max-w-[640px] flex-col gap-3">
+    <div className={`flex max-w-[680px] flex-col gap-5 ${center ? "mx-auto items-center text-center" : ""}`}>
       <span className="eyebrow">{eyebrow}</span>
       <h2 className="heading">{title}</h2>
-      {intro && <p className="m-0 text-base leading-[1.65] text-ink-muted">{intro}</p>}
+      {intro && <p className="lede">{intro}</p>}
     </div>
   );
 }
@@ -46,15 +46,13 @@ export function CtaBand({
   primary: { href: string; label: string };
 }) {
   return (
-    <section className="bg-forest py-[72px]">
-      <div className="wrap flex flex-wrap items-center justify-between gap-8">
-        <div className="flex max-w-[700px] flex-col gap-3">
-          <span className="text-xs font-semibold tracking-[.24em] text-brand-light">{eyebrow}</span>
-          <h2 className="m-0 font-serif text-[clamp(28px,3.4vw,40px)] leading-[1.2] font-normal text-white">{title}</h2>
-          <p className="m-0 text-base leading-[1.6] text-[#c9dace]">{body}</p>
-        </div>
-        <div className="flex flex-wrap gap-3.5">
-          <Link className="btn btn-solid" href={primary.href}>
+    <section className="bg-forest py-24 md:py-28">
+      <div className="wrap flex flex-col items-center gap-6 text-center">
+        <span className="eyebrow text-brand-light">{eyebrow}</span>
+        <h2 className="m-0 max-w-[760px] font-serif text-[clamp(34px,4.2vw,52px)] leading-[1.1] font-light text-white">{title}</h2>
+        <p className="m-0 max-w-[560px] text-[15.5px] leading-[1.8] text-[#c3ccc6]">{body}</p>
+        <div className="mt-4 flex flex-wrap justify-center gap-4">
+          <Link className="btn btn-light" href={primary.href}>
             {primary.label}
           </Link>
           <a className="btn btn-ghost" href={business.whatsapp} target="_blank" rel="noopener noreferrer">

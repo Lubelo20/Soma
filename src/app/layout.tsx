@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Great_Vibes, Libre_Caslon_Text, Montserrat } from "next/font/google";
+import { Cormorant_Garamond, Montserrat } from "next/font/google";
 import { business } from "@/lib/site";
 import "./globals.css";
 
@@ -8,16 +8,11 @@ const montserrat = Montserrat({
   subsets: ["latin"],
 });
 
-const caslon = Libre_Caslon_Text({
-  variable: "--font-caslon",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["400", "700"],
-});
-
-const vibes = Great_Vibes({
-  variable: "--font-vibes",
-  subsets: ["latin"],
-  weight: "400",
+  weight: ["300", "400", "500"],
+  style: ["normal", "italic"],
 });
 
 const description =
@@ -45,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en-ZA"
       data-scroll-behavior="smooth"
-      className={`${montserrat.variable} ${caslon.variable} ${vibes.variable} antialiased`}
+      className={`${montserrat.variable} ${cormorant.variable} antialiased`}
     >
       <body className="font-sans">{children}</body>
     </html>

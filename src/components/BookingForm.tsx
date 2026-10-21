@@ -8,14 +8,16 @@ import { formatDate } from "@/lib/slots";
 export type BookableTreatment = { id: number; name: string; category: "wellness" | "skincare"; durationMin: number; price: string };
 
 const initial: BookingState = { status: "idle" };
-const labelClass = "flex flex-col gap-1.5 text-[13px] font-semibold text-ink-body";
+const labelClass = "flex flex-col gap-2 text-[10.5px] font-medium tracking-[.22em] text-ink-body uppercase";
+const hint = "tracking-normal text-ink-subtle normal-case";
+const fieldError = "text-xs font-medium tracking-normal text-red-700 normal-case";
 const DATES_PER_PAGE = 14;
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
-      <legend className="mb-4 flex items-center gap-3 p-0 font-serif text-[22px] text-ink-strong">
-        <span className="flex size-8 items-center justify-center rounded-full bg-brand font-sans text-sm font-bold text-white">{n}</span>
+      <legend className="mb-5 flex items-baseline gap-4 p-0 font-serif text-[28px] font-light text-ink-strong">
+        <span className="text-[20px] text-gold-deep italic">0{n}</span>
         {title}
       </legend>
       {children}
@@ -67,10 +69,10 @@ export function BookingForm({
   if (state.status === "success" && state.booking) {
     const b = state.booking;
     return (
-      <div ref={topRef} className="flex scroll-mt-28 flex-col items-start gap-4 rounded-[18px] border border-line bg-white p-8">
+      <div ref={topRef} className="flex scroll-mt-28 flex-col items-start gap-5 border border-line bg-white p-8 sm:p-12">
         <span className="eyebrow">REQUEST RECEIVED · {b.ref}</span>
-        <h2 className="m-0 font-serif text-[32px] font-normal">Thank you! We&rsquo;ll confirm shortly</h2>
-        <p className="m-0 text-base leading-relaxed text-ink-muted">
+        <h2 className="m-0 font-serif text-[clamp(32px,3.6vw,42px)] leading-tight font-light">Thank you! We&rsquo;ll confirm shortly</h2>
+        <p className="lede">
           You&rsquo;ve requested <strong className="text-ink-strong">{b.treatmentName}</strong> on{" "}
           <strong className="text-ink-strong">{b.when}</strong>. This time is held for you, but your booking is{" "}
           <strong className="text-ink-strong">not confirmed yet</strong>. We&rsquo;ll email {b.email} as soon as it is.
@@ -91,7 +93,7 @@ export function BookingForm({
 
   return (
     <div ref={topRef} className="scroll-mt-28">
-      <form action={action} noValidate className="flex scroll-mt-28 flex-col gap-10 rounded-[18px] border border-line bg-white p-6 sm:p-8">
+      <form action={action} noValidate className="flex scroll-mt-28 flex-col gap-12 border border-line bg-white p-6 sm:p-10">
         <input type="hidden" name="treatmentId" value={treatmentId ?? ""} />
         <input type="hidden" name="date" value={date ?? ""} />
         <input type="hidden" name="time" value={time ?? ""} />
@@ -141,21 +143,21 @@ export function BookingForm({
                     setTime(null);
                     if (treatmentId) loadSlots(treatmentId, d);
                   }}
-                  className={`flex cursor-pointer flex-col items-center rounded-xl border px-2 py-2.5 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                    selected ? "border-brand bg-brand text-white" : "border-line bg-white text-ink hover:border-brand"
+                  className={`flex cursor-pointer flex-col items-center gap-0.5 rounded-[2px] border px-2 py-3 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    selected ? "border-brand bg-brand text-cream" : "border-line bg-white text-ink hover:border-gold"
                   }`}
                 >
-                  <span className="text-[11px] font-semibold tracking-wider uppercase">{formatDate(d, { weekday: "short" })}</span>
-                  <span className="text-xl font-semibold">{formatDate(d, { day: "numeric" })}</span>
-                  <span className="text-[11px]">{formatDate(d, { month: "short" })}</span>
+                  <span className="text-[10px] font-medium tracking-[.2em] uppercase">{formatDate(d, { weekday: "short" })}</span>
+                  <span className="font-serif text-[26px] leading-tight lining-nums">{formatDate(d, { day: "numeric" })}</span>
+                  <span className="text-[10px] tracking-[.2em] uppercase">{formatDate(d, { month: "short" })}</span>
                 </button>
               );
             })}
           </div>
-          <div className="flex justify-between text-sm font-semibold">
+          <div className="flex justify-between text-[11px] font-medium tracking-[.2em] uppercase">
             <button
               type="button"
-              className="cursor-pointer text-brand disabled:invisible"
+              className="cursor-pointer py-2 text-ink hover:text-gold-deep disabled:invisible"
               disabled={datePage === 0}
               onClick={() => setDatePage((p) => p - 1)}
             >
@@ -163,7 +165,7 @@ export function BookingForm({
             </button>
             <button
               type="button"
-              className="cursor-pointer text-brand disabled:invisible"
+              className="cursor-pointer py-2 text-ink hover:text-gold-deep disabled:invisible"
               disabled={(datePage + 1) * DATES_PER_PAGE >= dates.length}
               onClick={() => setDatePage((p) => p + 1)}
             >
@@ -186,8 +188,8 @@ export function BookingForm({
                   type="button"
                   aria-pressed={s === time}
                   onClick={() => setTime(s)}
-                  className={`cursor-pointer rounded-xl border py-2.5 text-[15px] font-semibold transition-colors ${
-                    s === time ? "border-brand bg-brand text-white" : "border-line bg-white text-ink hover:border-brand"
+                  className={`cursor-pointer rounded-[2px] border py-3 text-[15px] tracking-[.06em] transition-colors ${
+                    s === time ? "border-brand bg-brand text-cream" : "border-line bg-white text-ink hover:border-gold"
                   }`}
                 >
                   {s}
@@ -201,28 +203,28 @@ export function BookingForm({
         </Step>
 
         <Step n={4} title="Your details">
-          <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <label className={labelClass}>
               Full name
               <input type="text" {...bind("name")} autoComplete="name" className="field" aria-invalid={!!err.name} />
-              {err.name && <span className="text-xs font-medium text-red-700">{err.name}</span>}
+              {err.name && <span className={fieldError}>{err.name}</span>}
             </label>
             <label className={labelClass}>
               Phone / WhatsApp
               <input type="tel" {...bind("phone")} autoComplete="tel" className="field" aria-invalid={!!err.phone} />
-              {err.phone && <span className="text-xs font-medium text-red-700">{err.phone}</span>}
+              {err.phone && <span className={fieldError}>{err.phone}</span>}
             </label>
             <label className={`${labelClass} sm:col-span-2`}>
               <span>
-                Email <span className="font-normal text-ink-subtle">(we&rsquo;ll send your confirmation here)</span>
+                Email <span className={hint}>(we&rsquo;ll send your confirmation here)</span>
               </span>
               <input type="email" {...bind("email")} autoComplete="email" className="field" aria-invalid={!!err.email} />
-              {err.email && <span className="text-xs font-medium text-red-700">{err.email}</span>}
+              {err.email && <span className={fieldError}>{err.email}</span>}
             </label>
             <label className={`${labelClass} sm:col-span-2`}>
               <span>
                 Anything we should know?{" "}
-                <span className="font-normal text-ink-subtle">(optional: pregnancy, injuries, allergies, skin concerns)</span>
+                <span className={hint}>(optional: pregnancy, injuries, allergies, skin concerns)</span>
               </span>
               <textarea {...bind("notes")} rows={3} maxLength={1000} className="field resize-y py-3" />
             </label>
@@ -230,7 +232,7 @@ export function BookingForm({
         </Step>
 
         {treatment && date && time && (
-          <div className="rounded-[14px] bg-mint-soft px-5 py-4 text-[15px] text-ink-body">
+          <div className="border-y border-gold/50 py-5 text-center font-serif text-[21px] text-ink-body">
             <strong className="text-ink-strong">{treatment.name}</strong> ({treatment.durationMin} min) on{" "}
             <strong className="text-ink-strong">
               {formatDate(date)} at {time}
@@ -242,7 +244,7 @@ export function BookingForm({
           <button type="submit" disabled={pending || !time} className="btn btn-solid border-none">
             {pending ? "Sending request…" : "Request booking"}
           </button>
-          <p className="m-0 text-center text-[13px] text-ink-subtle">Your booking is confirmed once the clinic replies by email.</p>
+          <p className="m-0 text-center text-[12.5px] tracking-[.04em] text-ink-subtle">Your booking is confirmed once the clinic replies by email.</p>
         </div>
       </form>
     </div>

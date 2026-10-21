@@ -17,8 +17,8 @@ export default function TreatmentsPage() {
         img="/images/service-wellness.jpg"
         alt="Hot stone massage"
       />
-      <section className="py-[72px]">
-        <div className="wrap flex flex-col gap-10">
+      <section className="py-24 md:py-28">
+        <div className="wrap flex flex-col gap-12">
           <SectionHeading
             eyebrow="TREATMENT MENU"
             title="Choose your treatment"

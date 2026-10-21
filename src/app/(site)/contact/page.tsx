@@ -29,11 +29,11 @@ export default function ContactPage() {
       label: "CELL / WHATSAPP",
       value: (
         <>
-          <a href={`tel:${business.phoneE164}`} className="text-ink-strong no-underline hover:text-brand">
+          <a href={`tel:${business.phoneE164}`} className="text-ink-strong no-underline hover:text-gold-deep">
             {business.phoneDisplay}
           </a>
-          <a href={business.whatsapp} target="_blank" rel="noopener noreferrer" className="mt-1 block text-sm text-brand">
-            Chat on WhatsApp →
+          <a href={business.whatsapp} target="_blank" rel="noopener noreferrer" className="text-link mt-3 self-start">
+            Chat on WhatsApp
           </a>
         </>
       ),
@@ -42,7 +42,7 @@ export default function ContactPage() {
       icon: "mail",
       label: "EMAIL",
       value: (
-        <a href={`mailto:${business.email}`} className="text-ink-strong no-underline hover:text-brand">
+        <a href={`mailto:${business.email}`} className="text-ink-strong no-underline hover:text-gold-deep">
           {business.email}
         </a>
       ),
@@ -57,8 +57,8 @@ export default function ContactPage() {
               {l}
             </span>
           ))}
-          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="mt-1 block text-sm text-brand">
-            Get directions →
+          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-link mt-3 self-start">
+            Get directions
           </a>
         </>
       ),
@@ -73,17 +73,17 @@ export default function ContactPage() {
         title="We'd love to hear from you"
         intro="Questions about a treatment, a mobile visit, corporate wellness or training? Send us a message, call or WhatsApp."
       />
-      <section className="py-[88px]">
-        <div className="wrap flex flex-wrap gap-12">
-          <div className="flex min-w-0 flex-[1_1_380px] flex-col gap-[18px]">
+      <section className="py-24 md:py-32">
+        <div className="wrap flex flex-wrap gap-16">
+          <div className="flex min-w-0 flex-[1_1_360px] flex-col border-t border-line">
             {items.map((c) => (
-              <div key={c.label} className="flex items-start gap-3.5">
-                <span className="flex size-11 flex-none items-center justify-center rounded-full bg-mint text-brand">
-                  <Icon name={c.icon} size={20} strokeWidth={1.6} />
+              <div key={c.label} className="flex items-start gap-5 border-b border-line py-7">
+                <span className="flex-none pt-1 text-gold">
+                  <Icon name={c.icon} size={22} strokeWidth={1.2} />
                 </span>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-semibold tracking-[.14em] text-ink-subtle">{c.label}</span>
-                  <span className="text-base font-semibold text-ink-strong">{c.value}</span>
+                <div className="flex flex-col gap-2">
+                  <span className="text-[10.5px] font-medium tracking-[.3em] text-gold-deep">{c.label}</span>
+                  <span className="flex flex-col font-serif text-[22px] leading-[1.4] text-ink-strong lining-nums">{c.value}</span>
                 </div>
               </div>
             ))}
