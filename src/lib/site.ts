@@ -22,8 +22,6 @@ export const business = {
     postalCode: "4001",
     country: "ZA",
   },
-  // TODO: confirm with the client before launch.
-  hours: null as string | null,
   qcto: "05-QCTO/SDP210826181430",
   hwseta: "T110003506",
   founded: 2023,
@@ -31,12 +29,12 @@ export const business = {
 };
 
 export const navLinks = [
-  { href: "#services", label: "Treatments" },
-  { href: "#skincare", label: "Skincare" },
-  { href: "#corporate", label: "Corporate" },
-  { href: "#training", label: "Training" },
-  { href: "#about", label: "About" },
-  { href: "#contact", label: "Contact" },
+  { href: "/treatments", label: "Treatments" },
+  { href: "/skincare", label: "Skincare" },
+  { href: "/corporate", label: "Corporate" },
+  { href: "/training", label: "Training" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export const trust: { icon: IconName; title: string; sub: string }[] = [
@@ -48,26 +46,26 @@ export const trust: { icon: IconName; title: string; sub: string }[] = [
 
 export type Service = {
   id: string;
+  href: string;
   img: string;
   alt: string;
   eyebrow: string;
   title: string;
   body: string;
   cta: string;
-  interest: string;
   items: { icon: IconName; label: string }[];
 };
 
 export const services: Service[] = [
   {
     id: "wellness",
+    href: "/treatments",
     img: "/images/service-wellness.jpg",
     alt: "Hot stone massage",
     eyebrow: "WELLNESS & THERAPY",
     title: "Wellness and Therapeutic Services",
     body: "Professional treatments designed to promote relaxation, recovery and overall wellbeing.",
-    cta: "Book a treatment",
-    interest: "Wellness & massage treatment",
+    cta: "View treatments",
     items: [
       { icon: "leaf", label: "Swedish Massage" },
       { icon: "hand", label: "Deep Tissue Massage" },
@@ -79,13 +77,13 @@ export const services: Service[] = [
   },
   {
     id: "skincare",
+    href: "/skincare",
     img: "/images/service-skincare.jpg",
     alt: "Facial treatment with a mask brush",
     eyebrow: "RADIANT, HEALTHY SKIN",
     title: "Advanced Skincare and Aesthetics",
     body: "Evidence-based skincare solutions to reveal your natural radiance.",
-    cta: "Book a skin consultation",
-    interest: "Skincare & aesthetics",
+    cta: "View skincare",
     items: [
       { icon: "face", label: "Skin Consultations" },
       { icon: "sparkle", label: "Deep Cleansing Facials" },
@@ -97,13 +95,13 @@ export const services: Service[] = [
   },
   {
     id: "corporate",
+    href: "/corporate",
     img: "/images/service-corporate.jpg",
     alt: "Therapist giving a seated chair massage at work",
     eyebrow: "HEALTHIER PEOPLE, STRONGER BUSINESS",
     title: "Corporate Wellness Solutions",
     body: "Customised wellness programmes to improve employee wellbeing, boost productivity and create healthier workplaces.",
-    cta: "Request a proposal",
-    interest: "Corporate wellness day",
+    cta: "Corporate wellness",
     items: [
       { icon: "person", label: "Workplace Massage" },
       { icon: "calendar", label: "Wellness Days" },
@@ -136,9 +134,51 @@ export const gallery = [
   { img: "/images/gallery-mobile.jpg", alt: "Therapist carrying a portable massage bed", caption: "Mobile treatments, wherever you are" },
 ];
 
-export const interests = [
-  "Wellness & massage treatment",
-  "Skincare & aesthetics",
-  "Corporate wellness day",
-  "Occupational training",
-] as const;
+export const corporateProgrammes: { icon: IconName; title: string }[] = [
+  { icon: "person", title: "Workplace Massage Programmes" },
+  { icon: "calendar", title: "Employee Wellness Days" },
+  { icon: "award", title: "Executive Wellness Packages" },
+  { icon: "shield", title: "Stress Management Programmes" },
+  { icon: "leaf", title: "Burnout Prevention Workshops" },
+  { icon: "monitor", title: "Ergonomic Assessments" },
+  { icon: "pulse", title: "Lifestyle Risk Assessments" },
+  { icon: "book", title: "Mental Wellness Education" },
+  { icon: "firstaid", title: "First Aid Training" },
+  { icon: "people", title: "Health Screening Events" },
+];
+
+export const trainingSolutions = [
+  "Occupational Qualifications",
+  "Skills Programmes",
+  "Workplace Training",
+  "Learnership Support",
+  "Skills Development Partnerships",
+];
+
+export const socialImpact = [
+  "Youth employment opportunities",
+  "Women empowerment initiatives",
+  "Rural skills development programmes",
+  "Entrepreneurship support",
+  "Community health promotion",
+  "Professional skills development",
+  "Mental wellness awareness",
+  "Accessible wellness services",
+];
+
+export const enquiryKinds = {
+  general: {
+    label: "general",
+    interests: ["Wellness & massage treatment", "Skincare & aesthetics", "Mobile treatment (home, office or event)", "Corporate wellness", "Occupational training", "Something else"],
+  },
+  corporate: {
+    label: "corporate wellness",
+    interests: ["Employee wellness day", "Workplace massage programme", "Executive wellness package", "Stress & burnout workshop", "Health screening event", "Ergonomic assessment", "First aid training", "Something else"],
+  },
+  training: {
+    label: "training",
+    interests: ["Manual Skin Care Therapist (SAQA 121667)", "Body Massage Therapist (SAQA 121673)", "Beauty Therapist (SAQA 121607)", "Skills programme / learnership", "Skills development partnership"],
+  },
+} as const;
+
+export type EnquiryKind = keyof typeof enquiryKinds;

@@ -44,6 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en-ZA"
+      data-scroll-behavior="smooth"
       className={`${montserrat.variable} ${caslon.variable} ${vibes.variable} antialiased`}
     >
       <body className="font-sans">{children}</body>

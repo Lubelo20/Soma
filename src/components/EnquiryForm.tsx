@@ -2,14 +2,19 @@
 
 import { useActionState } from "react";
 import { sendEnquiry, type EnquiryState } from "@/app/actions";
-import { business, interests } from "@/lib/site";
+import { business, enquiryKinds, type EnquiryKind } from "@/lib/site";
 
 const initial: EnquiryState = { status: "idle" };
 
 const labelClass = "flex flex-col gap-1.5 text-[13px] font-semibold text-ink-body";
 
-export function EnquiryForm() {
-  const [state, action, pending] = useActionState(sendEnquiry, initial);
+function FieldError({ msg }: { msg?: string }) {
+  return msg ? <span className="text-xs font-medium text-red-700">{msg}</span> : null;
+}
+
+export function EnquiryForm({ kind = "general", submitLabel = "Send enquiry" }: { kind?: EnquiryKind; submitLabel?: string }) {
+  const [state, action, pending] = useActionState(sendEnquiry.bind(null, kind), initial);
+  const interests = enquiryKinds[kind].interests;
 
   if (state.status === "success") {
     return (
@@ -37,12 +42,19 @@ export function EnquiryForm() {
       <label className={labelClass}>
         Full name
         <input type="text" name="name" defaultValue={v?.name} autoComplete="name" required className="field" aria-invalid={!!err.name} />
-        {err.name && <span className="text-xs font-medium text-red-700">{err.name}</span>}
+        <FieldError msg={err.name} />
       </label>
       <label className={labelClass}>
         Phone / WhatsApp
         <input type="tel" name="phone" defaultValue={v?.phone} autoComplete="tel" required className="field" aria-invalid={!!err.phone} />
-        {err.phone && <span className="text-xs font-medium text-red-700">{err.phone}</span>}
+        <FieldError msg={err.phone} />
+      </label>
+      <label className={`${labelClass} sm:col-span-2`}>
+        <span>
+          Email <span className="font-normal text-ink-subtle">(optional)</span>
+        </span>
+        <input type="email" name="email" defaultValue={v?.email} autoComplete="email" className="field" aria-invalid={!!err.email} />
+        <FieldError msg={err.email} />
       </label>
       <label className={`${labelClass} sm:col-span-2`}>
         I&rsquo;m interested in
@@ -51,7 +63,7 @@ export function EnquiryForm() {
             <option key={i}>{i}</option>
           ))}
         </select>
-        {err.interest && <span className="text-xs font-medium text-red-700">{err.interest}</span>}
+        <FieldError msg={err.interest} />
       </label>
       <label className={`${labelClass} sm:col-span-2`}>
         Message
@@ -60,7 +72,7 @@ export function EnquiryForm() {
       <input type="text" name="company" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
       {state.message && <p className="m-0 text-sm font-medium text-red-700 sm:col-span-2">{state.message}</p>}
       <button type="submit" disabled={pending} className="btn btn-solid border-none sm:col-span-2">
-        {pending ? "Sending…" : "Send enquiry"}
+        {pending ? "Sending…" : submitLabel}
       </button>
     </form>
   );
