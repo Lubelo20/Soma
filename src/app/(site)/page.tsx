@@ -9,19 +9,19 @@ export default function Home() {
     <>
       {/* HERO */}
       <section id="top" className="relative overflow-hidden bg-forest">
-        <div className="absolute inset-y-0 right-0 w-full opacity-45 min-[861px]:w-[62%] min-[861px]:opacity-100">
+        {/* Photo sits beside the text on wide screens and above it on phones, never behind it. */}
+        <div className="relative h-72 min-[640px]:h-96 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:right-0 min-[861px]:h-auto min-[861px]:w-[52%]">
           <Image
             src="/images/hero-massage.jpg"
             alt="Client relaxing during a back massage"
             fill
             priority
-            sizes="(max-width: 860px) 100vw, 62vw"
+            sizes="(max-width: 860px) 100vw, 52vw"
             className="object-cover object-[60%_30%]"
           />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,42,29,.6),#0B2A1D)] min-[861px]:bg-[linear-gradient(90deg,#0B2A1D_0%,#0B2A1D_38%,rgba(11,42,29,.55)_58%,rgba(11,42,29,0)_80%)]" />
-        <div className="wrap relative pt-20 pb-24 md:pt-28 md:pb-30">
-          <div className="flex max-w-[600px] flex-col gap-7">
+        <div className="wrap relative pt-12 pb-16 min-[861px]:pt-28 min-[861px]:pb-30">
+          <div className="flex max-w-[600px] flex-col gap-7 min-[861px]:max-w-[44%]">
             <span className="text-xs font-semibold tracking-[.28em] text-brand-light">DURBAN · EST. {business.founded}</span>
             <h1 className="m-0 font-serif text-[clamp(42px,6vw,72px)] leading-[1.04] font-normal text-white">
               Wellness Today

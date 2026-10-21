@@ -6,16 +6,14 @@ import { business } from "@/lib/site";
 export function PageHero({ eyebrow, title, intro, img, alt }: { eyebrow: string; title: string; intro: string; img?: string; alt?: string }) {
   return (
     <section className="relative overflow-hidden bg-forest">
+      {/* Photo sits beside the text on wide screens and above it on phones, never behind it. */}
       {img && (
-        <div className="absolute inset-y-0 right-0 w-full opacity-35 min-[861px]:w-1/2 min-[861px]:opacity-100">
+        <div className="relative h-64 min-[640px]:h-80 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:right-0 min-[861px]:h-auto min-[861px]:w-1/2">
           <Image src={img} alt={alt ?? ""} fill priority sizes="(max-width: 860px) 100vw, 50vw" className="object-cover" />
         </div>
       )}
-      {img && (
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,42,29,.6),#0B2A1D)] min-[861px]:bg-[linear-gradient(90deg,#0B2A1D_0%,#0B2A1D_45%,rgba(11,42,29,.4)_70%,rgba(11,42,29,0)_90%)]" />
-      )}
-      <div className="wrap relative py-16 md:py-24">
-        <div className="flex max-w-[580px] flex-col gap-5">
+      <div className="wrap relative py-12 min-[861px]:py-24">
+        <div className={`flex max-w-[580px] flex-col gap-5 ${img ? "min-[861px]:max-w-[46%]" : ""}`}>
           <span className="text-xs font-semibold tracking-[.28em] text-brand-light">{eyebrow}</span>
           <h1 className="m-0 font-serif text-[clamp(36px,5vw,56px)] leading-[1.08] font-normal text-white">{title}</h1>
           <p className="m-0 text-[17px] leading-[1.6] text-[#dce8df]">{intro}</p>
