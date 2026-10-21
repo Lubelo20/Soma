@@ -32,6 +32,8 @@ export default function TreatmentsPage() {
         title="We can come to you"
         body="Prefer your home, office or event? Our therapists bring the treatment to you across Durban and beyond. Send us an enquiry to arrange a visit."
         primary={{ href: "/contact", label: "Arrange a mobile visit" }}
+        img="/images/gallery-mobile.jpg"
+        alt="Therapist carrying a portable massage bed to a client"
       />
     </>
   );

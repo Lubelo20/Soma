@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  /* Deep evergreen for actions and dark sections; champagne gold for accents. */
-  --color-brand: #24493a;
-  --color-brand-dark: #173327;
-  --color-brand-light: #d9c39a;
+  /* Leaf green matched to the logo for actions; deep shades of the same green for dark sections; champagne gold for accents. */
+  --color-brand: #178b12;
+  --color-brand-dark: #126d0e;
+  --color-brand-light: #a9e39b;
   --color-gold: #b8975f;
   --color-gold-deep: #7f6233;
-  --color-forest: #13281f;
-  --color-forest-deep: #0d1d16;
-  --color-mint: #ece6da;
-  --color-mint-soft: #f2ede4;
-  --color-mint-line: #ddd3c2;
+  --color-forest: #123d16;
+  --color-forest-deep: #0c2b10;
+  --color-mint: #e4f1df;
+  --color-mint-soft: #eef6ea;
+  --color-mint-line: #cfe3c8;
   --color-cream: #f7f4ee;
   --color-line: #e3ddd2;
   --color-line-soft: #ebe6dc;
