@@ -4,7 +4,7 @@ Next.js 16 (App Router, Cache Components) + Tailwind CSS v4 + Postgres (Neon in 
 
 - **Public site:** Home, Treatments, Skincare, Corporate, Training, About, Contact, Book
 - **Online booking:** clients pick a treatment, date and time; the slot is held as *pending* until staff confirm
-- **Staff dashboard** (`/dashboard`): confirm/decline/cancel bookings, enquiries, treatments & prices, opening hours & closed days
+- **Staff dashboard** (`/dashboard`): confirm/decline/cancel bookings, enquiries, treatments & prices, opening hours & closed days, staff accounts
 - **Emails via Resend:** request received (client), new booking (staff), confirmed / declined / cancelled (client), new enquiry (staff)
 
 ## Local development
@@ -23,9 +23,9 @@ npm test                          # slot-availability tests
 
 1. Create a Neon project and copy its **pooled** connection string.
 2. Run `npm run db:migrate` and `npm run db:seed` against it (`DATABASE_URL=... npx tsx scripts/migrate.mts`, or temporarily point `.env.local` at Neon).
-3. Create the staff accounts with `npm run staff:create` (Banathi and the receptionist).
+3. Set `SETUP_CODE` in Vercel, then open `/dashboard/setup` on the live site to create the first staff account. Add everyone else from the dashboard's **Staff** page. (`npm run staff:create` also works from a terminal.)
 4. In Resend, verify the `infinitysoma.co.za` domain and create an API key.
-5. In Vercel, set `DATABASE_URL`, `SITE_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, `STAFF_EMAIL`, then deploy.
+5. In Vercel, set `DATABASE_URL`, `SITE_URL`, `SETUP_CODE`, `RESEND_API_KEY`, `EMAIL_FROM`, `STAFF_EMAIL`, then deploy.
 
 ## Where things live
 

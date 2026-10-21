@@ -8,6 +8,7 @@ const links = [
   { href: "/dashboard/enquiries", label: "Enquiries", count: "enquiries" as const },
   { href: "/dashboard/treatments", label: "Treatments & prices" },
   { href: "/dashboard/hours", label: "Opening hours" },
+  { href: "/dashboard/staff", label: "Staff" },
   { href: "/dashboard/account", label: "Account" },
 ];
 

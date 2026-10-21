@@ -59,9 +59,15 @@ export async function requireStaff(): Promise<Staff> {
   return staff;
 }
 
+export const MIN_PASSWORD = 10;
+
+export function hashPassword(password: string) {
+  return bcrypt.hash(password, 12);
+}
+
 export async function changePassword(staffId: number, current: string, next: string) {
   const [row] = await sql<{ passwordHash: string }[]>`select password_hash from staff where id = ${staffId}`;
   if (!row || !(await bcrypt.compare(current, row.passwordHash))) return false;
-  await sql`update staff set password_hash = ${await bcrypt.hash(next, 12)} where id = ${staffId}`;
+  await sql`update staff set password_hash = ${await hashPassword(next)} where id = ${staffId}`;
   return true;
 }
