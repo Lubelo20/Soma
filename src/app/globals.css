@@ -25,6 +25,19 @@
   --font-serif: var(--font-cormorant), Georgia, serif;
 }
 
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes hero-settle {
+  from {
+    transform: scale(1.07);
+  }
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 88px;
