@@ -1,16 +1,16 @@
 const labelClass = "flex flex-col gap-1.5 text-[13px] font-semibold text-ink-body";
 
 /** Name, email and password inputs shared by the setup page and the Staff page. */
-export function NewStaffFields({ passwordLabel = "Password" }: { passwordLabel?: string }) {
+export function NewStaffFields({ passwordLabel = "Password", values }: { passwordLabel?: string; values?: Record<string, string> }) {
   return (
     <>
       <label className={labelClass}>
         Full name
-        <input name="name" autoComplete="off" required className="field" />
+        <input name="name" defaultValue={values?.name} autoComplete="off" required className="field" />
       </label>
       <label className={labelClass}>
         Email
-        <input type="email" name="email" autoComplete="off" required className="field" />
+        <input type="email" name="email" defaultValue={values?.email} autoComplete="off" required className="field" />
       </label>
       <label className={labelClass}>
         <span>

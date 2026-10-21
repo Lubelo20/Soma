@@ -12,9 +12,9 @@ export function SetupForm() {
         <span>
           Setup code <span className="font-normal text-ink-subtle">(SETUP_CODE in Vercel → Settings → Environment Variables)</span>
         </span>
-        <input name="code" autoComplete="off" required className="field" />
+        <input name="code" defaultValue={state.values?.code} autoComplete="off" required className="field" />
       </label>
-      <NewStaffFields passwordLabel="Choose a password" />
+      <NewStaffFields passwordLabel="Choose a password" values={state.values} />
       {state.error && <p className="m-0 text-sm font-medium text-red-700">{state.error}</p>}
       <button type="submit" disabled={pending} className="btn btn-solid border-none">
         {pending ? "Creating account…" : "Create account & sign in"}

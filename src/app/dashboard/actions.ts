@@ -8,7 +8,12 @@ import { sql } from "@/lib/db";
 import { emails, sendEmail } from "@/lib/email";
 import { formatDateTime } from "@/lib/slots";
 
-export type FormResult = { error?: string; ok?: boolean };
+export type FormResult = {
+  error?: string;
+  ok?: boolean;
+  // Echoed back on errors so forms keep what was typed (never includes passwords).
+  values?: Record<string, string>;
+};
 
 const str = (fd: FormData, name: string, max = 500) => String(fd.get(name) ?? "").trim().slice(0, max);
 
@@ -53,10 +58,11 @@ export async function setupFirstStaff(_prev: FormResult, fd: FormData): Promise<
   const given = str(fd, "code", 200);
   const codeOk =
     expected.length >= 16 && given.length === expected.length && timingSafeEqual(Buffer.from(given), Buffer.from(expected));
-  if (!codeOk) return { error: "That setup code is not correct." };
+  const values = { code: given, name: str(fd, "name", 120), email: str(fd, "email", 200) };
+  if (!codeOk) return { error: "That setup code is not correct.", values };
 
   const input = readNewStaff(fd);
-  if ("error" in input) return input;
+  if ("error" in input) return { ...input, values };
 
   // The insert only happens if the table is still empty, so two people can't both claim the first account.
   const [created] = await sql<{ id: number }[]>`
@@ -71,12 +77,13 @@ export async function setupFirstStaff(_prev: FormResult, fd: FormData): Promise<
 
 export async function addStaff(_prev: FormResult, fd: FormData): Promise<FormResult> {
   await requireStaff();
+  const values = { name: str(fd, "name", 120), email: str(fd, "email", 200) };
   const input = readNewStaff(fd);
-  if ("error" in input) return input;
+  if ("error" in input) return { ...input, values };
   const [created] = await sql<{ id: number }[]>`
     insert into staff (email, name, password_hash) values (${input.email}, ${input.name}, ${await hashPassword(input.password)})
     on conflict (email) do nothing returning id`;
-  if (!created) return { error: "Someone with that email already has an account." };
+  if (!created) return { error: "Someone with that email already has an account.", values };
   refresh();
   return { ok: true };
 }

@@ -4,8 +4,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { sql } from "./db";
+import { SESSION_COOKIE as COOKIE } from "./session-cookie";
 
-const COOKIE = "soma_session";
 const SESSION_DAYS = 30;
 
 export type Staff = { id: number; email: string; name: string };
