@@ -69,7 +69,7 @@ export default function TrainingPage() {
               <span className="text-[15px] leading-[1.8] text-ink-body">{trainingSolutions.join(" · ")}</span>
             </div>
           </div>
-          <div className="relative aspect-[4/5] min-w-0 overflow-hidden">
+          <div className="relative aspect-[4/3] min-w-0 overflow-hidden lg:aspect-[4/5]">
             <Image src="/images/training-facial.jpg" alt="Trainer guiding learners through a facial treatment" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
         </div>

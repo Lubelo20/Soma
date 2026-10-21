@@ -24,7 +24,7 @@ export default function Home() {
 
         <div className="wrap relative w-full max-[860px]:-mt-20 max-[860px]:px-4 max-[860px]:pb-4 min-[861px]:py-16">
           <div className="flex max-w-[580px] flex-col gap-6 bg-forest/95 p-8 shadow-[0_30px_60px_-30px_rgba(0,0,0,.6)] backdrop-blur-sm min-[861px]:gap-7 min-[861px]:p-12 motion-safe:animate-[hero-rise_1.1s_ease-out_.15s_both]">
-            <span className="eyebrow text-brand-light">Wellness · Skincare · Training</span>
+            <span className="eyebrow text-brand-light max-[480px]:text-[10px] max-[480px]:tracking-[.2em]">Wellness · Skincare · Training</span>
             <h1 className="m-0 font-serif text-[clamp(40px,4.6vw,68px)] leading-[1] font-light tracking-[-.015em] text-white">
               Wellness Today,
               <span className="mt-1 block text-brand-light italic">a Brighter Tomorrow</span>
@@ -55,7 +55,7 @@ export default function Home() {
           {trust.map((t, i) => (
             <div
               key={t.title}
-              className={`flex items-center gap-4 py-6 lg:px-6 lg:first:pl-0 ${i > 0 ? "lg:border-l lg:border-line" : ""}`}
+              className={`flex items-center gap-4 py-4 lg:px-6 lg:py-6 lg:first:pl-0 ${i > 0 ? "lg:border-l lg:border-line" : ""}`}
             >
               <span className="flex-none text-gold">
                 <Icon name={t.icon} size={26} strokeWidth={1.1} />
@@ -78,10 +78,10 @@ export default function Home() {
             title="Care for body, skin and workplace"
             intro="Book in-clinic at Musgrave Park, or bring our therapists to your home, office or event."
           />
-          <div className="grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-3 md:gap-y-16">
             {services.map((s) => (
               <article key={s.id} className="group flex flex-col gap-6">
-                <Link href={s.href} className="relative block aspect-[4/5] overflow-hidden" aria-label={s.title}>
+                <Link href={s.href} className="relative block aspect-[4/3] overflow-hidden md:aspect-[4/5]" aria-label={s.title}>
                   <Image
                     src={s.img}
                     alt={s.alt}
@@ -147,7 +147,7 @@ export default function Home() {
       {/* ABOUT */}
       <section className="py-24 md:py-32">
         <div className="wrap grid items-center gap-16 lg:grid-cols-2">
-          <div className="relative aspect-[4/5] min-w-0 overflow-hidden max-lg:order-2 lg:aspect-[5/6]">
+          <div className="relative aspect-[4/3] min-w-0 overflow-hidden max-lg:order-2 lg:aspect-[5/6]">
             <Image src="/images/about-reception.jpg" alt="Infinity Soma reception area" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
           <div className="flex min-w-0 flex-col gap-6">
@@ -186,13 +186,13 @@ export default function Home() {
               Follow @{business.instagramHandle}
             </a>
           </div>
-          <div className="grid grid-cols-1 gap-6 min-[560px]:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 md:gap-6 lg:grid-cols-4">
             {gallery.map((g) => (
               <figure key={g.img} className="m-0 flex flex-col gap-4">
                 <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image src={g.img} alt={g.alt} fill sizes="(max-width: 560px) 100vw, (max-width: 1024px) 50vw, 300px" className="object-cover" />
+                  <Image src={g.img} alt={g.alt} fill sizes="(max-width: 1024px) 50vw, 300px" className="object-cover" />
                 </div>
-                <figcaption className="font-serif text-[17px] text-ink-muted italic">{g.caption}</figcaption>
+                <figcaption className="font-serif text-[15px] text-ink-muted italic md:text-[17px]">{g.caption}</figcaption>
               </figure>
             ))}
           </div>

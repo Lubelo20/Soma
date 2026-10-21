@@ -37,7 +37,7 @@ export default function AboutPage() {
       </section>
       <section className="bg-white py-24 md:py-32">
         <div className="wrap grid items-center gap-16 lg:grid-cols-2">
-          <div className="relative aspect-[4/5] min-w-0 overflow-hidden">
+          <div className="relative aspect-[4/3] min-w-0 overflow-hidden lg:aspect-[4/5]">
             <Image src="/images/gallery-team.jpg" alt="Infinity Soma team at the clinic reception" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
           <div className="flex min-w-0 flex-col gap-6">

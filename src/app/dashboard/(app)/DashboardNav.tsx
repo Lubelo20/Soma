@@ -16,7 +16,7 @@ const links = [
 export function DashboardNav({ counts }: { counts: { pending: number; enquiries: number } }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Dashboard" className="flex gap-1 overflow-x-auto lg:flex-col lg:gap-0.5">
+    <nav aria-label="Dashboard" className="-mx-5 flex gap-1 overflow-x-auto px-5 pb-3 lg:mx-0 lg:flex-col lg:gap-0.5 lg:px-0 lg:pb-0">
       {links.map((l) => {
         const active = pathname === l.href;
         const n = l.count ? counts[l.count] : 0;
