@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { navLinks } from "@/lib/site";
+import { business, navLinks, socials } from "@/lib/site";
 import { Icon } from "./Icon";
 
 export function Header() {
@@ -14,12 +14,12 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-cream/95 backdrop-blur-sm">
-      <div className="wrap flex min-h-20 items-center justify-between gap-6">
+      <div className="wrap flex min-h-20 items-center justify-between gap-3 sm:gap-6">
         <Link href="/" className="flex items-center gap-3 no-underline">
           <Image src="/images/logo.png" alt="" width={39} height={40} className="h-9 w-auto" priority />
-          <span className="flex flex-col leading-[1.15]">
-            <span className="text-[15px] font-semibold tracking-[.2em] text-ink-strong">INFINITY SOMA</span>
-            <span className="text-[9.5px] tracking-[.42em] text-ink-muted">WELLNESS CLINIC</span>
+          <span className="flex flex-col leading-[1.15] whitespace-nowrap">
+            <span className="text-[13px] font-semibold tracking-[.18em] text-ink-strong sm:text-[15px] sm:tracking-[.2em]">INFINITY SOMA</span>
+            <span className="text-[8.5px] tracking-[.36em] text-ink-muted sm:text-[9.5px] sm:tracking-[.42em]">WELLNESS CLINIC</span>
           </span>
         </Link>
 
@@ -37,8 +37,9 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/book" className="btn btn-solid min-h-11 px-6 max-sm:hidden">
-            Book now
+          <Link href="/book" className="btn btn-solid min-h-11 px-6 max-sm:min-h-10 max-sm:px-4">
+            <span className="sm:hidden">Book</span>
+            <span className="max-sm:hidden">Book now</span>
           </Link>
           <button
             type="button"
@@ -67,9 +68,29 @@ export function Header() {
                 {l.label}
               </Link>
             ))}
-            <Link href="/book" onClick={() => setOpen(false)} className="btn btn-solid mt-4 mb-2">
+            <Link href="/book" onClick={() => setOpen(false)} className="btn btn-solid mt-4">
               Book now
             </Link>
+            <div className="mt-4 mb-2 flex flex-wrap items-center justify-between gap-4">
+              <a href={`tel:${business.phoneE164}`} className="text-[13px] tracking-[.04em] text-ink-body no-underline lining-nums">
+                Call {business.phoneDisplay}
+              </a>
+              <ul className="m-0 flex list-none gap-1 p-0">
+                {socials.map((s) => (
+                  <li key={s.name}>
+                    <a
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${s.name} ${s.handle}`}
+                      className="flex size-11 items-center justify-center text-ink hover:text-gold-deep"
+                    >
+                      <Icon name={s.icon} size={22} strokeWidth={1.3} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </nav>
       )}

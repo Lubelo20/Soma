@@ -93,7 +93,7 @@ export function BookingForm({
 
   return (
     <div ref={topRef} className="scroll-mt-28">
-      <form action={action} noValidate className="flex scroll-mt-28 flex-col gap-12 border border-line bg-white p-6 sm:p-10">
+      <form action={action} noValidate className="flex scroll-mt-28 flex-col gap-10 border border-line bg-white p-5 sm:gap-12 sm:p-10">
         <input type="hidden" name="treatmentId" value={treatmentId ?? ""} />
         <input type="hidden" name="date" value={date ?? ""} />
         <input type="hidden" name="time" value={time ?? ""} />
@@ -129,7 +129,7 @@ export function BookingForm({
         </Step>
 
         <Step n={2} title="Pick a date">
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(62px,1fr))] gap-2 sm:grid-cols-[repeat(auto-fill,minmax(88px,1fr))]">
             {visibleDates.map((d) => {
               const selected = d === date;
               return (
@@ -143,12 +143,12 @@ export function BookingForm({
                     setTime(null);
                     if (treatmentId) loadSlots(treatmentId, d);
                   }}
-                  className={`flex cursor-pointer flex-col items-center gap-0.5 rounded-[2px] border px-2 py-3 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                  className={`flex cursor-pointer flex-col items-center gap-0.5 rounded-[2px] border px-1 py-2.5 text-center sm:px-2 sm:py-3 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                     selected ? "border-brand bg-brand text-cream" : "border-line bg-white text-ink hover:border-gold"
                   }`}
                 >
                   <span className="text-[10px] font-medium tracking-[.2em] uppercase">{formatDate(d, { weekday: "short" })}</span>
-                  <span className="font-serif text-[26px] leading-tight lining-nums">{formatDate(d, { day: "numeric" })}</span>
+                  <span className="font-serif text-[23px] leading-tight lining-nums sm:text-[26px]">{formatDate(d, { day: "numeric" })}</span>
                   <span className="text-[10px] tracking-[.2em] uppercase">{formatDate(d, { month: "short" })}</span>
                 </button>
               );

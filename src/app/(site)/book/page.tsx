@@ -34,7 +34,7 @@ export default function BookPage(props: PageProps<"/book">) {
         title="Book a treatment"
         intro="Choose your treatment, date and time. We'll hold the slot and confirm your booking by email."
       />
-      <section className="py-20 md:py-24">
+      <section className="py-14 md:py-24">
         <div className="wrap flex flex-wrap items-start gap-12">
           <div className="min-w-0 flex-[2_1_560px]">
             <Suspense fallback={<div className="h-[600px] border border-line bg-white" />}>

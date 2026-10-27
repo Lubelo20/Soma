@@ -35,7 +35,7 @@ export default function TrainingPage() {
           </span>
         </div>
       </section>
-      <section className="py-24 md:py-32">
+      <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap flex flex-col gap-14">
           <SectionHeading center eyebrow="Our qualifications" title="Occupational certificates" />
           <ul className="m-0 grid list-none grid-cols-1 border-t border-line p-0 md:grid-cols-3 md:border-b">
@@ -49,8 +49,8 @@ export default function TrainingPage() {
           </ul>
         </div>
       </section>
-      <section className="bg-white py-24 md:py-32">
-        <div className="wrap grid items-center gap-16 lg:grid-cols-2">
+      <section className="bg-white py-16 md:py-24 lg:py-32">
+        <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="flex min-w-0 flex-col gap-10">
             <SectionHeading eyebrow="How you learn" title="Learn, practise, get placed" />
             <ol className="m-0 flex list-none flex-col border-t border-line p-0">
@@ -74,8 +74,8 @@ export default function TrainingPage() {
           </div>
         </div>
       </section>
-      <section id="enrol" className="py-24 md:py-32">
-        <div className="wrap flex flex-wrap gap-16">
+      <section id="enrol" className="py-16 md:py-24 lg:py-32">
+        <div className="wrap flex flex-wrap gap-10 lg:gap-16">
           <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-6">
             <span className="eyebrow">Enrol or partner with us</span>
             <h2 className="heading">Start your career in wellness</h2>

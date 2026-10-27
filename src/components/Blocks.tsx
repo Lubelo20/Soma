@@ -66,7 +66,7 @@ export function CtaBand({
         <div className="relative h-72 min-[640px]:h-96 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:left-0 min-[861px]:h-auto min-[861px]:w-1/2">
           <Image src={img} alt={alt ?? ""} fill sizes="(max-width: 860px) 100vw, 50vw" className="object-cover" />
         </div>
-        <div className="wrap relative flex py-20 min-[861px]:justify-end min-[861px]:py-32">
+        <div className="wrap relative flex py-14 min-[861px]:justify-end min-[861px]:py-32">
           <div className="flex max-w-[520px] flex-col items-start gap-6 min-[861px]:w-[46%]">
             <span className="eyebrow text-brand-light">{eyebrow}</span>
             <h2 className="m-0 font-serif text-[clamp(34px,4.2vw,52px)] leading-[1.1] font-light text-white">{title}</h2>
@@ -79,7 +79,7 @@ export function CtaBand({
   }
 
   return (
-    <section className="bg-forest py-24 md:py-28">
+    <section className="bg-forest py-16 md:py-24 lg:py-28">
       <div className="wrap flex flex-col items-center gap-6 text-center">
         <span className="eyebrow text-brand-light">{eyebrow}</span>
         <h2 className="m-0 max-w-[760px] font-serif text-[clamp(34px,4.2vw,52px)] leading-[1.1] font-light text-white">{title}</h2>

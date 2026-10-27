@@ -51,11 +51,11 @@ export default function Home() {
 
       {/* TRUST STRIP */}
       <section className="border-b border-line">
-        <div className="wrap grid grid-cols-1 py-4 min-[560px]:grid-cols-2 lg:grid-cols-4">
+        <div className="wrap grid grid-cols-1 py-2 min-[560px]:grid-cols-2 lg:grid-cols-4 lg:py-4">
           {trust.map((t, i) => (
             <div
               key={t.title}
-              className={`flex items-center gap-4 py-4 lg:px-6 lg:py-6 lg:first:pl-0 ${i > 0 ? "lg:border-l lg:border-line" : ""}`}
+              className={`flex items-center gap-4 py-3 lg:px-6 lg:py-6 lg:first:pl-0 ${i > 0 ? "lg:border-l lg:border-line" : ""}`}
             >
               <span className="flex-none text-gold">
                 <Icon name={t.icon} size={26} strokeWidth={1.1} />
@@ -70,8 +70,8 @@ export default function Home() {
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="py-24 md:py-32">
-        <div className="wrap flex flex-col gap-16">
+      <section id="services" className="py-16 md:py-24 lg:py-32">
+        <div className="wrap flex flex-col gap-10 md:gap-16">
           <SectionHeading
             center
             eyebrow="Our services"
@@ -107,8 +107,8 @@ export default function Home() {
       </section>
 
       {/* TRAINING */}
-      <section className="bg-white py-24 md:py-32">
-        <div className="wrap grid items-center gap-16 lg:grid-cols-2">
+      <section className="bg-white py-16 md:py-24 lg:py-32">
+        <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="flex min-w-0 flex-col gap-6">
             <span className="eyebrow">Skills for a brighter future</span>
             <h2 className="heading">Accredited Skills Development</h2>
@@ -145,8 +145,8 @@ export default function Home() {
       </section>
 
       {/* ABOUT */}
-      <section className="py-24 md:py-32">
-        <div className="wrap grid items-center gap-16 lg:grid-cols-2">
+      <section className="py-16 md:py-24 lg:py-32">
+        <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="relative aspect-[4/3] min-w-0 overflow-hidden max-lg:order-2 lg:aspect-[5/6]">
             <Image src="/images/about-reception.jpg" alt="Infinity Soma reception area" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
@@ -175,7 +175,7 @@ export default function Home() {
       </section>
 
       {/* GALLERY */}
-      <section className="bg-white py-24 md:py-28">
+      <section className="bg-white py-16 md:py-24 lg:py-28">
         <div className="wrap flex flex-col gap-12">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="flex flex-col gap-5">

@@ -1,6 +1,6 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { business } from "@/lib/site";
+import { business, socials } from "@/lib/site";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -22,7 +22,7 @@ const jsonLd = {
     postalCode: business.address.postalCode,
     addressCountry: business.address.country,
   },
-  sameAs: [business.instagram],
+  sameAs: socials.filter((s) => s.name !== "WhatsApp").map((s) => s.href),
 };
 
 export default function SiteLayout({ children }: LayoutProps<"/">) {

@@ -20,7 +20,7 @@ export default function CorporatePage() {
         img="/images/service-corporate.jpg"
         alt="Therapist giving a seated chair massage at work"
       />
-      <section className="py-24 md:py-32">
+      <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap flex flex-col gap-14">
           <SectionHeading center eyebrow="Programmes" title="What we offer your team" intro="Every programme is customised to your workplace, team size and goals." />
           <ul className="m-0 grid list-none grid-cols-1 border-t border-line p-0 sm:grid-cols-2 sm:gap-x-12 lg:grid-cols-3">
@@ -35,8 +35,8 @@ export default function CorporatePage() {
           </ul>
         </div>
       </section>
-      <section className="bg-white py-24 md:py-32">
-        <div className="wrap grid items-center gap-16 lg:grid-cols-2">
+      <section className="bg-white py-16 md:py-24 lg:py-32">
+        <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="relative aspect-[4/3] min-w-0 overflow-hidden">
             <Image src="/images/gallery-corporate-event.jpg" alt="Outdoor corporate wellness event with treatment tents" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
@@ -49,8 +49,8 @@ export default function CorporatePage() {
           </div>
         </div>
       </section>
-      <section id="proposal" className="py-24 md:py-32">
-        <div className="wrap flex flex-wrap gap-16">
+      <section id="proposal" className="py-16 md:py-24 lg:py-32">
+        <div className="wrap flex flex-wrap gap-10 lg:gap-16">
           <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-6">
             <span className="eyebrow">Request a proposal</span>
             <h2 className="heading">Tell us about your team</h2>

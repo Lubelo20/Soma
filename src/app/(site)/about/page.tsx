@@ -19,7 +19,7 @@ export default function AboutPage() {
         img="/images/about-reception.jpg"
         alt="Infinity Soma reception area"
       />
-      <section className="py-24 md:py-32">
+      <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap grid grid-cols-1 gap-16 md:grid-cols-2 md:gap-0">
           <div className="flex flex-col gap-6 md:border-r md:border-line md:pr-16">
             <span className="eyebrow">Our vision</span>
@@ -35,8 +35,8 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      <section className="bg-white py-24 md:py-32">
-        <div className="wrap grid items-center gap-16 lg:grid-cols-2">
+      <section className="bg-white py-16 md:py-24 lg:py-32">
+        <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="relative aspect-[4/3] min-w-0 overflow-hidden lg:aspect-[4/5]">
             <Image src="/images/gallery-team.jpg" alt="Infinity Soma team at the clinic reception" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
@@ -53,8 +53,8 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      <section className="py-24 md:py-32">
-        <div className="wrap flex flex-col gap-16">
+      <section className="py-16 md:py-24 lg:py-32">
+        <div className="wrap flex flex-col gap-10 md:gap-16">
           <SectionHeading center eyebrow="Why Infinity Soma" title="What sets us apart" />
           <ul className="m-0 grid list-none grid-cols-2 border-t border-line p-0 md:grid-cols-5">
             {pillars.map((p) => (
@@ -68,8 +68,8 @@ export default function AboutPage() {
           </ul>
         </div>
       </section>
-      <section className="bg-white py-24 md:py-32">
-        <div className="wrap grid gap-16 lg:grid-cols-[1fr_1.4fr]">
+      <section className="bg-white py-16 md:py-24 lg:py-32">
+        <div className="wrap grid gap-10 lg:gap-16 lg:grid-cols-[1fr_1.4fr]">
           <SectionHeading
             eyebrow="Social impact"
             title="Empowering our communities"

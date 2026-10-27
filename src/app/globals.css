@@ -81,10 +81,10 @@ body {
     @apply border border-ink/25 text-ink hover:border-brand hover:bg-brand hover:text-cream;
   }
   .text-link {
-    @apply inline-flex min-h-7 items-center gap-2 border-b border-current pt-2.5 pb-1.5 text-[11.5px] font-medium tracking-[.22em] text-ink uppercase no-underline transition-colors hover:text-gold-deep;
+    @apply relative inline-flex min-h-7 items-center gap-2 border-b border-current pt-2.5 pb-1.5 text-[11.5px] font-medium tracking-[.22em] text-ink uppercase no-underline transition-colors before:absolute before:inset-x-0 before:-inset-y-2 before:content-[''] hover:text-gold-deep;
   }
   .field {
-    @apply min-h-[48px] rounded-[2px] border border-[#d6cfc2] bg-white px-4 text-[15px] font-normal tracking-normal text-ink normal-case outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand/30;
+    @apply min-h-[48px] rounded-[2px] border border-[#d6cfc2] bg-white px-4 text-[16px] font-normal md:text-[15px] tracking-normal text-ink normal-case outline-none transition-colors focus:border-brand focus:ring-1 focus:ring-brand/30;
   }
   /* Dashboard */
   .card {

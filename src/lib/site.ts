@@ -28,6 +28,14 @@ export const business = {
   founder: "Banathi Sihonqo",
 };
 
+// Social profiles shown in the footer, contact page and mobile menu. Add Facebook / TikTok here once the clinic sends the links.
+export const socials: { name: string; href: string; icon: IconName; handle: string }[] = [
+  { name: "Instagram", href: business.instagram, icon: "instagram", handle: `@${business.instagramHandle}` },
+  { name: "WhatsApp", href: business.whatsapp, icon: "whatsapp", handle: business.phoneDisplay },
+  // { name: "Facebook", href: "https://www.facebook.com/…", icon: "facebook", handle: "Infinity Soma Wellness Clinic" },
+  // { name: "TikTok", href: "https://www.tiktok.com/@…", icon: "tiktok", handle: "@…" },
+];
+
 export const navLinks = [
   { href: "/treatments", label: "Treatments" },
   { href: "/skincare", label: "Skincare" },
