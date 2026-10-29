@@ -78,10 +78,10 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
       ) : (
         <ul className="m-0 flex list-none flex-col gap-4 p-0">
           {bookings.map((b) => (
-            <li key={b.id} className="card flex flex-col gap-5">
+            <li key={b.id} className="card flex flex-col gap-4 max-sm:p-4 sm:gap-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="font-serif text-[24px] leading-tight text-ink-strong">{formatDateTime(b.startsAt)}</span>
+                  <span className="font-serif text-[21px] leading-tight text-ink-strong sm:text-[24px]">{formatDateTime(b.startsAt)}</span>
                   <span className="text-[15px] text-ink-body">
                     {b.treatmentName} · {Math.round((b.endsAt.getTime() - b.startsAt.getTime()) / 60000)} min
                   </span>
@@ -92,7 +92,8 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
                 </div>
               </div>
 
-              <div className="grid gap-x-8 gap-y-2 border-t border-line-soft pt-4 text-[15px] sm:grid-cols-[auto_1fr]">
+              {/* Labels sit beside their values even on phones, which keeps each card short. */}
+              <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-line-soft pt-4 text-[15px] sm:gap-x-8">
                 <span className="text-ink-subtle">Client</span>
                 <span className="font-semibold text-ink-strong">{b.clientName}</span>
                 <span className="text-ink-subtle">Phone</span>

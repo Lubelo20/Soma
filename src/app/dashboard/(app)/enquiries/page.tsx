@@ -24,15 +24,16 @@ export default async function EnquiriesPage() {
       ) : (
         <ul className="m-0 flex list-none flex-col gap-4 p-0">
           {enquiries.map((e) => (
-            <li key={e.id} className={`flex flex-col gap-3 card ${e.handled ? "opacity-60" : ""}`}>
+            <li key={e.id} className={`flex flex-col gap-3 card max-sm:p-4 ${e.handled ? "border-dashed bg-cream" : ""}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="font-serif text-[24px] leading-tight text-ink-strong">{e.name}</span>
+                  <span className="font-serif text-[21px] leading-tight text-ink-strong sm:text-[24px]">{e.name}</span>
                   <span className="text-[15px] text-ink-body">{e.interest}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-ink-subtle">{formatDateTime(e.createdAt)}</span>
                   <span className="pill bg-mint text-brand-dark">{kindLabel[e.kind] ?? e.kind}</span>
+                  {e.handled && <span className="pill bg-slate-100 text-slate-700">Handled</span>}
                 </div>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-[15px]">
@@ -40,10 +41,10 @@ export default async function EnquiriesPage() {
                 {e.email && <a href={`mailto:${e.email}`}>{e.email}</a>}
               </div>
               {e.message && <p className="m-0 text-[15px] leading-relaxed whitespace-pre-line text-ink-body">{e.message}</p>}
-              <form action={setEnquiryHandled}>
+              <form action={setEnquiryHandled} className="max-sm:w-full">
                 <input type="hidden" name="id" value={e.id} />
                 <input type="hidden" name="handled" value={String(!e.handled)} />
-                <button type="submit" className={`btn ${e.handled ? "btn-line" : "btn-solid"} min-h-10 px-5`}>
+                <button type="submit" className={`btn ${e.handled ? "btn-line" : "btn-solid"} min-h-12 px-5 max-sm:w-full sm:min-h-10`}>
                   {e.handled ? "Mark as not handled" : "Mark as handled"}
                 </button>
               </form>

@@ -21,10 +21,10 @@ export const whatsappLink = (phone: string) => {
 
 function ActionButton({ id, action, label, tone = "solid" }: { id: string; action: string; label: string; tone?: "solid" | "line" }) {
   return (
-    <form action={updateBooking}>
+    <form action={updateBooking} className="max-sm:w-full">
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="action" value={action} />
-      <button type="submit" className={`btn ${tone === "solid" ? "btn-solid" : "btn-line"} min-h-10 px-5`}>
+      <button type="submit" className={`btn ${tone === "solid" ? "btn-solid" : "btn-line"} min-h-12 px-5 max-sm:w-full sm:min-h-10`}>
         {label}
       </button>
     </form>
@@ -33,8 +33,8 @@ function ActionButton({ id, action, label, tone = "solid" }: { id: string; actio
 
 function ReasonAction({ id, action, label, help }: { id: string; action: string; label: string; help: string }) {
   return (
-    <details className="group">
-      <summary className="btn min-h-10 cursor-pointer list-none border border-red-700 px-5 text-red-700 hover:bg-red-50">{label}</summary>
+    <details className="group max-sm:w-full">
+      <summary className="btn min-h-12 cursor-pointer list-none border border-red-700 px-5 text-red-700 hover:bg-red-50 max-sm:w-full sm:min-h-10">{label}</summary>
       <form action={updateBooking} className="mt-3 flex w-full max-w-md flex-col gap-2">
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="action" value={action} />
@@ -44,7 +44,7 @@ function ReasonAction({ id, action, label, help }: { id: string; action: string;
           </span>
           <textarea name="reason" rows={2} maxLength={1000} className="field resize-y py-2" />
         </label>
-        <button type="submit" className="btn min-h-10 self-start border-none bg-red-700 px-5 text-white hover:bg-red-800">
+        <button type="submit" className="btn min-h-12 border-none bg-red-700 px-5 text-white hover:bg-red-800 max-sm:w-full sm:min-h-10 sm:self-start">
           {label} &amp; email client
         </button>
       </form>

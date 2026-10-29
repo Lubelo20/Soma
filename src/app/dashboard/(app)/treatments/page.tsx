@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireStaff } from "@/lib/auth";
-import type { Treatment } from "@/lib/data";
+import { formatPrice, type Treatment } from "@/lib/data";
 import { bySection } from "@/lib/sections";
 import { sql } from "@/lib/db";
 import { TreatmentEditor } from "./TreatmentEditor";
@@ -8,6 +8,28 @@ import { TreatmentEditor } from "./TreatmentEditor";
 export const metadata: Metadata = { title: "Treatments & prices" };
 // Staff always need live data, so these pages render on request rather than from a prefetched shell.
 export const instant = false;
+
+/** One treatment as a tappable summary line that opens its edit form, so long lists stay short on phones. */
+function TreatmentRow({ t }: { t: Treatment }) {
+  return (
+    <details className={`card group p-0 ${t.active ? "" : "border-dashed bg-cream"}`}>
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 sm:px-6">
+        <span className="min-w-0 flex-1 font-semibold text-ink-strong">
+          {t.name} {!t.active && <span className="pill ml-1 bg-slate-100 align-middle text-slate-700">Hidden</span>}
+        </span>
+        <span className="text-sm whitespace-nowrap text-ink-muted">
+          {formatPrice(t.priceCents)} · {t.durationMin} min
+        </span>
+        <span aria-hidden="true" className="text-gold-deep transition-transform group-open:rotate-90">
+          ›
+        </span>
+      </summary>
+      <div className="border-t border-line-soft px-4 py-5 sm:px-6">
+        <TreatmentEditor treatment={t} />
+      </div>
+    </details>
+  );
+}
 
 export default async function TreatmentsAdminPage() {
   await requireStaff();
@@ -45,17 +67,15 @@ export default async function TreatmentsAdminPage() {
         <section key={cat} className="flex flex-col gap-6">
           <h2 className="m-0 font-serif text-[30px] leading-tight font-light text-ink-strong">{cat === "wellness" ? "Treatments page" : "Skincare page"}</h2>
           {bySection(treatments.filter((t) => t.category === cat && t.active)).map((s) => (
-            <details key={s.title} className="flex flex-col gap-3">
+            <details key={s.title} open className="flex flex-col gap-3">
               <summary className="cursor-pointer text-gold-deep">
                 <span className="eyebrow">
                   {s.title || "No section"} · {s.items.length}
                 </span>
               </summary>
-              <div className="flex flex-col gap-3 pt-3">
+              <div className="flex flex-col gap-2 pt-3">
                 {s.items.map((t) => (
-                  <div key={t.id} className="card">
-                    <TreatmentEditor treatment={t} />
-                  </div>
+                  <TreatmentRow key={t.id} t={t} />
                 ))}
               </div>
             </details>
@@ -68,13 +88,11 @@ export default async function TreatmentsAdminPage() {
           <summary className="cursor-pointer text-gold-deep">
             <span className="eyebrow">Hidden from the website · {treatments.filter((t) => !t.active).length}</span>
           </summary>
-          <div className="flex flex-col gap-3 pt-3">
+          <div className="flex flex-col gap-2 pt-3">
             {treatments
               .filter((t) => !t.active)
               .map((t) => (
-                <div key={t.id} className="card opacity-60">
-                  <TreatmentEditor treatment={t} />
-                </div>
+                <TreatmentRow key={t.id} t={t} />
               ))}
           </div>
         </details>
