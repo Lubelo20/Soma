@@ -3,10 +3,28 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { accreditations, business } from "@/lib/site";
 
-/** Dark evergreen banner at the top of inner pages. */
-export function PageHero({ eyebrow, title, intro, img, alt }: { eyebrow: string; title: string; intro: string; img?: string; alt?: string }) {
+/**
+ * Banner at the top of inner pages: dark evergreen by default. With `texture`, a light decorative background
+ * (e.g. marble) fills the banner instead and the text turns dark to stay readable on it.
+ */
+export function PageHero({
+  eyebrow,
+  title,
+  intro,
+  img,
+  alt,
+  texture,
+}: {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  img?: string;
+  alt?: string;
+  texture?: string;
+}) {
   return (
-    <section className="relative overflow-hidden bg-forest">
+    <section className={`relative overflow-hidden ${texture ? "bg-mint" : "bg-forest"}`}>
+      {texture && <Image src={texture} alt="" fill priority sizes="100vw" className="object-cover" />}
       {/* Photo sits beside the text on wide screens and above it on phones, never behind it. */}
       {img && (
         <div className="relative h-64 min-[640px]:h-80 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:right-0 min-[861px]:h-auto min-[861px]:w-1/2">
@@ -15,9 +33,13 @@ export function PageHero({ eyebrow, title, intro, img, alt }: { eyebrow: string;
       )}
       <div className="wrap relative py-16 min-[861px]:py-32">
         <div className={`flex max-w-[620px] flex-col gap-6 ${img ? "min-[861px]:max-w-[44%]" : ""}`}>
-          <span className="eyebrow text-brand-light">{eyebrow}</span>
-          <h1 className="m-0 font-serif text-[clamp(40px,5.4vw,68px)] leading-[1.04] font-light tracking-[-.01em] text-white">{title}</h1>
-          <p className="m-0 text-[16px] leading-[1.8] text-[#cdd5cf]">{intro}</p>
+          <span className={`eyebrow ${texture ? "font-semibold text-forest" : "text-brand-light"}`}>{eyebrow}</span>
+          <h1
+            className={`m-0 font-serif text-[clamp(40px,5.4vw,68px)] leading-[1.04] font-light tracking-[-.01em] ${texture ? "font-normal text-forest-deep" : "text-white"}`}
+          >
+            {title}
+          </h1>
+          <p className={`m-0 text-[16px] leading-[1.8] ${texture ? "font-medium text-ink-strong" : "text-[#cdd5cf]"}`}>{intro}</p>
         </div>
       </div>
     </section>

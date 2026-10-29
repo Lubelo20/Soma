@@ -84,6 +84,7 @@ export default function ContactPage() {
         eyebrow="GET IN TOUCH"
         title="We'd love to hear from you"
         intro="Questions about a treatment, a mobile visit, corporate wellness or training? Send us a message, call or WhatsApp."
+        texture="/images/marble-green.jpg"
       />
       <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap flex flex-wrap gap-10 lg:gap-16">
