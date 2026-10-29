@@ -7,7 +7,7 @@ import { logout } from "../actions";
 import { DashboardNav } from "./DashboardNav";
 
 async function Sidebar() {
-  const staff = await requireStaff();
+  await requireStaff();
   const [{ pending, enquiries }] = await sql<{ pending: number; enquiries: number }[]>`
     select (select count(*)::int from bookings where status = 'pending') as pending,
            (select count(*)::int from enquiries where not handled) as enquiries`;
@@ -15,9 +15,7 @@ async function Sidebar() {
     <>
       <DashboardNav counts={{ pending, enquiries }} />
       <div className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-5 text-sm max-lg:hidden">
-        <span className="text-[10.5px] tracking-[.22em] text-[#8fa394] uppercase">Signed in as</span>
-        <span className="font-serif text-[19px] text-white">{staff.name}</span>
-        <form action={logout} className="pt-2">
+        <form action={logout}>
           <button type="submit" className="cursor-pointer p-0 text-[11.5px] font-medium tracking-[.16em] text-brand-light uppercase hover:text-white">
             Sign out
           </button>

@@ -9,9 +9,13 @@ export default function AccountPage() {
   const [state, action, pending] = useActionState(updatePassword, {});
   return (
     <div className="flex max-w-md flex-col gap-6">
-      <h1 className="page-title">Account</h1>
+      <h1 className="page-title">Password</h1>
+      <p className="m-0 text-[15px] leading-relaxed text-ink-muted">
+        All staff share one password. Changing it signs out every other phone and computer, so do this whenever someone leaves the team, then
+        tell the rest of the staff the new one.
+      </p>
       <form action={action} className="flex flex-col gap-4 card">
-        <h2 className="m-0 font-serif text-[24px] leading-tight text-ink-strong">Change password</h2>
+        <h2 className="m-0 font-serif text-[24px] leading-tight text-ink-strong">Change the staff password</h2>
         <label className={labelClass}>
           Current password
           <input type="password" name="current" autoComplete="current-password" required className="field" />

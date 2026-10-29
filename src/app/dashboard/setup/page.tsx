@@ -3,19 +3,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { sql } from "@/lib/db";
+import { hasPassword } from "@/lib/auth";
 import { SetupForm } from "./SetupForm";
 
 export const metadata: Metadata = { title: "Set up" };
 
 async function SetupGate() {
   await connection();
-  const [{ count }] = await sql<{ count: number }[]>`select count(*)::int as count from staff`;
-  if (count > 0) {
+  if (await hasPassword()) {
     return (
       <div className="flex flex-col gap-4">
         <p className="m-0 text-[15px] leading-relaxed text-ink-muted">
-          The dashboard is already set up. Sign in, then add other staff from the <strong>Staff</strong> page.
+          The dashboard is already set up. Sign in with the staff password; it can be changed from the <strong>Password</strong> page.
         </p>
         <Link href="/dashboard/login" className="btn btn-solid">
           Go to sign in
@@ -37,7 +36,7 @@ export default function SetupPage() {
             <span className="text-[9.5px] tracking-[.3em] text-ink-subtle uppercase">Staff dashboard</span>
           </div>
         </div>
-        <h1 className="m-0 font-serif text-[32px] leading-tight font-light">Create the first staff account</h1>
+        <h1 className="m-0 font-serif text-[32px] leading-tight font-light">Choose the staff password</h1>
         <Suspense fallback={<p className="text-ink-subtle">Loading…</p>}>
           <SetupGate />
         </Suspense>

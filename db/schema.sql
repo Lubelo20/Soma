@@ -65,16 +65,24 @@ create table if not exists enquiries (
   created_at timestamptz not null default now()
 );
 
-create table if not exists staff (
-  id            serial primary key,
-  email         text not null unique,  -- stored lower-case
-  name          text not null,
-  password_hash text not null,
-  created_at    timestamptz not null default now()
+-- Key/value settings. 'dashboard_password_hash' holds the bcrypt hash of the one password all staff share.
+create table if not exists settings (
+  key   text primary key,
+  value text not null
 );
+
+-- Sessions used to belong to individual staff accounts. Those accounts are gone, so their sessions are
+-- cleared (once) and the staff table is dropped.
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'sessions' and column_name = 'staff_id') then
+    delete from sessions;
+    alter table sessions drop column staff_id;
+  end if;
+end $$;
+drop table if exists staff;
 
 create table if not exists sessions (
   token_hash text primary key,
-  staff_id   integer not null references staff(id) on delete cascade,
   expires_at timestamptz not null
 );

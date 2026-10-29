@@ -3,7 +3,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { MIN_PASSWORD, changePassword, endSession, hashPassword, requireStaff, startSession, verifyLogin } from "@/lib/auth";
+import { MIN_PASSWORD, changePassword, endSession, requireStaff, setPassword, startSession, verifyPassword } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { emails, sendEmail } from "@/lib/email";
 import { formatDateTime } from "@/lib/slots";
@@ -20,9 +20,8 @@ const str = (fd: FormData, name: string, max = 500) => String(fd.get(name) ?? ""
 // ---------- Auth ----------
 
 export async function login(_prev: { error?: string }, fd: FormData): Promise<{ error?: string }> {
-  const staff = await verifyLogin(str(fd, "email"), String(fd.get("password") ?? ""));
-  if (!staff) return { error: "Incorrect email or password." };
-  await startSession(staff.id);
+  if (!(await verifyPassword(String(fd.get("password") ?? "")))) return { error: "Incorrect password." };
+  await startSession();
   redirect("/dashboard");
 }
 
@@ -32,68 +31,31 @@ export async function logout() {
 }
 
 export async function updatePassword(_prev: FormResult, fd: FormData): Promise<FormResult> {
-  const staff = await requireStaff();
+  await requireStaff();
   const next = String(fd.get("next") ?? "");
   if (next.length < MIN_PASSWORD) return { error: `New password must be at least ${MIN_PASSWORD} characters.` };
   if (next !== fd.get("confirm")) return { error: "New passwords don't match." };
-  const ok = await changePassword(staff.id, String(fd.get("current") ?? ""), next);
+  const ok = await changePassword(String(fd.get("current") ?? ""), next);
   return ok ? { ok: true } : { error: "Current password is incorrect." };
 }
 
-// ---------- Staff accounts ----------
-
-function readNewStaff(fd: FormData): { name: string; email: string; password: string } | { error: string } {
-  const name = str(fd, "name", 120);
-  const email = str(fd, "email", 200).toLowerCase();
-  const password = String(fd.get("password") ?? "");
-  if (name.length < 2) return { error: "Please enter a name." };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { error: "Please enter a valid email address." };
-  if (password.length < MIN_PASSWORD) return { error: `Password must be at least ${MIN_PASSWORD} characters.` };
-  return { name, email, password };
-}
-
-/** One-time setup: creates the first staff account. Only works while there are no accounts and the SETUP_CODE matches. */
-export async function setupFirstStaff(_prev: FormResult, fd: FormData): Promise<FormResult> {
+/** One-time setup: chooses the shared staff password. Only works while none is set and the SETUP_CODE matches. */
+export async function setupPassword(_prev: FormResult, fd: FormData): Promise<FormResult> {
   const expected = process.env.SETUP_CODE ?? "";
   const given = str(fd, "code", 200);
   const codeOk =
     expected.length >= 16 && given.length === expected.length && timingSafeEqual(Buffer.from(given), Buffer.from(expected));
-  const values = { code: given, name: str(fd, "name", 120), email: str(fd, "email", 200) };
+  const values = { code: given };
   if (!codeOk) return { error: "That setup code is not correct.", values };
 
-  const input = readNewStaff(fd);
-  if ("error" in input) return { ...input, values };
+  const password = String(fd.get("password") ?? "");
+  if (password.length < MIN_PASSWORD) return { error: `Password must be at least ${MIN_PASSWORD} characters.`, values };
+  if (password !== fd.get("confirm")) return { error: "Passwords don't match.", values };
 
-  // The insert only happens if the table is still empty, so two people can't both claim the first account.
-  const [created] = await sql<{ id: number }[]>`
-    insert into staff (email, name, password_hash)
-    select ${input.email}, ${input.name}, ${await hashPassword(input.password)}
-    where not exists (select 1 from staff)
-    returning id`;
-  if (!created) return { error: "The dashboard is already set up. Please sign in." };
-  await startSession(created.id);
+  // Only saved if no password exists yet, so two people can't both set it.
+  if (!(await setPassword(password, { onlyIfUnset: true }))) return { error: "The dashboard is already set up. Please sign in." };
+  await startSession();
   redirect("/dashboard");
-}
-
-export async function addStaff(_prev: FormResult, fd: FormData): Promise<FormResult> {
-  await requireStaff();
-  const values = { name: str(fd, "name", 120), email: str(fd, "email", 200) };
-  const input = readNewStaff(fd);
-  if ("error" in input) return { ...input, values };
-  const [created] = await sql<{ id: number }[]>`
-    insert into staff (email, name, password_hash) values (${input.email}, ${input.name}, ${await hashPassword(input.password)})
-    on conflict (email) do nothing returning id`;
-  if (!created) return { error: "Someone with that email already has an account.", values };
-  refresh();
-  return { ok: true };
-}
-
-export async function removeStaff(fd: FormData) {
-  const staff = await requireStaff();
-  const id = Number(fd.get("id"));
-  if (id === staff.id) return; // can't remove yourself, so there's always at least one account
-  await sql`delete from staff where id = ${id}`;
-  refresh();
 }
 
 // ---------- Bookings ----------

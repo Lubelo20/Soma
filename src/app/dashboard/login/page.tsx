@@ -18,12 +18,10 @@ export default function LoginPage() {
         </div>
         <h1 className="m-0 font-serif text-[32px] leading-tight font-light">Sign in</h1>
         <label className="label">
-          Email
-          <input type="email" name="email" autoComplete="username" required className="field" />
-        </label>
-        <label className="label">
-          Password
-          <input type="password" name="password" autoComplete="current-password" required className="field" />
+          Staff password
+          {/* Hidden username so password managers save this under one name. */}
+          <input type="text" name="username" value="Infinity Soma staff" autoComplete="username" readOnly hidden />
+          <input type="password" name="password" autoComplete="current-password" required autoFocus className="field" />
         </label>
         {state.error && <p className="m-0 text-sm font-medium text-red-700">{state.error}</p>}
         <button type="submit" disabled={pending} className="btn btn-solid border-none">
