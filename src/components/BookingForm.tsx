@@ -9,7 +9,7 @@ import { formatDate } from "@/lib/slots";
 export type BookableTreatment = { id: number; name: string; category: "wellness" | "skincare"; section: string; durationMin: number; price: string };
 
 const initial: BookingState = { status: "idle" };
-const labelClass = "flex flex-col gap-2 text-[10.5px] font-medium tracking-[.22em] text-ink-body uppercase";
+const labelClass = "flex flex-col gap-2 text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase";
 const hint = "tracking-normal text-ink-subtle normal-case";
 const fieldError = "text-xs font-medium tracking-normal text-red-700 normal-case";
 const DATES_PER_PAGE = 14;
@@ -145,9 +145,9 @@ export function BookingForm({
                     selected ? "border-brand bg-brand text-cream" : "border-line bg-white text-ink hover:border-gold"
                   }`}
                 >
-                  <span className="text-[10px] font-medium tracking-[.2em] uppercase">{formatDate(d, { weekday: "short" })}</span>
+                  <span className="text-[11px] font-medium tracking-[.16em] uppercase">{formatDate(d, { weekday: "short" })}</span>
                   <span className="font-serif text-[23px] leading-tight lining-nums sm:text-[26px]">{formatDate(d, { day: "numeric" })}</span>
-                  <span className="text-[10px] tracking-[.2em] uppercase">{formatDate(d, { month: "short" })}</span>
+                  <span className="text-[11px] tracking-[.16em] uppercase">{formatDate(d, { month: "short" })}</span>
                 </button>
               );
             })}

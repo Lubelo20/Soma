@@ -37,7 +37,7 @@ export function Accreditations({ intro }: { intro?: string }) {
                 <Icon name={a.icon} size={34} strokeWidth={1} />
               </span>
               <div className="flex min-w-0 flex-col gap-2">
-                <span className="text-[10.5px] font-medium tracking-[.22em] text-ink-subtle uppercase">{a.bodyFull}</span>
+                <span className="text-[11px] font-medium tracking-[.2em] text-ink-subtle uppercase">{a.bodyFull}</span>
                 <span className="font-serif text-[26px] leading-tight text-ink-strong">{a.title}</span>
                 <span className="text-[14.5px] text-ink-muted">
                   {a.numberLabel}: <strong className="font-semibold tracking-[.02em] break-all text-ink-strong">{a.number}</strong>

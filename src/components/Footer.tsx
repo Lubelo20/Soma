@@ -8,7 +8,7 @@ async function CopyrightYear() {
   return new Date().getFullYear();
 }
 
-const heading = "text-[10.5px] font-medium tracking-[.32em] text-brand-light uppercase";
+const heading = "text-[11px] font-medium tracking-[.32em] text-brand-light uppercase";
 const link = "inline-block py-2 text-[#c9cfc9] no-underline transition-colors hover:text-white";
 
 export function Footer() {

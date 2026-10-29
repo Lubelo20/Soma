@@ -6,7 +6,7 @@ import { business, enquiryKinds, type EnquiryKind } from "@/lib/site";
 
 const initial: EnquiryState = { status: "idle" };
 
-const labelClass = "flex flex-col gap-2 text-[10.5px] font-medium tracking-[.22em] text-ink-body uppercase";
+const labelClass = "flex flex-col gap-2 text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase";
 
 function FieldError({ msg }: { msg?: string }) {
   return msg ? <span className="text-xs font-medium tracking-normal text-red-700 normal-case">{msg}</span> : null;

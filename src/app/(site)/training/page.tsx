@@ -56,7 +56,7 @@ export default function TrainingPage() {
               ))}
             </ol>
             <div className="flex flex-col gap-3">
-              <span className="text-[10.5px] font-medium tracking-[.3em] text-gold-deep uppercase">Training solutions</span>
+              <span className="text-[11px] font-medium tracking-[.3em] text-gold-deep uppercase">Training solutions</span>
               <span className="text-[15px] leading-[1.8] text-ink-body">{trainingSolutions.join(" · ")}</span>
             </div>
           </div>

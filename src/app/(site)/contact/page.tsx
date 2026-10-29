@@ -94,7 +94,7 @@ export default function ContactPage() {
                   <Icon name={c.icon} size={22} strokeWidth={1.2} />
                 </span>
                 <div className="flex flex-col gap-2">
-                  <span className="text-[10.5px] font-medium tracking-[.3em] text-gold-deep">{c.label}</span>
+                  <span className="text-[11px] font-medium tracking-[.3em] text-gold-deep">{c.label}</span>
                   <span className="flex flex-col font-serif text-[22px] leading-[1.4] text-ink-strong lining-nums">{c.value}</span>
                 </div>
               </div>

@@ -37,12 +37,29 @@ function TreatmentRow({ t }: { t: Treatment }) {
 /** Price list for one category, grouped by section, read from the database (cached; refreshed when staff edit treatments). */
 export async function TreatmentMenu({ category }: { category: Treatment["category"] }) {
   const sections = bySection((await getActiveTreatments()).filter((t) => t.category === category));
+  const anchor = (title: string) => title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return (
     <div className="flex flex-col gap-16 md:gap-20">
+      {/* Shortcuts to each section; a sideways-scrolling row on phones, where the menu gets long. */}
+      {sections.filter((s) => s.title).length > 1 && (
+        <nav aria-label="Menu sections" className="-mx-5 -mb-6 flex gap-2 overflow-x-auto px-5 pb-1 md:mx-0 md:-mb-8 md:flex-wrap md:px-0">
+          {sections
+            .filter((s) => s.title)
+            .map((s) => (
+              <a
+                key={s.title}
+                href={`#${anchor(s.title)}`}
+                className="flex min-h-11 flex-none items-center rounded-full border border-line bg-white px-4 text-[13px] whitespace-nowrap text-ink-body no-underline transition-colors hover:border-brand hover:text-brand"
+              >
+                {s.title}
+              </a>
+            ))}
+        </nav>
+      )}
       {sections.map((s) => {
         const compact = s.items.every((t) => !t.description);
         return (
-          <section key={s.title} className="flex flex-col gap-2">
+          <section key={s.title} id={s.title ? anchor(s.title) : undefined} className="flex scroll-mt-24 flex-col gap-2">
             {s.title && (
               <h3 className="m-0 flex items-center gap-5 font-serif text-[clamp(28px,3vw,36px)] leading-tight font-light text-ink-strong">
                 {s.title}

@@ -110,7 +110,7 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
         <div className="card p-0">
           <div className="grid grid-cols-7 border-b border-line">
             {DOW.map((d) => (
-              <span key={d} className="px-2 py-3 text-center text-[10.5px] font-medium tracking-[.22em] text-ink-subtle uppercase">
+              <span key={d} className="px-2 py-3 text-center text-[11px] font-medium tracking-[.12em] sm:tracking-[.2em] text-ink-subtle uppercase">
                 {d}
               </span>
             ))}
@@ -139,9 +139,9 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
                     >
                       {Number(d.slice(-2))}
                     </span>
-                    {closed && <span className="hidden text-[9.5px] tracking-[.16em] text-ink-subtle uppercase md:inline">Closed</span>}
+                    {closed && <span className="hidden text-[11px] tracking-[.08em] text-ink-subtle uppercase md:inline">Closed</span>}
                     {items.length > 0 && (
-                      <span className="rounded-full bg-brand px-1.5 text-[10px] font-semibold text-white md:hidden">{items.length}</span>
+                      <span className="rounded-full bg-brand px-1.5 text-[11px] font-semibold text-white md:hidden">{items.length}</span>
                     )}
                   </span>
                   <span className="hidden flex-col gap-1 md:flex">

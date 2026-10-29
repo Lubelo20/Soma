@@ -24,7 +24,7 @@ export default function Home() {
 
         <div className="wrap relative w-full max-[860px]:-mt-20 max-[860px]:px-4 max-[860px]:pb-4 min-[861px]:py-16">
           <div className="flex max-w-[580px] flex-col gap-6 bg-forest/95 p-8 shadow-[0_30px_60px_-30px_rgba(0,0,0,.6)] backdrop-blur-sm min-[861px]:gap-7 min-[861px]:p-12 motion-safe:animate-[hero-rise_1.1s_ease-out_.15s_both]">
-            <span className="eyebrow text-brand-light max-[480px]:text-[10px] max-[480px]:tracking-[.2em]">Wellness · Skincare · Training</span>
+            <span className="eyebrow text-brand-light max-[480px]:gap-2 max-[480px]:tracking-[.16em]">Wellness · Skincare · Training</span>
             <h1 className="m-0 font-serif text-[clamp(40px,4.6vw,68px)] leading-[1] font-light tracking-[-.015em] text-white">
               Wellness Today,
               <span className="mt-1 block text-brand-light italic">a Brighter Tomorrow</span>
@@ -44,7 +44,7 @@ export default function Home() {
         </div>
 
         <div className="absolute right-[max(2.5rem,calc((100vw-1240px)/2+2.5rem))] bottom-10 hidden flex-col gap-1 border-l-2 border-gold bg-cream px-6 py-4 shadow-[0_18px_40px_-20px_rgba(0,0,0,.45)] min-[861px]:flex motion-safe:animate-[hero-rise_1s_ease-out_.8s_both]">
-          <span className="text-[10px] font-medium tracking-[.3em] text-gold-deep uppercase">Est. {business.founded}</span>
+          <span className="text-[11px] font-medium tracking-[.3em] text-gold-deep uppercase">Est. {business.founded}</span>
           <span className="font-serif text-[19px] leading-tight text-ink-strong">Musgrave Park, Durban</span>
         </div>
       </section>
@@ -91,7 +91,7 @@ export default function Home() {
                   />
                 </Link>
                 <div className="flex flex-1 flex-col gap-4">
-                  <span className="text-[10.5px] font-medium tracking-[.3em] text-gold-deep uppercase">{s.eyebrow}</span>
+                  <span className="text-[11px] font-medium tracking-[.3em] text-gold-deep uppercase">{s.eyebrow}</span>
                   <h3 className="m-0 font-serif text-[30px] leading-[1.1] font-light">{s.title}</h3>
                   <p className="m-0 text-[15px] leading-[1.75] text-ink-muted">{s.body}</p>
                   <p className="m-0 text-[13px] leading-[1.9] text-ink-subtle">{s.items.map((i) => i.label).join(" · ")}</p>

@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  /* Leaf green matched to the logo for actions; deep shades of the same green for dark sections; champagne gold for accents. */
-  --color-brand: #178b12;
+  /* Leaf green matched to the logo for actions; deep shades of the same green for dark sections; champagne gold for accents.
+     Brand is a touch deeper than the logo (#178b12) so cream button text and green text on white pass WCAG AA (4.5:1). */
+  --color-brand: #147c10;
   --color-brand-dark: #126d0e;
   --color-brand-light: #a9e39b;
   --color-gold: #b8975f;
@@ -94,13 +95,13 @@ body {
     @apply m-0 font-serif text-[38px] leading-tight font-light tracking-[-.01em] text-ink-strong;
   }
   .label {
-    @apply flex flex-col gap-2 text-[10.5px] font-medium tracking-[.22em] text-ink-body uppercase;
+    @apply flex flex-col gap-2 text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase;
   }
   .hint {
     @apply font-normal tracking-normal text-ink-subtle normal-case;
   }
   .pill {
-    @apply inline-flex items-center rounded-[2px] px-2.5 py-1 text-[10px] font-semibold tracking-[.18em] uppercase;
+    @apply inline-flex items-center rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-[.16em] uppercase;
   }
   .tab {
     @apply inline-flex min-h-10 items-center rounded-[2px] border border-line bg-white px-3.5 text-[11.5px] font-medium tracking-[.16em] text-ink uppercase no-underline transition-colors hover:border-brand hover:text-brand-dark;
