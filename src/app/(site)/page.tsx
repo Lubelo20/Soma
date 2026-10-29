@@ -10,15 +10,15 @@ export default function Home() {
       {/* HERO */}
       {/* Full-bleed photo; the text sits on a solid panel rather than a fade, so the image stays clean. */}
       <section id="top" className="relative overflow-hidden bg-forest min-[861px]:flex min-[861px]:min-h-[min(calc(100svh-80px),900px)] min-[861px]:items-center">
-        {/* On wide screens the photo is wider than the hero and anchored left, which moves the client's face clear of the text panel. */}
-        <div className="relative h-[52svh] min-h-80 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:left-0 min-[861px]:h-auto min-[861px]:w-[135%]">
+        {/* The client's face sits on the right of this photo, clear of the text panel. */}
+        <div className="relative h-[52svh] min-h-80 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:left-0 min-[861px]:h-auto min-[861px]:w-full">
           <Image
-            src="/images/hero-massage.jpg"
-            alt="Client relaxing during a back massage"
+            src="/images/hero-clinic.jpg"
+            alt="Client relaxing during a facial at the clinic"
             fill
             priority
-            sizes="(max-width: 860px) 100vw, 135vw"
-            className="object-cover object-[50%_30%] motion-safe:animate-[hero-settle_2.4s_cubic-bezier(.2,.7,.2,1)_both]"
+            sizes="100vw"
+            className="object-cover object-[50%_25%] max-[860px]:object-[75%_25%] motion-safe:animate-[hero-settle_2.4s_cubic-bezier(.2,.7,.2,1)_both]"
           />
         </div>
 
@@ -132,7 +132,7 @@ export default function Home() {
           </div>
           <div className="grid min-w-0 grid-cols-2 gap-4">
             <div className="relative col-span-2 aspect-[16/10] overflow-hidden">
-              <Image src="/images/training-facial.jpg" alt="Trainer guiding learners through a facial treatment" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
+              <Image src="/images/clinic-facial.jpg" alt="Somatologist giving a facial with a steamer in the clinic" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
             </div>
             <div className="relative aspect-square overflow-hidden">
               <Image src="/images/training-room.jpg" alt="Infinity Soma training room with massage beds" fill sizes="(max-width: 1024px) 50vw, 290px" className="object-cover" />
@@ -148,7 +148,7 @@ export default function Home() {
       <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="relative aspect-[4/3] min-w-0 overflow-hidden max-lg:order-2 lg:aspect-[5/6]">
-            <Image src="/images/about-reception.jpg" alt="Infinity Soma reception area" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
+            <Image src="/images/clinic-reception.jpg" alt="Infinity Soma reception with framed certificates" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
           <div className="flex min-w-0 flex-col gap-6">
             <span className="eyebrow">About us</span>

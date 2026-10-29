@@ -14,7 +14,7 @@ export default function TreatmentsPage() {
         eyebrow="WELLNESS & THERAPY"
         title="Wellness and Therapeutic Services"
         intro="Professional treatments designed to promote relaxation, recovery and overall wellbeing. They support stress management, pain relief, better circulation and faster recovery."
-        img="/images/service-wellness.jpg"
+        img="/images/wellness-hot-stones.jpg"
         alt="Hot stone massage"
       />
       <section className="py-16 md:py-24 lg:py-28">
@@ -30,10 +30,10 @@ export default function TreatmentsPage() {
       <CtaBand
         eyebrow="MOBILE TREATMENTS"
         title="We can come to you"
-        body="Prefer your home, office or event? Our therapists bring the treatment to you across Durban and beyond. Send us an enquiry to arrange a visit."
+        body="Prefer your home, office, event or race day? Our therapists bring the treatment to you across Durban and beyond. Send us an enquiry to arrange a visit."
         primary={{ href: "/contact", label: "Arrange a mobile visit" }}
-        img="/images/gallery-mobile.jpg"
-        alt="Therapist carrying a portable massage bed to a client"
+        img="/images/athlete-recovery.jpg"
+        alt="Therapist stretching an athlete's leg on a massage bed at a race event"
       />
     </>
   );

@@ -14,8 +14,8 @@ export default function SkincarePage() {
         eyebrow="RADIANT, HEALTHY SKIN"
         title="Advanced Skincare and Aesthetics"
         intro="Evidence-based skincare solutions to reveal your natural radiance, delivered with client-centred care."
-        img="/images/service-skincare.jpg"
-        alt="Facial treatment with a mask brush"
+        img="/images/skincare-facial-steamer.jpg"
+        alt="Somatologist applying a facial mask beside a steamer"
       />
       <section className="py-16 md:py-24 lg:py-28">
         <div className="wrap flex flex-col gap-12">
@@ -32,6 +32,8 @@ export default function SkincarePage() {
         title="Not sure which treatment is right for you?"
         body="Tell us about your skin and what you'd like to change. We'll recommend the treatments and home care that suit you."
         primary={{ href: "/contact", label: "Ask our team" }}
+        img="/images/skincare-mirror.jpg"
+        alt="Client checking her skin in a mirror after a treatment"
       />
     </>
   );

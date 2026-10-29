@@ -61,7 +61,7 @@ export default function TrainingPage() {
             </div>
           </div>
           <div className="relative aspect-[4/3] min-w-0 overflow-hidden lg:aspect-[4/5]">
-            <Image src="/images/training-facial.jpg" alt="Trainer guiding learners through a facial treatment" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
+            <Image src="/images/clinic-facial.jpg" alt="Somatologist giving a facial with a steamer in the clinic" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
         </div>
       </section>

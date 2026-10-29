@@ -10,7 +10,7 @@ const jsonLd = {
   url: business.url,
   email: business.email,
   telephone: business.phoneE164,
-  image: `${business.url}/images/hero-massage.jpg`,
+  image: `${business.url}/images/hero-clinic.jpg`,
   logo: `${business.url}/images/logo.png`,
   foundingDate: String(business.founded),
   founder: { "@type": "Person", name: business.founder },

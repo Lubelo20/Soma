@@ -16,8 +16,8 @@ export default function AboutPage() {
         eyebrow="ABOUT US"
         title="A Holistic Approach to Health and Wellbeing"
         intro="A multidisciplinary wellness, aesthetics, corporate wellness and skills development organisation committed to improving health, wellbeing, employability and community empowerment."
-        img="/images/about-reception.jpg"
-        alt="Infinity Soma reception area"
+        img="/images/clinic-reception.jpg"
+        alt="Infinity Soma reception with framed certificates"
       />
       <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap grid grid-cols-1 gap-16 md:grid-cols-2 md:gap-0">
@@ -38,7 +38,7 @@ export default function AboutPage() {
       <section className="bg-white py-16 md:py-24 lg:py-32">
         <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="relative aspect-[4/3] min-w-0 overflow-hidden lg:aspect-[4/5]">
-            <Image src="/images/gallery-team.jpg" alt="Infinity Soma team at the clinic reception" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
+            <Image src="/images/team-uniforms.jpg" alt="Infinity Soma team in clinic uniforms" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
           <div className="flex min-w-0 flex-col gap-6">
             <span className="eyebrow">Leadership</span>

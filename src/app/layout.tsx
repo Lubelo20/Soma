@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     siteName: business.name,
     title: business.name,
     description,
-    images: [{ url: "/images/hero-massage.jpg", width: 1350, height: 700 }],
+    images: [{ url: "/images/hero-clinic.jpg", width: 957, height: 718 }],
   },
 };
 

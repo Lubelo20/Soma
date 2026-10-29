@@ -17,8 +17,8 @@ export default function CorporatePage() {
         eyebrow="HEALTHIER PEOPLE, STRONGER BUSINESS"
         title="Corporate Wellness Solutions"
         intro="We partner with public and private sector organisations to improve employee wellbeing, with programmes that boost productivity, reduce absenteeism and create healthier workplaces."
-        img="/images/service-corporate.jpg"
-        alt="Therapist giving a seated chair massage at work"
+        img="/images/corporate-seated-massage.jpg"
+        alt="Therapist giving a seated neck and shoulder massage at an expo"
       />
       <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap flex flex-col gap-14">
@@ -38,7 +38,7 @@ export default function CorporatePage() {
       <section className="bg-white py-16 md:py-24 lg:py-32">
         <div className="wrap grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
           <div className="relative aspect-[4/3] min-w-0 overflow-hidden">
-            <Image src="/images/gallery-corporate-event.jpg" alt="Outdoor corporate wellness event with treatment tents" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
+            <Image src="/images/race-day-tent.jpg" alt="Infinity Soma massage tent at an outdoor event" fill sizes="(max-width: 1024px) 100vw, 580px" className="object-cover" />
           </div>
           <div className="flex min-w-0 flex-col gap-6">
             <span className="eyebrow">Wellness days</span>

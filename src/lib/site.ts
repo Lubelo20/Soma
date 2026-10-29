@@ -93,7 +93,7 @@ export const services: Service[] = [
   {
     id: "wellness",
     href: "/treatments",
-    img: "/images/service-wellness.jpg",
+    img: "/images/wellness-hot-stones.jpg",
     alt: "Hot stone massage",
     eyebrow: "WELLNESS & THERAPY",
     title: "Wellness and Therapeutic Services",
@@ -111,8 +111,8 @@ export const services: Service[] = [
   {
     id: "skincare",
     href: "/skincare",
-    img: "/images/service-skincare.jpg",
-    alt: "Facial treatment with a mask brush",
+    img: "/images/skincare-facial-steamer.jpg",
+    alt: "Somatologist applying a facial mask beside a steamer",
     eyebrow: "RADIANT, HEALTHY SKIN",
     title: "Advanced Skincare and Aesthetics",
     body: "Evidence-based skincare solutions to reveal your natural radiance.",
@@ -129,8 +129,8 @@ export const services: Service[] = [
   {
     id: "corporate",
     href: "/corporate",
-    img: "/images/service-corporate.jpg",
-    alt: "Therapist giving a seated chair massage at work",
+    img: "/images/corporate-seated-massage.jpg",
+    alt: "Therapist giving a seated neck and shoulder massage at an expo",
     eyebrow: "HEALTHIER PEOPLE, STRONGER BUSINESS",
     title: "Corporate Wellness Solutions",
     body: "Customised wellness programmes to improve employee wellbeing, boost productivity and create healthier workplaces.",
@@ -161,10 +161,10 @@ export const pillars: { icon: IconName; label: string }[] = [
 ];
 
 export const gallery = [
-  { img: "/images/gallery-team.jpg", alt: "Infinity Soma team at the clinic reception", caption: "Our team at Musgrave Park" },
-  { img: "/images/gallery-activation.jpg", alt: "Therapist consulting visitors at a wellness stand", caption: "Community wellness activation" },
-  { img: "/images/gallery-corporate-event.jpg", alt: "Outdoor corporate wellness event with treatment tents", caption: "Corporate wellness event" },
-  { img: "/images/gallery-mobile.jpg", alt: "Therapist carrying a portable massage bed", caption: "Mobile treatments, wherever you are" },
+  { img: "/images/team-uniforms.jpg", alt: "Infinity Soma team in clinic uniforms", caption: "Our team at Musgrave Park" },
+  { img: "/images/community-event-team.jpg", alt: "Infinity Soma team and guests beside the clinic banner at a wellness event", caption: "Community wellness activation" },
+  { img: "/images/race-day-tent.jpg", alt: "Infinity Soma massage tent at a race event", caption: "Athlete recovery on race day" },
+  { img: "/images/mobile-therapist.jpg", alt: "Therapist carrying a portable massage bed", caption: "Mobile treatments, wherever you are" },
 ];
 
 export const corporateProgrammes: { icon: IconName; title: string }[] = [
