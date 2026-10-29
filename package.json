@@ -10,6 +10,7 @@
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.mts",
     "db:seed": "tsx --env-file=.env.local scripts/seed.mts",
     "db:menu": "tsx --env-file=.env.local scripts/apply-menu.mts",
+    "db:live": "vercel env pull .env.production.local --environment=production --yes && tsx --env-file=.env.production.local scripts/migrate.mts && tsx --env-file=.env.production.local scripts/apply-menu.mts; rm -f .env.production.local",
     "password:set": "tsx --env-file=.env.local scripts/set-password.mts",
     "test": "vitest run"
   },
