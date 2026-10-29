@@ -100,6 +100,7 @@ export async function saveTreatment(_prev: FormResult, fd: FormData): Promise<Fo
   const id = Number(fd.get("id")) || null;
   const name = str(fd, "name", 120);
   const category = str(fd, "category", 20);
+  const section = str(fd, "section", 60);
   const description = str(fd, "description", 600);
   const durationMin = Number(fd.get("durationMin"));
   const priceRaw = str(fd, "price", 20).replace(/[R\s,]/gi, "");
@@ -113,14 +114,14 @@ export async function saveTreatment(_prev: FormResult, fd: FormData): Promise<Fo
 
   if (id) {
     await sql`
-      update treatments set name = ${name}, category = ${category}, description = ${description},
+      update treatments set name = ${name}, category = ${category}, section = ${section}, description = ${description},
         duration_min = ${durationMin}, price_cents = ${priceCents}, active = ${active}
       where id = ${id}`;
   } else {
     const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     await sql`
-      insert into treatments (slug, name, category, description, duration_min, price_cents, active, sort)
-      values (${`${base}-${Date.now().toString(36)}`}, ${name}, ${category}, ${description}, ${durationMin}, ${priceCents}, ${active},
+      insert into treatments (slug, name, category, section, description, duration_min, price_cents, active, sort)
+      values (${`${base}-${Date.now().toString(36)}`}, ${name}, ${category}, ${section}, ${description}, ${durationMin}, ${priceCents}, ${active},
         (select coalesce(max(sort), 0) + 1 from treatments))`;
   }
   updateTag("treatments");

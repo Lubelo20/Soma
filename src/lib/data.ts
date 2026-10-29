@@ -8,6 +8,7 @@ export type Treatment = {
   slug: string;
   name: string;
   category: "wellness" | "skincare";
+  section: string;
   description: string;
   durationMin: number;
   priceCents: number | null;

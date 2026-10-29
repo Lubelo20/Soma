@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { business } from "@/lib/site";
+import { Icon } from "@/components/Icon";
+import { accreditations, business } from "@/lib/site";
 
 /** Dark evergreen banner at the top of inner pages. */
 export function PageHero({ eyebrow, title, intro, img, alt }: { eyebrow: string; title: string; intro: string; img?: string; alt?: string }) {
@@ -18,6 +19,33 @@ export function PageHero({ eyebrow, title, intro, img, alt }: { eyebrow: string;
           <h1 className="m-0 font-serif text-[clamp(40px,5.4vw,68px)] leading-[1.04] font-light tracking-[-.01em] text-white">{title}</h1>
           <p className="m-0 text-[16px] leading-[1.8] text-[#cdd5cf]">{intro}</p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/** QCTO and HWSETA credentials with their full registration numbers. */
+export function Accreditations({ intro }: { intro?: string }) {
+  return (
+    <section className="border-y border-line bg-white py-16 md:py-20">
+      <div className="wrap flex flex-col gap-10">
+        <SectionHeading center eyebrow="Accreditation" title="Nationally accredited and registered" intro={intro} />
+        <ul className="m-0 grid list-none grid-cols-1 gap-4 p-0 md:grid-cols-2 md:gap-6">
+          {accreditations.map((a) => (
+            <li key={a.body} className="flex gap-5 border border-line bg-cream p-6 sm:p-8">
+              <span className="flex-none pt-1 text-gold">
+                <Icon name={a.icon} size={34} strokeWidth={1} />
+              </span>
+              <div className="flex min-w-0 flex-col gap-2">
+                <span className="text-[10.5px] font-medium tracking-[.22em] text-ink-subtle uppercase">{a.bodyFull}</span>
+                <span className="font-serif text-[26px] leading-tight text-ink-strong">{a.title}</span>
+                <span className="text-[14.5px] text-ink-muted">
+                  {a.numberLabel}: <strong className="font-semibold tracking-[.02em] break-all text-ink-strong">{a.number}</strong>
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

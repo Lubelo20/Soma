@@ -2,10 +2,11 @@
 
 import { useActionState, useRef, useState, useTransition } from "react";
 import { createBooking, getSlots, type BookingState } from "@/app/actions";
+import { bySection } from "@/lib/sections";
 import { business } from "@/lib/site";
 import { formatDate } from "@/lib/slots";
 
-export type BookableTreatment = { id: number; name: string; category: "wellness" | "skincare"; durationMin: number; price: string };
+export type BookableTreatment = { id: number; name: string; category: "wellness" | "skincare"; section: string; durationMin: number; price: string };
 
 const initial: BookingState = { status: "idle" };
 const labelClass = "flex flex-col gap-2 text-[10.5px] font-medium tracking-[.22em] text-ink-body uppercase";
@@ -84,10 +85,7 @@ export function BookingForm({
     );
   }
 
-  const groups = [
-    { label: "Wellness & massage", items: treatments.filter((t) => t.category === "wellness") },
-    { label: "Skincare & aesthetics", items: treatments.filter((t) => t.category === "skincare") },
-  ];
+  const groups = bySection(treatments).map((s) => ({ label: s.title || "Other treatments", items: s.items }));
   const visibleDates = dates.slice(datePage * DATES_PER_PAGE, (datePage + 1) * DATES_PER_PAGE);
   const err = state.errors ?? {};
 

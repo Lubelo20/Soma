@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.mts",
     "db:seed": "tsx --env-file=.env.local scripts/seed.mts",
+    "db:menu": "tsx --env-file=.env.local scripts/apply-menu.mts",
     "password:set": "tsx --env-file=.env.local scripts/set-password.mts",
     "test": "vitest run"
   },

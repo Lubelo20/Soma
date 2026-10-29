@@ -12,8 +12,13 @@ export const business = {
   phoneDisplay: "+27 63 880 4946",
   phoneE164: "+27638804946",
   whatsapp: "https://wa.me/27638804946",
-  instagramHandle: "soma_wellness2023",
-  instagram: "https://www.instagram.com/soma_wellness2023/",
+  instagramHandle: "infinitysomawellness",
+  instagram: "https://www.instagram.com/infinitysomawellness/",
+  // The flyer gives "somawellness_2023"; Facebook usernames can't contain "_", so this opens a Facebook search
+  // for it until the clinic sends the page's real link.
+  facebook: "https://www.facebook.com/search/top?q=somawellness_2023",
+  tiktokHandle: "soma_wellness2023",
+  tiktok: "https://www.tiktok.com/@soma_wellness2023",
   address: {
     lines: ["Suite G09b, Musgrave Park", "18 Musgrave Road, Musgrave", "Durban, 4001"],
     street: "Suite G09b, Musgrave Park, 18 Musgrave Road",
@@ -28,12 +33,12 @@ export const business = {
   founder: "Banathi Sihonqo",
 };
 
-// Social profiles shown in the footer, contact page and mobile menu. Add Facebook / TikTok here once the clinic sends the links.
+// Social profiles shown in the footer, contact page and mobile menu.
 export const socials: { name: string; href: string; icon: IconName; handle: string }[] = [
   { name: "Instagram", href: business.instagram, icon: "instagram", handle: `@${business.instagramHandle}` },
   { name: "WhatsApp", href: business.whatsapp, icon: "whatsapp", handle: business.phoneDisplay },
-  // { name: "Facebook", href: "https://www.facebook.com/…", icon: "facebook", handle: "Infinity Soma Wellness Clinic" },
-  // { name: "TikTok", href: "https://www.tiktok.com/@…", icon: "tiktok", handle: "@…" },
+  { name: "Facebook", href: business.facebook, icon: "facebook", handle: "somawellness_2023" },
+  { name: "TikTok", href: business.tiktok, icon: "tiktok", handle: `@${business.tiktokHandle}` },
 ];
 
 export const navLinks = [
@@ -45,8 +50,28 @@ export const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
+// Shown in full on the About and Training pages.
+export const accreditations: { icon: IconName; body: string; bodyFull: string; title: string; numberLabel: string; number: string }[] = [
+  {
+    icon: "shield",
+    body: "QCTO",
+    bodyFull: "QCTO · Quality Council for Trades & Occupations",
+    title: "Skills Development Provider (SDP)",
+    numberLabel: "Accreditation number",
+    number: business.qcto,
+  },
+  {
+    icon: "award",
+    body: "HWSETA",
+    bodyFull: "HWSETA · Health and Welfare Sector Education and Training Authority",
+    title: "HWSETA Stakeholder",
+    numberLabel: "T-Number",
+    number: business.hwseta,
+  },
+];
+
 export const trust: { icon: IconName; title: string; sub: string }[] = [
-  { icon: "shield", title: "QCTO Accredited", sub: "Skills Development Provider" },
+  { icon: "shield", title: "QCTO Accredited SDP", sub: `Accreditation No. ${business.qcto}` },
   { icon: "award", title: "HWSETA Stakeholder", sub: `T-Number ${business.hwseta}` },
   { icon: "pin", title: "Mobile & In-Clinic", sub: "Musgrave, Durban & beyond" },
   { icon: "people", title: "Qualified Somatologists", sub: "Backed by academic experts" },
@@ -78,9 +103,9 @@ export const services: Service[] = [
       { icon: "leaf", label: "Swedish Massage" },
       { icon: "hand", label: "Deep Tissue Massage" },
       { icon: "drop", label: "Aromatherapy Massage" },
-      { icon: "stones", label: "Hot Stone Therapy" },
-      { icon: "bump", label: "Pregnancy Massage" },
-      { icon: "run", label: "Sports Recovery" },
+      { icon: "stones", label: "Hot Stone Massage" },
+      { icon: "bump", label: "Prenatal Massage" },
+      { icon: "run", label: "Reflexology & Pedicures" },
     ],
   },
   {
@@ -93,12 +118,12 @@ export const services: Service[] = [
     body: "Evidence-based skincare solutions to reveal your natural radiance.",
     cta: "View skincare",
     items: [
-      { icon: "face", label: "Skin Consultations" },
-      { icon: "sparkle", label: "Deep Cleansing Facials" },
+      { icon: "face", label: "Somatology Facials" },
       { icon: "flask", label: "Chemical Peels" },
       { icon: "blade", label: "Dermaplaning" },
       { icon: "jar", label: "Microdermabrasion & LED" },
-      { icon: "ageing", label: "Acne & Anti-Ageing" },
+      { icon: "ageing", label: "Needling & Lamprobe" },
+      { icon: "sparkle", label: "Ladies' & Men's Waxing" },
     ],
   },
   {
@@ -177,7 +202,7 @@ export const socialImpact = [
 export const enquiryKinds = {
   general: {
     label: "general",
-    interests: ["Wellness & massage treatment", "Skincare & aesthetics", "Mobile treatment (home, office or event)", "Corporate wellness", "Occupational training", "Something else"],
+    interests: ["Wellness & massage treatment", "Skincare & aesthetics", "Athlete recovery package", "Mobile treatment (home, office or event)", "Corporate wellness", "Occupational training", "Something else"],
   },
   corporate: {
     label: "corporate wellness",

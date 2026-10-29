@@ -7,6 +7,7 @@ export type EditableTreatment = {
   id?: number;
   name: string;
   category: "wellness" | "skincare";
+  section: string;
   description: string;
   durationMin: number;
   priceCents: number | null;
@@ -18,18 +19,24 @@ const labelClass = "label";
 export function TreatmentEditor({ treatment, isNew = false }: { treatment: EditableTreatment; isNew?: boolean }) {
   const [state, action, pending] = useActionState(saveTreatment, {});
   return (
-    <form action={action} className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_1fr_1fr_1fr]">
+    <form action={action} className="grid grid-cols-1 gap-4 sm:grid-cols-4">
       {treatment.id && <input type="hidden" name="id" value={treatment.id} />}
-      <label className={labelClass}>
+      <label className={`${labelClass} sm:col-span-2`}>
         Name
         <input name="name" defaultValue={treatment.name} required className="field" />
       </label>
       <label className={labelClass}>
-        Category
+        Page
         <select name="category" defaultValue={treatment.category} className="field">
-          <option value="wellness">Wellness</option>
+          <option value="wellness">Treatments</option>
           <option value="skincare">Skincare</option>
         </select>
+      </label>
+      <label className={labelClass}>
+        <span>
+          Section <span className="hint">(heading on the page)</span>
+        </span>
+        <input name="section" list="treatment-sections" defaultValue={treatment.section} placeholder="e.g. Massage Therapy" className="field" />
       </label>
       <label className={labelClass}>
         Minutes
@@ -45,8 +52,10 @@ export function TreatmentEditor({ treatment, isNew = false }: { treatment: Edita
           className="field"
         />
       </label>
-      <label className={`${labelClass} sm:col-span-4`}>
-        Description
+      <label className={`${labelClass} sm:col-span-2`}>
+        <span>
+          Description <span className="hint">(leave empty for a short price-list line, like waxing)</span>
+        </span>
         <textarea name="description" rows={2} maxLength={600} defaultValue={treatment.description} className="field resize-y py-2" />
       </label>
       <div className="flex flex-wrap items-center gap-4 sm:col-span-4">

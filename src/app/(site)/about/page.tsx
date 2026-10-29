@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { CtaBand, PageHero, SectionHeading } from "@/components/Blocks";
+import { Accreditations, CtaBand, PageHero, SectionHeading } from "@/components/Blocks";
 import { Icon } from "@/components/Icon";
 import { business, pillars, socialImpact } from "@/lib/site";
 
@@ -87,6 +87,7 @@ export default function AboutPage() {
           </ul>
         </div>
       </section>
+      <Accreditations />
       <CtaBand
         eyebrow="VISIT US"
         title="Experience Infinity Soma for yourself"

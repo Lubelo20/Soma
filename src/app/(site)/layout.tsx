@@ -22,7 +22,8 @@ const jsonLd = {
     postalCode: business.address.postalCode,
     addressCountry: business.address.country,
   },
-  sameAs: socials.filter((s) => s.name !== "WhatsApp").map((s) => s.href),
+  // Facebook is left out while its link is only a search (see business.facebook).
+  sameAs: socials.filter((s) => s.name !== "WhatsApp" && s.name !== "Facebook").map((s) => s.href),
 };
 
 export default function SiteLayout({ children }: LayoutProps<"/">) {

@@ -4,7 +4,7 @@ import { TreatmentMenu } from "@/components/TreatmentMenu";
 
 export const metadata: Metadata = {
   title: "Skincare & Aesthetics",
-  description: "Skin consultations, facials, chemical peels, dermaplaning, microdermabrasion, LED therapy, acne, pigmentation and anti-ageing treatments in Durban.",
+  description: "Somatology facials, chemical peels, dermaplaning, microdermabrasion, LED therapy, needling, Lamprobe and ladies' and men's waxing in Musgrave, Durban.",
 };
 
 export default function SkincarePage() {
@@ -20,18 +20,18 @@ export default function SkincarePage() {
       <section className="py-16 md:py-24 lg:py-28">
         <div className="wrap flex flex-col gap-12">
           <SectionHeading
-            eyebrow="SKINCARE MENU"
+            eyebrow="SKINCARE & WAXING MENU"
             title="Treatments for every skin goal"
-            intro="Not sure where to start? Book a skin consultation and we'll build a treatment plan around your skin."
+            intro="Facials, advanced skin treatments and waxing for ladies and men, all performed by qualified somatologists."
           />
           <TreatmentMenu category="skincare" />
         </div>
       </section>
       <CtaBand
-        eyebrow="START WITH A CONSULTATION"
+        eyebrow="NOT SURE WHERE TO START?"
         title="Not sure which treatment is right for you?"
-        body="A one-on-one skin analysis is the best first step. We'll recommend treatments and home care that suit your skin."
-        primary={{ href: "/book", label: "Book a consultation" }}
+        body="Tell us about your skin and what you'd like to change. We'll recommend the treatments and home care that suit you."
+        primary={{ href: "/contact", label: "Ask our team" }}
       />
     </>
   );

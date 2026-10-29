@@ -15,6 +15,9 @@ create table if not exists treatments (
   created_at   timestamptz not null default now()
 );
 
+-- Heading the treatment is listed under on its page, e.g. "Massage Therapy" or "Ladies' Waxing".
+alter table treatments add column if not exists section text not null default '';
+
 -- One row per weekday (0 = Sunday). Null opens/closes = closed that day.
 create table if not exists opening_hours (
   weekday smallint primary key check (weekday between 0 and 6),

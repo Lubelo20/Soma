@@ -4,7 +4,7 @@ import { TreatmentMenu } from "@/components/TreatmentMenu";
 
 export const metadata: Metadata = {
   title: "Massage & Wellness Treatments",
-  description: "Swedish, deep tissue, aromatherapy, hot stone, pregnancy and sports massage, lymphatic drainage and body wraps in Musgrave, Durban.",
+  description: "Swedish, deep tissue, hot stone, gua sha, aromatherapy and prenatal massage, lymphatic drainage, reflexology, pedicures and manicures in Musgrave, Durban.",
 };
 
 export default function TreatmentsPage() {

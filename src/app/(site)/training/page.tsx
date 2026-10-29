@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { PageHero, SectionHeading } from "@/components/Blocks";
+import { Accreditations, PageHero, SectionHeading } from "@/components/Blocks";
 import { EnquiryForm } from "@/components/EnquiryForm";
-import { business, quals, trainingSolutions } from "@/lib/site";
+import { quals, trainingSolutions } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Accredited Training",
@@ -25,16 +25,7 @@ export default function TrainingPage() {
         img="/images/training-team.jpg"
         alt="Infinity Soma somatologists in clinic uniforms"
       />
-      <section className="border-b border-line">
-        <div className="wrap flex flex-wrap gap-x-12 gap-y-3 py-7 text-[12px] tracking-[.16em] text-ink-subtle uppercase">
-          <span>
-            <span className="text-ink-strong">QCTO Skills Development Provider</span> · {business.qcto}
-          </span>
-          <span>
-            <span className="text-ink-strong">HWSETA Stakeholder</span> · T-Number {business.hwseta}
-          </span>
-        </div>
-      </section>
+      <Accreditations intro="Our qualifications are delivered under QCTO accreditation, so learners earn nationally recognised occupational certificates." />
       <section className="py-16 md:py-24 lg:py-32">
         <div className="wrap flex flex-col gap-14">
           <SectionHeading center eyebrow="Our qualifications" title="Occupational certificates" />

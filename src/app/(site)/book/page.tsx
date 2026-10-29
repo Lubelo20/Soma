@@ -19,7 +19,7 @@ async function Booking({ searchParams }: { searchParams: PageProps<"/book">["sea
   const initialId = Number(treatment);
   return (
     <BookingForm
-      treatments={treatments.map((t) => ({ id: t.id, name: t.name, category: t.category, durationMin: t.durationMin, price: formatPrice(t.priceCents) }))}
+      treatments={treatments.map((t) => ({ id: t.id, name: t.name, category: t.category, section: t.section, durationMin: t.durationMin, price: formatPrice(t.priceCents) }))}
       dates={dates}
       initialTreatmentId={treatments.some((t) => t.id === initialId) ? initialId : undefined}
     />
