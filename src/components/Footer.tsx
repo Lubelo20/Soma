@@ -62,9 +62,10 @@ export function Footer() {
             </div>
             <Link
               href="/dashboard"
-              className="inline-flex min-h-11 items-center self-start border border-white/25 px-5 text-[11px] font-medium tracking-[.22em] text-white uppercase no-underline transition-colors hover:border-brand-light hover:text-brand-light"
+              className="btn btn-ghost mt-2 min-h-12 self-start px-6"
             >
               Staff dashboard
+              <Icon name="arrow" size={14} strokeWidth={1.4} />
             </Link>
           </div>
 
