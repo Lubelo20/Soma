@@ -5,6 +5,7 @@ import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { MIN_PASSWORD, changePassword, endSession, requireStaff, setPassword, startSession, verifyPassword } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { clearEvents, clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail } from "@/lib/email";
 import { formatDateTime } from "@/lib/slots";
 
@@ -19,8 +20,21 @@ const str = (fd: FormData, name: string, max = 500) => String(fd.get(name) ?? ""
 
 // ---------- Auth ----------
 
+// Password guessing: 5 wrong tries per device (IP) and 50 overall in 15 minutes, then sign-in pauses.
+const LOGIN_WINDOW_MIN = 15;
+
 export async function login(_prev: { error?: string }, fd: FormData): Promise<{ error?: string }> {
-  if (!(await verifyPassword(String(fd.get("password") ?? "")))) return { error: "Incorrect password." };
+  const ip = await clientIp();
+  const [mine, everyone] = await Promise.all([
+    countRecent("login-fail", ip, LOGIN_WINDOW_MIN),
+    countRecent("login-fail", "*", LOGIN_WINDOW_MIN),
+  ]);
+  if (mine >= 5 || everyone >= 50) return { error: `Too many attempts. Please wait ${LOGIN_WINDOW_MIN} minutes and try again.` };
+  if (!(await verifyPassword(String(fd.get("password") ?? "")))) {
+    await Promise.all([recordEvent("login-fail", ip), recordEvent("login-fail", "*")]);
+    return { error: "Incorrect password." };
+  }
+  await clearEvents("login-fail", ip);
   await startSession();
   redirect("/dashboard");
 }
@@ -41,12 +55,19 @@ export async function updatePassword(_prev: FormResult, fd: FormData): Promise<F
 
 /** One-time setup: chooses the shared staff password. Only works while none is set and the SETUP_CODE matches. */
 export async function setupPassword(_prev: FormResult, fd: FormData): Promise<FormResult> {
+  const ip = await clientIp();
+  if ((await countRecent("login-fail", ip, LOGIN_WINDOW_MIN)) >= 5) {
+    return { error: `Too many attempts. Please wait ${LOGIN_WINDOW_MIN} minutes and try again.` };
+  }
   const expected = process.env.SETUP_CODE ?? "";
   const given = str(fd, "code", 200);
   const codeOk =
     expected.length >= 16 && given.length === expected.length && timingSafeEqual(Buffer.from(given), Buffer.from(expected));
   const values = { code: given };
-  if (!codeOk) return { error: "That setup code is not correct.", values };
+  if (!codeOk) {
+    await recordEvent("login-fail", ip);
+    return { error: "That setup code is not correct.", values };
+  }
 
   const password = String(fd.get("password") ?? "");
   if (password.length < MIN_PASSWORD) return { error: `Password must be at least ${MIN_PASSWORD} characters.`, values };

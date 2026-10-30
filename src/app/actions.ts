@@ -3,6 +3,7 @@
 import { randomInt } from "node:crypto";
 import { getActiveTreatments, getClosures, getWeeklyHours } from "@/lib/data";
 import { sql } from "@/lib/db";
+import { clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail, staffInbox } from "@/lib/email";
 import { enquiryKinds, type EnquiryKind } from "@/lib/site";
 import { availableSlots, bookableDates, clinicTime, formatDate, weekday, type Busy } from "@/lib/slots";
@@ -10,6 +11,11 @@ import { availableSlots, bookableDates, clinicTime, formatDate, weekday, type Bu
 const PHONE_RE = /^[+\d][\d\s()-]{7,19}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const field = (fd: FormData, name: string, max = 200) => String(fd.get(name) ?? "").trim().slice(0, max);
+// Single-line fields (names, phones, emails) end up in email subjects and headers, so line breaks are removed.
+const line = (fd: FormData, name: string, max = 200) => field(fd, name, max).replace(/[\x00-\x1f\x7f]+/g, " ");
+// Form spam: each device (IP) can send this many bookings or enquiries per hour.
+const PER_HOUR = 5;
+const tooMany = "You've sent several requests in a short time. Please WhatsApp or call us instead.";
 
 // ---------- Enquiries ----------
 
@@ -27,10 +33,10 @@ export async function sendEnquiry(kind: EnquiryKind, _prev: EnquiryState, fd: Fo
   if (!(kind in enquiryKinds)) return { status: "error", message: "Unknown form." };
 
   const values = {
-    name: field(fd, "name"),
-    phone: field(fd, "phone", 30),
-    email: field(fd, "email"),
-    interest: field(fd, "interest"),
+    name: line(fd, "name"),
+    phone: line(fd, "phone", 30),
+    email: line(fd, "email"),
+    interest: line(fd, "interest"),
     message: field(fd, "message", 2000),
   };
   const errors: EnquiryState["errors"] = {};
@@ -39,6 +45,10 @@ export async function sendEnquiry(kind: EnquiryKind, _prev: EnquiryState, fd: Fo
   if (values.email && !EMAIL_RE.test(values.email)) errors.email = "Please enter a valid email address.";
   if (!(enquiryKinds[kind].interests as readonly string[]).includes(values.interest)) errors.interest = "Please choose an option.";
   if (Object.keys(errors).length) return { status: "error", errors, values };
+
+  const ip = await clientIp();
+  if ((await countRecent("enquiry", ip, 60)) >= PER_HOUR) return { status: "error", values, message: tooMany };
+  await recordEvent("enquiry", ip);
 
   try {
     await sql`
@@ -97,9 +107,9 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   const treatmentId = Number(fd.get("treatmentId"));
   const date = field(fd, "date", 10);
   const time = field(fd, "time", 5);
-  const name = field(fd, "name");
-  const phone = field(fd, "phone", 30);
-  const email = field(fd, "email").toLowerCase();
+  const name = line(fd, "name");
+  const phone = line(fd, "phone", 30);
+  const email = line(fd, "email").toLowerCase();
   const notes = field(fd, "notes", 1000);
 
   const errors: BookingState["errors"] = {};
@@ -107,6 +117,17 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   if (!PHONE_RE.test(phone)) errors.phone = "Please enter a valid phone number.";
   if (!EMAIL_RE.test(email)) errors.email = "Please enter a valid email address.";
   if (Object.keys(errors).length) return { status: "error", errors };
+
+  // Stops one person or bot holding many slots: a per-device hourly limit, and at most 3 upcoming
+  // unconfirmed requests per email address.
+  const ip = await clientIp();
+  if ((await countRecent("booking", ip, 60)) >= PER_HOUR) return { status: "error", message: tooMany };
+  const [{ pending }] = await sql<{ pending: number }[]>`
+    select count(*)::int as pending from bookings where client_email = ${email} and status = 'pending' and starts_at > now()`;
+  if (pending >= 3) {
+    return { status: "error", message: "You already have 3 requests waiting for confirmation. We'll be in touch soon, or WhatsApp us." };
+  }
+  await recordEvent("booking", ip);
 
   const { treatment, slots } = await slotsFor(treatmentId, date);
   if (!treatment || !slots.includes(time)) {

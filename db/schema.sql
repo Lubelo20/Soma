@@ -89,3 +89,12 @@ create table if not exists sessions (
   token_hash text primary key,
   expires_at timestamptz not null
 );
+
+-- Recent sign-in failures and form submissions, used to slow down password guessing and form spam.
+-- Rows older than a day are deleted as new ones arrive. (Also created on demand by src/lib/rate-limit.ts.)
+create table if not exists rate_events (
+  kind text not null,
+  key  text not null,
+  at   timestamptz not null default now()
+);
+create index if not exists rate_events_lookup on rate_events (kind, key, at);
