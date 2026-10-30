@@ -28,9 +28,6 @@ export default function LoginPage() {
         <button type="submit" disabled={pending} className="btn btn-solid border-none">
           {pending ? "Signing in…" : "Sign in"}
         </button>
-        <a href="/dashboard/setup" className="text-center text-[13px] text-ink-subtle">
-          First time here? Set up the dashboard
-        </a>
       </form>
     </div>
   );
