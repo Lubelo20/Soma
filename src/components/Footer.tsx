@@ -60,6 +60,12 @@ export function Footer() {
                 {business.email}
               </a>
             </div>
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-11 items-center self-start border border-white/25 px-5 text-[11px] font-medium tracking-[.22em] text-white uppercase no-underline transition-colors hover:border-brand-light hover:text-brand-light"
+            >
+              Staff dashboard
+            </Link>
           </div>
 
           <nav aria-label="Footer" className="flex flex-col gap-4 text-sm">
