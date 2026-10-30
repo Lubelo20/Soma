@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <>
       {/* HERO */}
-      {/* Full-bleed photo; the text sits on a solid panel rather than a fade, so the image stays clean. */}
+      {/* Full-bleed photo; the text sits on a frosted-glass panel (75% green + blur), opaque enough that white text passes WCAG AA even over the white towel. */}
       <section id="top" className="relative overflow-hidden bg-forest min-[861px]:flex min-[861px]:min-h-[min(calc(100svh-80px),900px)] min-[861px]:items-center">
         {/* The client's face sits on the right of this photo, clear of the text panel. */}
         <div className="relative h-[52svh] min-h-80 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:left-0 min-[861px]:h-auto min-[861px]:w-full">
@@ -23,13 +23,13 @@ export default function Home() {
         </div>
 
         <div className="wrap relative w-full max-[860px]:-mt-20 max-[860px]:px-4 max-[860px]:pb-4 min-[861px]:py-16">
-          <div className="flex max-w-[580px] flex-col gap-6 bg-forest/95 p-8 shadow-[0_30px_60px_-30px_rgba(0,0,0,.6)] backdrop-blur-sm min-[861px]:gap-7 min-[861px]:p-12 motion-safe:animate-[hero-rise_1.1s_ease-out_.15s_both]">
-            <span className="eyebrow text-brand-light max-[480px]:gap-2 max-[480px]:tracking-[.16em]">Wellness · Skincare · Training</span>
+          <div className="flex max-w-[580px] flex-col gap-6 border border-white/25 bg-forest/75 p-8 shadow-[0_30px_60px_-30px_rgba(0,0,0,.6),inset_0_1px_0_rgba(255,255,255,.18)] backdrop-blur-xl backdrop-saturate-150 min-[861px]:gap-7 min-[861px]:p-12 motion-safe:animate-[hero-rise_1.1s_ease-out_.15s_both]">
+            <span className="eyebrow text-white max-[480px]:gap-2 max-[480px]:tracking-[.16em]">Wellness · Skincare · Training</span>
             <h1 className="m-0 font-serif text-[clamp(40px,4.6vw,68px)] leading-[1] font-light tracking-[-.015em] text-white">
               Wellness Today,
               <span className="mt-1 block text-brand-light italic">a Brighter Tomorrow</span>
             </h1>
-            <p className="m-0 text-[15.5px] leading-[1.85] text-[#cdd5cf]">
+            <p className="m-0 text-[15.5px] leading-[1.85] text-white/95">
               Professional wellness, advanced skincare, corporate wellness and accredited training in Durban, for healthier individuals, stronger workplaces and empowered communities.
             </p>
             <div className="flex flex-wrap items-center gap-x-8 gap-y-4 pt-1">
