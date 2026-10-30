@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { setupPassword } from "../actions";
+import { PasswordInput } from "../PasswordInput";
 
 export function SetupForm() {
   const [state, action, pending] = useActionState(setupPassword, {});
@@ -18,11 +19,11 @@ export function SetupForm() {
         <span>
           Staff password <span className="hint">(at least 10 characters)</span>
         </span>
-        <input type="password" name="password" autoComplete="new-password" minLength={10} required className="field" />
+        <PasswordInput name="password" autoComplete="new-password" minLength={10} required />
       </label>
       <label className="label">
         Confirm password
-        <input type="password" name="confirm" autoComplete="new-password" minLength={10} required className="field" />
+        <PasswordInput name="confirm" autoComplete="new-password" minLength={10} required />
       </label>
       {state.error && <p className="m-0 text-sm font-medium text-red-700">{state.error}</p>}
       <button type="submit" disabled={pending} className="btn btn-solid border-none">

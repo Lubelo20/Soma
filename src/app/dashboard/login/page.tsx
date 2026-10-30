@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useActionState } from "react";
 import { login } from "../actions";
+import { PasswordInput } from "../PasswordInput";
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, {});
@@ -17,11 +18,11 @@ export default function LoginPage() {
           </div>
         </div>
         <h1 className="m-0 font-serif text-[32px] leading-tight font-light">Sign in</h1>
+        {/* Hidden username so password managers save this under one name. Kept outside the label so the label names the password field. */}
+        <input type="text" name="username" value="Infinity Soma staff" autoComplete="username" readOnly hidden />
         <label className="label">
           Staff password
-          {/* Hidden username so password managers save this under one name. */}
-          <input type="text" name="username" value="Infinity Soma staff" autoComplete="username" readOnly hidden />
-          <input type="password" name="password" autoComplete="current-password" required autoFocus className="field" />
+          <PasswordInput name="password" autoComplete="current-password" required autoFocus />
         </label>
         {state.error && <p className="m-0 text-sm font-medium text-red-700">{state.error}</p>}
         <button type="submit" disabled={pending} className="btn btn-solid border-none">
