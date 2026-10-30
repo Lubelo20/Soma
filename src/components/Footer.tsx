@@ -78,7 +78,7 @@ export function Footer() {
             © <CopyrightYear /> {business.legalName} · Reg. {business.registration}
           </span>
           <span>
-            QCTO SDP {business.qcto} · HWSETA {business.hwseta}
+            Design by Lubelo Tech Solutions
           </span>
         </div>
       </div>
