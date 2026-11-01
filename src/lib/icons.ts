@@ -32,6 +32,16 @@ export const icons = {
   facebook: "M14 21v-8h2.8l.5-3.5H14V7.6c0-1 .4-1.8 1.8-1.8H18V2.8a19 19 0 0 0-2.8-.3C12.5 2.5 11 4.2 11 7v2.5H8V13h3v8",
   tiktok: "M14 3h3a4.5 4.5 0 0 0 4 4v3a7.5 7.5 0 0 1-4-1.2V15a6 6 0 1 1-6-6v3a3 3 0 1 0 3 3z",
   whatsapp: "M3 21l1.4-4.3A8.5 8.5 0 1 1 7.6 19.7zM9 8.6c0 3.4 3 6.4 6.4 6.4l1-1.6-2-.9-1 .9a5 5 0 0 1-2.8-2.8l.9-1-.9-2z",
+  // Dashboard
+  bookings: "M9 3.5h6v3H9zM7 5H5v16h14V5h-2M8.5 13.5l2.5 2.5 4.5-5",
+  calendarGrid: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01",
+  chat: "M4 5h16v11h-9l-5 4v-4H4zM8 9h8M8 12h5",
+  tag: "M3 12V4h8l10 10-8 7zM7.5 7.5h.01",
+  lock: "M6 11h12v10H6zM8.5 11V7.5a3.5 3.5 0 0 1 7 0V11M12 15v2.5",
+  external: "M14 4h6v6M20 4l-9 9M18 14v6H4V6h6",
+  logout: "M10 4H5v16h5M15 8l4 4-4 4M19 12H9",
+  plus: "M12 5v14M5 12h14",
+  check: "M5 12.5l4.5 4.5L19 7.5",
 } as const;
 
 export type IconName = keyof typeof icons;

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { updatePassword } from "../../actions";
 import { PasswordInput } from "../../PasswordInput";
+import { Icon } from "@/components/Icon";
 
 const labelClass = "label";
 
@@ -32,7 +33,12 @@ export default function AccountPage() {
           <PasswordInput name="confirm" autoComplete="new-password" minLength={10} required />
         </label>
         {state.error && <p className="m-0 text-sm font-medium text-red-700">{state.error}</p>}
-        {state.ok && <p className="m-0 text-sm font-medium text-brand">Password updated ✓</p>}
+        {state.ok && (
+          <p className="m-0 inline-flex items-center gap-1.5 text-sm font-medium text-brand">
+            <Icon name="check" size={16} strokeWidth={2} />
+            Password updated
+          </p>
+        )}
         <button type="submit" disabled={pending} className="btn btn-solid border-none">
           {pending ? "Saving…" : "Update password"}
         </button>

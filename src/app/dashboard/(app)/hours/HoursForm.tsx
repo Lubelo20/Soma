@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { DayHours } from "@/lib/slots";
 import { saveHours } from "../../actions";
+import { Icon } from "@/components/Icon";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -33,7 +34,12 @@ export function HoursForm({ weekly }: { weekly: DayHours[] }) {
           {pending ? "Saving…" : "Save opening hours"}
         </button>
         {state.error && <span className="text-sm font-medium text-red-700">{state.error}</span>}
-        {state.ok && <span className="text-sm font-medium text-brand">Saved ✓</span>}
+        {state.ok && (
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-brand">
+            <Icon name="check" size={16} strokeWidth={2} />
+            Saved
+          </span>
+        )}
       </div>
     </form>
   );

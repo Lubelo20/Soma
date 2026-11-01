@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { formatDateTime } from "@/lib/slots";
 import { BookingActions, StatusPill, whatsappLink, type BookingStatus } from "./BookingActions";
+import { Icon } from "@/components/Icon";
 
 export const metadata: Metadata = { title: "Bookings" };
 // Staff always need live data, so these pages render on request rather than from a prefetched shell.
@@ -57,10 +58,12 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
         <h1 className="page-title">Bookings</h1>
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           <Link href="/dashboard/calendar" className="text-link">
+            <Icon name="calendarGrid" size={15} strokeWidth={1.5} />
             Calendar view
           </Link>
           <Link href="/book" target="_blank" className="text-link">
-            Add a booking ↗
+            <Icon name="plus" size={15} strokeWidth={1.5} />
+            Add a booking
           </Link>
         </div>
       </div>

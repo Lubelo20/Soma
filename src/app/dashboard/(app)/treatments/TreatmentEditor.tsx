@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { saveTreatment } from "../../actions";
+import { Icon } from "@/components/Icon";
 
 export type EditableTreatment = {
   id?: number;
@@ -67,7 +68,12 @@ export function TreatmentEditor({ treatment, isNew = false }: { treatment: Edita
           {pending ? "Saving…" : isNew ? "Add treatment" : "Save"}
         </button>
         {state.error && <span className="text-sm font-medium text-red-700">{state.error}</span>}
-        {state.ok && <span className="text-sm font-medium text-brand">Saved ✓</span>}
+        {state.ok && (
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-brand">
+            <Icon name="check" size={16} strokeWidth={2} />
+            Saved
+          </span>
+        )}
       </div>
     </form>
   );
