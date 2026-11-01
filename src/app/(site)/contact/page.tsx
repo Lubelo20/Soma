@@ -7,6 +7,7 @@ import type { IconName } from "@/lib/icons";
 import { business, socials } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/contact" },
   title: "Contact Us",
   description: "Visit Infinity Soma Wellness Clinic at Musgrave Park, Durban, call or WhatsApp +27 63 880 4946, or send us an enquiry.",
 };

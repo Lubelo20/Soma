@@ -8,6 +8,7 @@ import { business } from "@/lib/site";
 import { bookableDates } from "@/lib/slots";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/book" },
   title: "Book a Treatment",
   description: "Book a massage, facial or skincare treatment online at Infinity Soma Wellness Clinic, Musgrave, Durban.",
 };

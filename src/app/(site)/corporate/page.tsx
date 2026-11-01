@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { corporateProgrammes } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/corporate" },
   title: "Corporate Wellness",
   description: "Workplace massage, employee wellness days, stress and burnout workshops, health screening and first aid training for organisations in KwaZulu-Natal.",
 };

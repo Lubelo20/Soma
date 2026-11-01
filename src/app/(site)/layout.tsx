@@ -1,5 +1,6 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { getWeeklyHours } from "@/lib/data";
 import { business, socials } from "@/lib/site";
 
 const jsonLd = {
@@ -26,10 +27,21 @@ const jsonLd = {
   sameAs: socials.filter((s) => s.name !== "WhatsApp" && s.name !== "Facebook").map((s) => s.href),
 };
 
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** Business details for search engines, with the opening hours staff set in the dashboard. */
+async function BusinessJsonLd() {
+  const weekly = await getWeeklyHours();
+  const openingHoursSpecification = weekly.flatMap((h, d) =>
+    h ? [{ "@type": "OpeningHoursSpecification", dayOfWeek: `https://schema.org/${dayNames[d]}`, opens: h.opens, closes: h.closes }] : [],
+  );
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ ...jsonLd, openingHoursSpecification }) }} />;
+}
+
 export default function SiteLayout({ children }: LayoutProps<"/">) {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <BusinessJsonLd />
       <Header />
       <main className="w-full">{children}</main>
       <Footer />

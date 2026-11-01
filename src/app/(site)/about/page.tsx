@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 import { business, pillars, socialImpact } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/about" },
   title: "About Us",
   description: "Founded in 2023 by Banathi Sihonqo, Infinity Soma integrates wellness services, accredited training and corporate health programmes in Durban.",
 };

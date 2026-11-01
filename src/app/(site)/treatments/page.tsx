@@ -3,6 +3,7 @@ import { CtaBand, PageHero, SectionHeading } from "@/components/Blocks";
 import { TreatmentMenu } from "@/components/TreatmentMenu";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/treatments" },
   title: "Massage & Wellness Treatments",
   description: "Swedish, deep tissue, hot stone, gua sha, aromatherapy and prenatal massage, lymphatic drainage, reflexology, pedicures and manicures in Musgrave, Durban.",
 };

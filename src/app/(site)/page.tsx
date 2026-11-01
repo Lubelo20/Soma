@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CtaBand, SectionHeading } from "@/components/Blocks";
 import { Icon } from "@/components/Icon";
 import { business, gallery, pillars, quals, services, trust } from "@/lib/site";
+
+// The main address search engines should list, whichever domain the page was reached on.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default function Home() {
   return (

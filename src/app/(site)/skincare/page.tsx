@@ -3,6 +3,7 @@ import { CtaBand, PageHero, SectionHeading } from "@/components/Blocks";
 import { TreatmentMenu } from "@/components/TreatmentMenu";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/skincare" },
   title: "Skincare & Aesthetics",
   description: "Somatology facials, chemical peels, dermaplaning, microdermabrasion, LED therapy, needling, Lamprobe and ladies' and men's waxing in Musgrave, Durban.",
 };

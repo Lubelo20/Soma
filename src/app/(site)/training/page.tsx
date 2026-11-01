@@ -5,6 +5,7 @@ import { EnquiryForm } from "@/components/EnquiryForm";
 import { quals, trainingSolutions } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/training" },
   title: "Accredited Training",
   description: "QCTO-accredited occupational qualifications in Durban: Manual Skin Care Therapist, Body Massage Therapist and Beauty Therapist (NQF Level 4).",
 };
