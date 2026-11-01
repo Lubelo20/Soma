@@ -18,6 +18,9 @@ export type FormResult = {
 
 const str = (fd: FormData, name: string, max = 500) => String(fd.get(name) ?? "").trim().slice(0, max);
 
+// Audit trail in the hosting logs (Vercel → Logs): sign-ins and every staff change, with no client details.
+const audit = (event: string, detail: Record<string, string | number | boolean> = {}) => console.info(`[audit] ${event}`, JSON.stringify(detail));
+
 // ---------- Auth ----------
 
 // Password guessing: 5 wrong tries per device (IP) and 50 overall in 15 minutes, then sign-in pauses.
@@ -29,18 +32,24 @@ export async function login(_prev: { error?: string }, fd: FormData): Promise<{ 
     countRecent("login-fail", ip, LOGIN_WINDOW_MIN),
     countRecent("login-fail", "*", LOGIN_WINDOW_MIN),
   ]);
-  if (mine >= 5 || everyone >= 50) return { error: `Too many attempts. Please wait ${LOGIN_WINDOW_MIN} minutes and try again.` };
+  if (mine >= 5 || everyone >= 50) {
+    audit("sign-in blocked", { ip });
+    return { error: `Too many attempts. Please wait ${LOGIN_WINDOW_MIN} minutes and try again.` };
+  }
   if (!(await verifyPassword(String(fd.get("password") ?? "")))) {
     await Promise.all([recordEvent("login-fail", ip), recordEvent("login-fail", "*")]);
+    audit("sign-in failed", { ip });
     return { error: "Incorrect password." };
   }
   await clearEvents("login-fail", ip);
+  audit("signed in", { ip });
   await startSession();
   redirect("/dashboard");
 }
 
 export async function logout() {
   await endSession();
+  audit("signed out");
   redirect("/dashboard/login");
 }
 
@@ -50,6 +59,7 @@ export async function updatePassword(_prev: FormResult, fd: FormData): Promise<F
   if (next.length < MIN_PASSWORD) return { error: `New password must be at least ${MIN_PASSWORD} characters.` };
   if (next !== fd.get("confirm")) return { error: "New passwords don't match." };
   const ok = await changePassword(String(fd.get("current") ?? ""), next);
+  audit(ok ? "password changed" : "password change refused: wrong current password");
   return ok ? { ok: true } : { error: "Current password is incorrect." };
 }
 
@@ -66,6 +76,7 @@ export async function setupPassword(_prev: FormResult, fd: FormData): Promise<Fo
   const values = { code: given };
   if (!codeOk) {
     await recordEvent("login-fail", ip);
+    audit("setup code rejected", { ip });
     return { error: "That setup code is not correct.", values };
   }
 
@@ -75,6 +86,7 @@ export async function setupPassword(_prev: FormResult, fd: FormData): Promise<Fo
 
   // Only saved if no password exists yet, so two people can't both set it.
   if (!(await setPassword(password, { onlyIfUnset: true }))) return { error: "The dashboard is already set up. Please sign in." };
+  audit("dashboard set up", { ip });
   await startSession();
   redirect("/dashboard");
 }
@@ -101,6 +113,7 @@ export async function updateBooking(fd: FormData) {
     where id = ${id} and status in ${sql(t.from)}
     returning ref, treatment_name, starts_at, client_name, client_email`;
 
+  if (b) audit(`booking ${t.to}`, { ref: b.ref });
   if (b && t.email) {
     const summary = { ref: b.ref, treatmentName: b.treatmentName, when: formatDateTime(b.startsAt), clientName: b.clientName };
     const mail =
@@ -145,6 +158,7 @@ export async function saveTreatment(_prev: FormResult, fd: FormData): Promise<Fo
       values (${`${base}-${Date.now().toString(36)}`}, ${name}, ${category}, ${section}, ${description}, ${durationMin}, ${priceCents}, ${active},
         (select coalesce(max(sort), 0) + 1 from treatments))`;
   }
+  audit(id ? "treatment updated" : "treatment added", { name, priceCents: priceCents ?? "on request", active });
   updateTag("treatments");
   refresh();
   return { ok: true };
@@ -171,6 +185,7 @@ export async function saveHours(_prev: FormResult, fd: FormData): Promise<FormRe
         on conflict (weekday) do update set opens = excluded.opens, closes = excluded.closes`;
     }
   });
+  audit("opening hours updated");
   updateTag("hours");
   refresh();
   return { ok: true };
@@ -180,6 +195,7 @@ export async function addClosure(fd: FormData) {
   await requireStaff();
   const day = str(fd, "day", 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+  audit("closure added", { day });
   await sql`insert into closures (day, note) values (${day}, ${str(fd, "note", 120)}) on conflict (day) do update set note = excluded.note`;
   updateTag("hours");
   refresh();
@@ -188,6 +204,7 @@ export async function addClosure(fd: FormData) {
 export async function removeClosure(fd: FormData) {
   await requireStaff();
   await sql`delete from closures where day = ${str(fd, "day", 10)}`;
+  audit("closure removed", { day: str(fd, "day", 10) });
   updateTag("hours");
   refresh();
 }
@@ -196,6 +213,7 @@ export async function removeClosure(fd: FormData) {
 
 export async function setEnquiryHandled(fd: FormData) {
   await requireStaff();
+  audit("enquiry marked", { id: Number(fd.get("id")), handled: fd.get("handled") === "true" });
   await sql`update enquiries set handled = ${fd.get("handled") === "true"} where id = ${Number(fd.get("id"))}`;
   refresh();
 }

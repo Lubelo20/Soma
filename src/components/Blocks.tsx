@@ -24,11 +24,11 @@ export function PageHero({
 }) {
   return (
     <section className={`relative overflow-hidden ${texture ? "bg-mint" : "bg-forest"}`}>
-      {texture && <Image src={texture} alt="" fill priority sizes="100vw" className="object-cover" />}
+      {texture && <Image src={texture} alt="" fill preload fetchPriority="high" sizes="100vw" className="object-cover" />}
       {/* Photo sits beside the text on wide screens and above it on phones, never behind it. */}
       {img && (
         <div className="relative h-64 min-[640px]:h-80 min-[861px]:absolute min-[861px]:inset-y-0 min-[861px]:right-0 min-[861px]:h-auto min-[861px]:w-1/2">
-          <Image src={img} alt={alt ?? ""} fill priority sizes="(max-width: 860px) 100vw, 50vw" className="object-cover" />
+          <Image src={img} alt={alt ?? ""} fill preload fetchPriority="high" sizes="(max-width: 860px) 100vw, 50vw" className="object-cover" />
         </div>
       )}
       <div className="wrap relative py-16 min-[861px]:py-32">

@@ -24,13 +24,13 @@ export default function AccountPage() {
         </label>
         <label className={labelClass}>
           <span>
-            New password <span className="hint">(at least 10 characters)</span>
+            New password <span className="hint">(at least 12 characters)</span>
           </span>
-          <PasswordInput name="next" autoComplete="new-password" minLength={10} required />
+          <PasswordInput name="next" autoComplete="new-password" minLength={12} required />
         </label>
         <label className={labelClass}>
           Confirm new password
-          <PasswordInput name="confirm" autoComplete="new-password" minLength={10} required />
+          <PasswordInput name="confirm" autoComplete="new-password" minLength={12} required />
         </label>
         {state.error && <p className="m-0 text-sm font-medium text-red-700">{state.error}</p>}
         {state.ok && (

@@ -23,6 +23,20 @@ const jsonLd = {
     postalCode: business.address.postalCode,
     addressCountry: business.address.country,
   },
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer service",
+    telephone: business.phoneE164,
+    email: business.email,
+    areaServed: "ZA",
+    availableLanguage: ["en"],
+  },
+  // In-clinic in Musgrave; mobile treatments and corporate programmes travel across the region.
+  areaServed: [
+    { "@type": "City", name: "Durban" },
+    { "@type": "AdministrativeArea", name: "eThekwini" },
+    { "@type": "AdministrativeArea", name: "KwaZulu-Natal" },
+  ],
   // Facebook is left out while its link is only a search (see business.facebook).
   sameAs: socials.filter((s) => s.name !== "WhatsApp" && s.name !== "Facebook").map((s) => s.href),
 };

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Montserrat } from "next/font/google";
+import { shareImage } from "@/lib/seo";
 import { business } from "@/lib/site";
 import "./globals.css";
 
@@ -21,8 +22,8 @@ const description =
 export const metadata: Metadata = {
   metadataBase: new URL(business.url),
   title: {
-    default: `${business.name} | Massage, Skincare & Training in Durban`,
-    template: `%s | ${business.name}`,
+    default: `${business.name} | Massage & Skincare, Durban`,
+    template: "%s | Infinity Soma",
   },
   description,
   openGraph: {
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     siteName: business.name,
     title: business.name,
     description,
-    images: [{ url: "/images/hero-clinic.jpg", width: 957, height: 718 }],
+    images: [shareImage],
   },
 };
 

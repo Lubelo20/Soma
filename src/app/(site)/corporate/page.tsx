@@ -4,16 +4,20 @@ import { PageHero, SectionHeading } from "@/components/Blocks";
 import { EnquiryForm } from "@/components/EnquiryForm";
 import { Icon } from "@/components/Icon";
 import { corporateProgrammes } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/corporate" },
-  title: "Corporate Wellness",
-  description: "Workplace massage, employee wellness days, stress and burnout workshops, health screening and first aid training for organisations in KwaZulu-Natal.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Corporate Wellness Programmes in Durban",
+  description:
+    "Workplace massage, employee wellness days, stress and burnout workshops, health screening and first aid training for KwaZulu-Natal teams. Request a proposal.",
+  path: "/corporate",
+});
 
 export default function CorporatePage() {
   return (
     <>
+      <BreadcrumbJsonLd name="Corporate Wellness" path="/corporate" />
       <PageHero
         eyebrow="HEALTHIER PEOPLE, STRONGER BUSINESS"
         title="Corporate Wellness Solutions"

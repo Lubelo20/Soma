@@ -5,12 +5,15 @@ import { Icon } from "@/components/Icon";
 import { describeHours, getWeeklyHours } from "@/lib/data";
 import type { IconName } from "@/lib/icons";
 import { business, socials } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/contact" },
-  title: "Contact Us",
-  description: "Visit Infinity Soma Wellness Clinic at Musgrave Park, Durban, call or WhatsApp +27 63 880 4946, or send us an enquiry.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Contact & Directions, Musgrave, Durban",
+  description:
+    "Visit Infinity Soma Wellness Clinic at Musgrave Park, 18 Musgrave Road, Durban. Call or WhatsApp +27 63 880 4946, or send us an enquiry and we'll reply soon.",
+  path: "/contact",
+});
 
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${business.address.street}, Musgrave, Durban ${business.address.postalCode}`)}`;
 
@@ -81,6 +84,7 @@ export default function ContactPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd name="Contact" path="/contact" />
       <PageHero
         eyebrow="GET IN TOUCH"
         title="We'd love to hear from you"

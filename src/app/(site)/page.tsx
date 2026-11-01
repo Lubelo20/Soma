@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CtaBand, SectionHeading } from "@/components/Blocks";
+import { pageMetadata } from "@/lib/seo";
 import { Icon } from "@/components/Icon";
 import { business, gallery, pillars, quals, services, trust } from "@/lib/site";
 
-// The main address search engines should list, whichever domain the page was reached on.
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = pageMetadata({
+  description:
+    "Massage, facials, skincare, corporate wellness and QCTO-accredited training at Musgrave Park, Durban, in-clinic or mobile. Book your treatment online today.",
+  path: "/",
+});
 
 export default function Home() {
   return (
@@ -20,7 +24,8 @@ export default function Home() {
             src="/images/hero-clinic.jpg"
             alt="Client relaxing during a facial at the clinic"
             fill
-            priority
+            preload
+            fetchPriority="high"
             sizes="100vw"
             className="object-cover object-[50%_25%] max-[860px]:object-[75%_25%] motion-safe:animate-[hero-settle_2.4s_cubic-bezier(.2,.7,.2,1)_both]"
           />

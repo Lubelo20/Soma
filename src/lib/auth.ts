@@ -2,11 +2,15 @@ import "server-only";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { sql } from "./db";
 import { SESSION_COOKIE as COOKIE } from "./session-cookie";
 
+// A session ends after 12 hours without dashboard activity (the database expiry slides forward on each
+// request), and after 30 days at most, when the cookie itself expires.
 const SESSION_DAYS = 30;
+const IDLE_HOURS = 12;
 
 const PASSWORD_KEY = "dashboard_password_hash";
 
@@ -34,7 +38,7 @@ export async function verifyPassword(password: string) {
 export async function startSession() {
   const token = randomBytes(32).toString("base64url");
   const expires = new Date(Date.now() + SESSION_DAYS * 86400_000);
-  await sql`insert into sessions (token_hash, expires_at) values (${hashToken(token)}, ${expires})`;
+  await sql`insert into sessions (token_hash, expires_at) values (${hashToken(token)}, now() + make_interval(hours => ${IDLE_HOURS}))`;
   await sql`delete from sessions where expires_at < now()`;
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
@@ -52,19 +56,24 @@ export async function endSession() {
   jar.delete(COOKIE);
 }
 
-export async function isSignedIn() {
+// Cached per request: the layout, page and actions all ask, but the session is checked (and its idle
+// expiry extended) once.
+export const isSignedIn = cache(async () => {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return false;
-  const [row] = await sql`select 1 from sessions where token_hash = ${hashToken(token)} and expires_at > now()`;
+  const [row] = await sql`
+    update sessions set expires_at = now() + make_interval(hours => ${IDLE_HOURS})
+    where token_hash = ${hashToken(token)} and expires_at > now()
+    returning 1`;
   return Boolean(row);
-}
+});
 
 /** Use at the top of every dashboard page and server action. */
 export async function requireStaff() {
   if (!(await isSignedIn())) redirect("/dashboard/login");
 }
 
-export const MIN_PASSWORD = 10;
+export const MIN_PASSWORD = 12;
 
 /** Sets the shared password. With onlyIfUnset, does nothing (and returns false) if one already exists. */
 export async function setPassword(password: string, { onlyIfUnset = false } = {}) {

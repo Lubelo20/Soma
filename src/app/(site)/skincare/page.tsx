@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import { CtaBand, PageHero, SectionHeading } from "@/components/Blocks";
 import { TreatmentMenu } from "@/components/TreatmentMenu";
+import { pageMetadata } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/skincare" },
-  title: "Skincare & Aesthetics",
-  description: "Somatology facials, chemical peels, dermaplaning, microdermabrasion, LED therapy, needling, Lamprobe and ladies' and men's waxing in Musgrave, Durban.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Skincare & Aesthetics Treatments, Durban",
+  description:
+    "Facials, chemical peels, dermaplaning, microdermabrasion, LED therapy, Lamprobe and waxing by qualified somatologists in Musgrave, Durban. Book online today.",
+  path: "/skincare",
+});
 
 export default function SkincarePage() {
   return (
     <>
+      <BreadcrumbJsonLd name="Skincare" path="/skincare" />
       <PageHero
         eyebrow="RADIANT, HEALTHY SKIN"
         title="Advanced Skincare and Aesthetics"

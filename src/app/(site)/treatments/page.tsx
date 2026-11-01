@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import { CtaBand, PageHero, SectionHeading } from "@/components/Blocks";
 import { TreatmentMenu } from "@/components/TreatmentMenu";
+import { pageMetadata } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/treatments" },
-  title: "Massage & Wellness Treatments",
-  description: "Swedish, deep tissue, hot stone, gua sha, aromatherapy and prenatal massage, lymphatic drainage, reflexology, pedicures and manicures in Musgrave, Durban.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Massage & Wellness Treatments in Durban",
+  description:
+    "Swedish, deep tissue, hot stone and prenatal massage, reflexology, lymphatic drainage, manicures and pedicures in Musgrave, Durban. View prices and book online.",
+  path: "/treatments",
+});
 
 export default function TreatmentsPage() {
   return (
     <>
+      <BreadcrumbJsonLd name="Treatments" path="/treatments" />
       <PageHero
         eyebrow="WELLNESS & THERAPY"
         title="Wellness and Therapeutic Services"

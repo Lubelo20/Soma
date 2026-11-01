@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { sendEnquiry, type EnquiryState } from "@/app/actions";
 import { business, enquiryKinds, type EnquiryKind } from "@/lib/site";
@@ -75,6 +76,13 @@ export function EnquiryForm({ kind = "general", submitLabel = "Send enquiry" }: 
       <button type="submit" disabled={pending} className="btn btn-solid mt-2 border-none sm:col-span-2">
         {pending ? "Sending…" : submitLabel}
       </button>
+      <p className="m-0 text-[12.5px] leading-relaxed text-ink-subtle sm:col-span-2">
+        We use your details only to reply to your enquiry. See our{" "}
+        <Link href="/privacy" className="text-ink-muted underline">
+          privacy notice
+        </Link>
+        .
+      </p>
     </form>
   );
 }

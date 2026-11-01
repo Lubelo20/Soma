@@ -84,8 +84,11 @@ export function Footer() {
           <span>
             © <CopyrightYear /> {business.legalName} · Reg. {business.registration}
           </span>
-          <span>
-            Design by Lubelo Tech Solutions
+          <span className="flex flex-wrap gap-x-6 gap-y-2">
+            <Link href="/privacy" className="text-[#c9cfc9] no-underline hover:text-white">
+              Privacy notice (POPIA)
+            </Link>
+            <span>Design by Lubelo Tech Solutions</span>
           </span>
         </div>
       </div>

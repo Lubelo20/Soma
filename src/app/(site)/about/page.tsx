@@ -3,16 +3,20 @@ import Image from "next/image";
 import { Accreditations, CtaBand, PageHero, SectionHeading } from "@/components/Blocks";
 import { Icon } from "@/components/Icon";
 import { business, pillars, socialImpact } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/about" },
-  title: "About Us",
-  description: "Founded in 2023 by Banathi Sihonqo, Infinity Soma integrates wellness services, accredited training and corporate health programmes in Durban.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "About Us: Holistic Wellness Clinic, Durban",
+  description:
+    "Founded in 2023 by Banathi Sihonqo, Infinity Soma brings wellness treatments, accredited training and corporate health programmes together in Musgrave, Durban.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (
     <>
+      <BreadcrumbJsonLd name="About Us" path="/about" />
       <PageHero
         eyebrow="ABOUT US"
         title="A Holistic Approach to Health and Wellbeing"

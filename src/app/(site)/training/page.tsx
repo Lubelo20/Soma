@@ -3,12 +3,15 @@ import Image from "next/image";
 import { Accreditations, PageHero, SectionHeading } from "@/components/Blocks";
 import { EnquiryForm } from "@/components/EnquiryForm";
 import { quals, trainingSolutions } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/training" },
-  title: "Accredited Training",
-  description: "QCTO-accredited occupational qualifications in Durban: Manual Skin Care Therapist, Body Massage Therapist and Beauty Therapist (NQF Level 4).",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "QCTO-Accredited Wellness Training, Durban",
+  description:
+    "QCTO-accredited NQF Level 4 qualifications in Durban: Manual Skin Care Therapist, Body Massage Therapist and Beauty Therapist. Enquire about the next intake.",
+  path: "/training",
+});
 
 const steps = [
   { title: "Classroom teaching", body: "Theory and foundations taught by experienced facilitators." },
@@ -19,6 +22,7 @@ const steps = [
 export default function TrainingPage() {
   return (
     <>
+      <BreadcrumbJsonLd name="Training" path="/training" />
       <PageHero
         eyebrow="SKILLS FOR A BRIGHTER FUTURE"
         title="Accredited Skills Development"

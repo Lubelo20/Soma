@@ -17,13 +17,13 @@ export function SetupForm() {
       <p className="m-0 text-[14px] leading-relaxed text-ink-muted">All staff sign in with this one password. Share it only with the team.</p>
       <label className="label">
         <span>
-          Staff password <span className="hint">(at least 10 characters)</span>
+          Staff password <span className="hint">(at least 12 characters)</span>
         </span>
-        <PasswordInput name="password" autoComplete="new-password" minLength={10} required />
+        <PasswordInput name="password" autoComplete="new-password" minLength={12} required />
       </label>
       <label className="label">
         Confirm password
-        <PasswordInput name="confirm" autoComplete="new-password" minLength={10} required />
+        <PasswordInput name="confirm" autoComplete="new-password" minLength={12} required />
       </label>
       {state.error && <p className="m-0 text-sm font-medium text-red-700">{state.error}</p>}
       <button type="submit" disabled={pending} className="btn btn-solid border-none">

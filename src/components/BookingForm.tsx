@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
 import { createBooking, getSlots, type BookingState } from "@/app/actions";
 import { bySection } from "@/lib/sections";
@@ -243,6 +244,13 @@ export function BookingForm({
             {pending ? "Sending request…" : "Request booking"}
           </button>
           <p className="m-0 text-center text-[12.5px] tracking-[.04em] text-ink-subtle">Your booking is confirmed once the clinic replies by email.</p>
+          <p className="m-0 text-center text-[12.5px] leading-relaxed text-ink-subtle">
+            We use your details, and any health notes you add, only for your booking. See our{" "}
+            <Link href="/privacy" className="text-ink-muted underline">
+              privacy notice
+            </Link>
+            .
+          </p>
         </div>
       </form>
     </div>

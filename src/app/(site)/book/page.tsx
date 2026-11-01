@@ -6,12 +6,15 @@ import { BookingForm } from "@/components/BookingForm";
 import { formatPrice, getActiveTreatments, getClosures, getWeeklyHours } from "@/lib/data";
 import { business } from "@/lib/site";
 import { bookableDates } from "@/lib/slots";
+import { pageMetadata } from "@/lib/seo";
+import { BreadcrumbJsonLd } from "@/components/BreadcrumbJsonLd";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/book" },
-  title: "Book a Treatment",
-  description: "Book a massage, facial or skincare treatment online at Infinity Soma Wellness Clinic, Musgrave, Durban.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Book a Massage or Facial Online, Durban",
+  description:
+    "Book a massage, facial, waxing or skincare treatment online at Infinity Soma in Musgrave, Durban. Pick a time that suits you and we'll confirm it by email.",
+  path: "/book",
+});
 
 async function Booking({ searchParams }: { searchParams: PageProps<"/book">["searchParams"] }) {
   await connection(); // available dates depend on today's date
@@ -30,6 +33,7 @@ async function Booking({ searchParams }: { searchParams: PageProps<"/book">["sea
 export default function BookPage(props: PageProps<"/book">) {
   return (
     <>
+      <BreadcrumbJsonLd name="Book a Treatment" path="/book" />
       <PageHero
         eyebrow="BOOK ONLINE"
         title="Book a treatment"

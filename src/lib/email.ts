@@ -5,14 +5,17 @@ const siteUrl = () => process.env.SITE_URL ?? business.url;
 export const staffInbox = () => process.env.STAFF_EMAIL ?? business.email;
 
 /**
- * Sends a plain-text email through Resend. Without RESEND_API_KEY (local development)
- * the email is printed to the server console instead. Never throws: a failed email
+ * Sends a plain-text email through Resend. Without RESEND_API_KEY the email is skipped (and, in
+ * local development, printed to the server console instead). Never throws: a failed email
  * must not fail the booking it belongs to.
  */
 export async function sendEmail({ to, subject, text, replyTo }: { to: string; subject: string; text: string; replyTo?: string }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.log(`[email] to=${to} subject="${subject}"\n${text}\n`);
+    // In development the email is printed so it can be checked. In production the details would land
+    // in the hosting logs, so only the fact that it wasn't sent is recorded.
+    if (process.env.NODE_ENV === "production") console.warn("[email] not sent: RESEND_API_KEY is not set");
+    else console.log(`[email] to=${to} subject="${subject}"\n${text}\n`);
     return;
   }
   try {
