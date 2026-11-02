@@ -18,6 +18,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Hide the Next.js "N" dev-tools badge (development only; it overlaps the dashboard sidebar).
   devIndicators: false,
+  // Posters for specials, uploaded by staff.
+  images: { remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }] },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

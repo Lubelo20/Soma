@@ -10,6 +10,7 @@ const links: { href: string; label: string; short?: string; icon: IconName; coun
   { href: "/dashboard/calendar", label: "Calendar", icon: "calendarGrid" },
   { href: "/dashboard/enquiries", label: "Enquiries", icon: "chat", count: "enquiries" },
   { href: "/dashboard/treatments", label: "Treatments & prices", short: "Treatments", icon: "tag" },
+  { href: "/dashboard/specials", label: "Specials", icon: "sparkle" },
   { href: "/dashboard/hours", label: "Opening hours", short: "Hours", icon: "clock" },
   { href: "/dashboard/account", label: "Password", icon: "lock" },
 ];

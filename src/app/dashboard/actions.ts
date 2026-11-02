@@ -1,6 +1,7 @@
 "use server";
 
 import { timingSafeEqual } from "node:crypto";
+import { del } from "@vercel/blob";
 import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { MIN_PASSWORD, changePassword, endSession, requireStaff, setPassword, startSession, verifyPassword } from "@/lib/auth";
@@ -8,6 +9,7 @@ import { formatPrice } from "@/lib/data";
 import { sql } from "@/lib/db";
 import { clearEvents, clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail } from "@/lib/email";
+import { isBlobUrl } from "@/lib/poster";
 import { parsePriceCents } from "@/lib/price";
 import { formatDateTime } from "@/lib/slots";
 
@@ -180,6 +182,76 @@ export async function deleteTreatment(fd: FormData) {
   if (!Number.isInteger(id)) return;
   const [t] = await sql<{ name: string }[]>`delete from treatments where id = ${id} and category <> 'special' returning name`;
   if (t) audit("treatment deleted", { name: t.name });
+  updateTag("treatments");
+  refresh();
+}
+
+// ---------- Specials ----------
+
+// A leftover file costs little, so a failed clean-up never fails what staff were doing.
+async function removePoster(url: string | null | undefined) {
+  if (!url || !isBlobUrl(url)) return;
+  try {
+    await del(url);
+  } catch (err) {
+    console.error("[specials] couldn't remove old poster", err);
+  }
+}
+
+export async function saveSpecial(_prev: FormResult, fd: FormData): Promise<FormResult> {
+  await requireStaff();
+  const id = Number(fd.get("id")) || null;
+  const name = str(fd, "name", 120);
+  const durationMin = Number(fd.get("durationMin"));
+  const price = parsePriceCents(str(fd, "price", 20));
+  const posterUrl = str(fd, "posterUrl", 1000);
+
+  if (name.length < 2) return { error: "Name is required." };
+  if (!price.ok || price.cents === null) return { error: "Enter the package price from the poster, e.g. 1489 or 1462,50." };
+  if (!Number.isInteger(durationMin) || durationMin < 10 || durationMin > 480) return { error: "First session must be 10–480 minutes." };
+  if (!isBlobUrl(posterUrl)) return { error: "Please upload a poster." };
+
+  if (id) {
+    const [old] = await sql<{ posterUrl: string | null }[]>`select poster_url from treatments where id = ${id} and category = 'special'`;
+    if (!old) return { error: "That special no longer exists." };
+    await sql`
+      update treatments set name = ${name}, duration_min = ${durationMin}, price_cents = ${price.cents}, poster_url = ${posterUrl}
+      where id = ${id} and category = 'special'`;
+    if (old.posterUrl !== posterUrl) await removePoster(old.posterUrl);
+  } else {
+    const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    // Starts switched off, so nothing appears on the website until someone chooses to show it.
+    await sql`
+      insert into treatments (slug, name, category, section, duration_min, price_cents, poster_url, active, sort)
+      values (${`special-${base}-${Date.now().toString(36)}`}, ${name}, 'special', 'Specials', ${durationMin}, ${price.cents}, ${posterUrl}, false,
+        (select coalesce(max(sort), 0) + 1 from treatments))`;
+  }
+  audit(id ? "special updated" : "special added", { name, priceCents: price.cents });
+  updateTag("treatments");
+  refresh();
+  return { ok: true };
+}
+
+export async function setSpecialActive(fd: FormData) {
+  await requireStaff();
+  const id = Number(fd.get("id"));
+  const active = fd.get("active") === "true";
+  if (!Number.isInteger(id)) return;
+  const [s] = await sql<{ name: string }[]>`update treatments set active = ${active} where id = ${id} and category = 'special' returning name`;
+  if (s) audit(active ? "special switched on" : "special switched off", { name: s.name });
+  updateTag("treatments");
+  refresh();
+}
+
+export async function deleteSpecial(fd: FormData) {
+  await requireStaff();
+  const id = Number(fd.get("id"));
+  if (!Number.isInteger(id)) return;
+  const [s] = await sql<{ name: string; posterUrl: string | null }[]>`delete from treatments where id = ${id} and category = 'special' returning name, poster_url`;
+  if (s) {
+    audit("special deleted", { name: s.name });
+    await removePoster(s.posterUrl);
+  }
   updateTag("treatments");
   refresh();
 }
