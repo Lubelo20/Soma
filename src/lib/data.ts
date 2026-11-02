@@ -7,14 +7,30 @@ export type Treatment = {
   id: number;
   slug: string;
   name: string;
-  category: "wellness" | "skincare";
+  category: "wellness" | "skincare" | "special";
   section: string;
   description: string;
   durationMin: number;
   priceCents: number | null;
   active: boolean;
   sort: number;
+  posterUrl: string | null;
 };
+
+/** A package offer with a poster. durationMin is its first session, the only part booked online. */
+export type Special = { id: number; name: string; durationMin: number; priceCents: number; posterUrl: string };
+
+/** Specials currently switched on, newest first. Staff edits call updateTag("treatments"). */
+export async function getActiveSpecials(): Promise<Special[]> {
+  "use cache";
+  cacheTag("treatments");
+  cacheLife("days");
+  const rows = await sql<Special[]>`
+    select id, name, duration_min, price_cents, poster_url from treatments
+    where active and category = 'special' and poster_url is not null and price_cents is not null
+    order by created_at desc, id desc`;
+  return rows.map((r) => ({ ...r }));
+}
 
 /** Treatments shown on the public site. Staff edits call updateTag("treatments"). */
 export async function getActiveTreatments(): Promise<Treatment[]> {

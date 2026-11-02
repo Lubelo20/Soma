@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
+import { formatPrice } from "@/lib/data";
 import { sql } from "@/lib/db";
 import { formatDateTime } from "@/lib/slots";
 import { BookingActions, StatusPill, whatsappLink, type BookingStatus } from "./BookingActions";
@@ -23,6 +24,8 @@ type Booking = {
   notes: string;
   staffNote: string;
   createdAt: Date;
+  isSpecial: boolean;
+  bookedPriceCents: number | null;
 };
 
 const views = {
@@ -88,6 +91,12 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
                   <span className="text-[15px] text-ink-body">
                     {b.treatmentName} · {Math.round((b.endsAt.getTime() - b.startsAt.getTime()) / 60000)} min
                   </span>
+                  {b.isSpecial && (
+                    <span className="text-[14px] text-ink-muted">
+                      <span className="pill mr-2 bg-mint text-brand-dark">Special: first session</span>
+                      Package {formatPrice(b.bookedPriceCents)}, arrange the remaining sessions
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs tracking-[.08em] text-ink-subtle">{b.ref}</span>

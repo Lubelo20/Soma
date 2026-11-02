@@ -1,7 +1,7 @@
 "use server";
 
 import { randomInt } from "node:crypto";
-import { getActiveTreatments, getClosures, getWeeklyHours } from "@/lib/data";
+import { formatPrice, getActiveTreatments, getClosures, getWeeklyHours } from "@/lib/data";
 import { sql } from "@/lib/db";
 import { clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail, staffInbox } from "@/lib/email";
@@ -93,7 +93,7 @@ export type BookingState = {
   status: "idle" | "success" | "error";
   message?: string;
   errors?: Partial<Record<"name" | "phone" | "email" | "slot", string>>;
-  booking?: { ref: string; treatmentName: string; when: string; email: string };
+  booking?: { ref: string; treatmentName: string; when: string; email: string; specialPrice?: string };
 };
 
 function newRef() {
@@ -137,10 +137,13 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   const startsAt = clinicTime(date, time);
   const endsAt = new Date(startsAt.getTime() + treatment.durationMin * 60_000);
   const ref = newRef();
+  const isSpecial = treatment.category === "special";
+  const bookedPriceCents = isSpecial ? treatment.priceCents : null;
+  const specialPrice = isSpecial ? formatPrice(treatment.priceCents) : undefined;
   try {
     await sql`
-      insert into bookings (ref, treatment_id, treatment_name, starts_at, ends_at, client_name, client_phone, client_email, notes)
-      values (${ref}, ${treatment.id}, ${treatment.name}, ${startsAt}, ${endsAt}, ${name}, ${phone}, ${email}, ${notes})`;
+      insert into bookings (ref, treatment_id, treatment_name, starts_at, ends_at, client_name, client_phone, client_email, notes, is_special, booked_price_cents)
+      values (${ref}, ${treatment.id}, ${treatment.name}, ${startsAt}, ${endsAt}, ${name}, ${phone}, ${email}, ${notes}, ${isSpecial}, ${bookedPriceCents})`;
   } catch (err) {
     // 23P01 = exclusion violation: someone else took an overlapping slot a moment ago.
     if ((err as { code?: string }).code === "23P01") {
@@ -151,10 +154,10 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   }
 
   const when = `${formatDate(date)} at ${time}`;
-  const summary = { ref, treatmentName: treatment.name, when, clientName: name };
+  const summary = { ref, treatmentName: treatment.name, when, clientName: name, specialPrice };
   await Promise.all([
     sendEmail({ to: email, ...emails.bookingReceived(summary) }),
     sendEmail({ to: staffInbox(), ...emails.staffNewBooking({ ...summary, phone, email, notes }), replyTo: email }),
   ]);
-  return { status: "success", booking: { ref, treatmentName: treatment.name, when, email } };
+  return { status: "success", booking: { ref, treatmentName: treatment.name, when, email, specialPrice } };
 }

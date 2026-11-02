@@ -1,5 +1,6 @@
 import "server-only";
 import { business } from "./site";
+import { clientSpecialLines, staffSpecialLines } from "./special-copy";
 
 const siteUrl = () => process.env.SITE_URL ?? business.url;
 export const staffInbox = () => process.env.STAFF_EMAIL ?? business.email;
@@ -38,16 +39,19 @@ export async function sendEmail({ to, subject, text, replyTo }: { to: string; su
 
 const signature = `\n\n${business.name}\n${business.address.lines.join(", ")}\n${business.phoneDisplay} (call or WhatsApp)\n${business.url.replace("https://", "")}`;
 
-type BookingSummary = { ref: string; treatmentName: string; when: string; clientName: string };
+// specialPrice is set only when a special was booked.
+type BookingSummary = { ref: string; treatmentName: string; when: string; clientName: string; specialPrice?: string };
+const clientSpecial = (b: BookingSummary) => (b.specialPrice ? clientSpecialLines(b.specialPrice) : "");
+const staffSpecial = (b: BookingSummary) => (b.specialPrice ? staffSpecialLines(b.specialPrice) : "");
 
 export const emails = {
   bookingReceived: (b: BookingSummary) => ({
     subject: `We've received your booking request (${b.ref})`,
-    text: `Hi ${b.clientName},\n\nThank you for booking with us. Your request is not confirmed yet. We'll confirm by email shortly.\n\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nReference: ${b.ref}\n\nNeed to change something? Reply to this email or WhatsApp us on ${business.phoneDisplay}.${signature}`,
+    text: `Hi ${b.clientName},\n\nThank you for booking with us. Your request is not confirmed yet. We'll confirm by email shortly.\n\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nReference: ${b.ref}${clientSpecial(b)}\n\nNeed to change something? Reply to this email or WhatsApp us on ${business.phoneDisplay}.${signature}`,
   }),
   bookingConfirmed: (b: BookingSummary) => ({
     subject: `Your booking is confirmed: ${b.when}`,
-    text: `Hi ${b.clientName},\n\nGood news, your booking is confirmed.\n\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nWhere: ${business.address.lines.join(", ")}\nReference: ${b.ref}\n\nPlease arrive 10 minutes early. If you can't make it, let us know as soon as possible.${signature}`,
+    text: `Hi ${b.clientName},\n\nGood news, your booking is confirmed.\n\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nWhere: ${business.address.lines.join(", ")}\nReference: ${b.ref}${clientSpecial(b)}\n\nPlease arrive 10 minutes early. If you can't make it, let us know as soon as possible.${signature}`,
   }),
   bookingDeclined: (b: BookingSummary & { reason: string }) => ({
     subject: `About your booking request (${b.ref})`,
@@ -59,7 +63,7 @@ export const emails = {
   }),
   staffNewBooking: (b: BookingSummary & { phone: string; email: string; notes: string }) => ({
     subject: `New booking request: ${b.treatmentName}, ${b.when}`,
-    text: `A new booking request needs confirming.\n\nClient: ${b.clientName}\nPhone / WhatsApp: ${b.phone}\nEmail: ${b.email}\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nReference: ${b.ref}\nNotes: ${b.notes || "(none)"}\n\nConfirm or decline: ${siteUrl()}/dashboard`,
+    text: `A new booking request needs confirming.\n\nClient: ${b.clientName}\nPhone / WhatsApp: ${b.phone}\nEmail: ${b.email}\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nReference: ${b.ref}\nNotes: ${b.notes || "(none)"}${staffSpecial(b)}\n\nConfirm or decline: ${siteUrl()}/dashboard`,
   }),
   staffNewEnquiry: (e: { kind: string; name: string; phone: string; email: string; interest: string; message: string }) => ({
     subject: `New ${e.kind} enquiry from ${e.name}`,

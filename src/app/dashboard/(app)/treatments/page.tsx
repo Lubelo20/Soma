@@ -11,7 +11,9 @@ export const metadata: Metadata = { title: "Treatments & prices" };
 export const instant = false;
 
 /** One treatment as a tappable summary line that opens its edit form, so long lists stay short on phones. */
-function TreatmentRow({ t }: { t: Treatment }) {
+type MenuTreatment = Treatment & { category: "wellness" | "skincare" };
+
+function TreatmentRow({ t }: { t: MenuTreatment }) {
   return (
     <details className={`card group p-0 ${t.active ? "" : "border-dashed bg-cream"}`}>
       <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 sm:px-6">
@@ -46,7 +48,8 @@ function TreatmentRow({ t }: { t: Treatment }) {
 
 export default async function TreatmentsAdminPage() {
   await requireStaff();
-  const treatments = await sql<Treatment[]>`select * from treatments order by category, sort, name`;
+  // Specials have their own tab.
+  const treatments = await sql<MenuTreatment[]>`select * from treatments where category <> 'special' order by category, sort, name`;
   const missingPrices = treatments.filter((t) => t.active && t.priceCents == null).length;
   const sectionNames = [...new Set(treatments.map((t) => t.section).filter(Boolean))];
 

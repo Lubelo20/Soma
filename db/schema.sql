@@ -18,6 +18,11 @@ create table if not exists treatments (
 -- Heading the treatment is listed under on its page, e.g. "Massage Therapy" or "Ladies' Waxing".
 alter table treatments add column if not exists section text not null default '';
 
+-- Specials are treatments with a poster: 'active' is their on/off switch and duration_min is the first session.
+alter table treatments add column if not exists poster_url text;
+alter table treatments drop constraint if exists treatments_category_check;
+alter table treatments add constraint treatments_category_check check (category in ('wellness', 'skincare', 'special'));
+
 -- One row per weekday (0 = Sunday). Null opens/closes = closed that day.
 create table if not exists opening_hours (
   weekday smallint primary key check (weekday between 0 and 6),
@@ -55,6 +60,10 @@ create table if not exists bookings (
 );
 
 create index if not exists bookings_starts_at_idx on bookings (starts_at);
+
+-- Copied from the special when it's booked, so later edits or deletion don't change what the client was told.
+alter table bookings add column if not exists is_special boolean not null default false;
+alter table bookings add column if not exists booked_price_cents integer;
 
 create table if not exists enquiries (
   id         serial primary key,

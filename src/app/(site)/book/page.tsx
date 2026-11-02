@@ -21,9 +21,18 @@ async function Booking({ searchParams }: { searchParams: PageProps<"/book">["sea
   const [{ treatment }, treatments, weekly, closures] = await Promise.all([searchParams, getActiveTreatments(), getWeeklyHours(), getClosures()]);
   const dates = bookableDates({ now: new Date(), weekly, closures: closures.map((c) => c.day) });
   const initialId = Number(treatment);
+  // Specials first, newest first, so a current offer is easy to find.
+  const ordered = [...treatments.filter((t) => t.category === "special").reverse(), ...treatments.filter((t) => t.category !== "special")];
   return (
     <BookingForm
-      treatments={treatments.map((t) => ({ id: t.id, name: t.name, category: t.category, section: t.section, durationMin: t.durationMin, price: formatPrice(t.priceCents) }))}
+      treatments={ordered.map((t) => ({
+        id: t.id,
+        name: t.name,
+        special: t.category === "special",
+        section: t.category === "special" ? "Specials" : t.section,
+        durationMin: t.durationMin,
+        price: formatPrice(t.priceCents),
+      }))}
       dates={dates}
       initialTreatmentId={treatments.some((t) => t.id === initialId) ? initialId : undefined}
     />

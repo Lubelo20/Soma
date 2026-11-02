@@ -6,14 +6,23 @@ import { createBooking, getSlots, type BookingState } from "@/app/actions";
 import { bySection } from "@/lib/sections";
 import { business } from "@/lib/site";
 import { formatDate } from "@/lib/slots";
+import { FIRST_SESSION_NOTE } from "@/lib/special-copy";
 
-export type BookableTreatment = { id: number; name: string; category: "wellness" | "skincare"; section: string; durationMin: number; price: string };
+export type BookableTreatment = { id: number; name: string; special: boolean; section: string; durationMin: number; price: string };
 
 const initial: BookingState = { status: "idle" };
 const labelClass = "flex flex-col gap-2 text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase";
 const hint = "tracking-normal text-ink-subtle normal-case";
 const fieldError = "text-xs font-medium tracking-normal text-red-700 normal-case";
 const DATES_PER_PAGE = 14;
+
+function SpecialNote({ price }: { price: string }) {
+  return (
+    <p className="m-0 border-l-2 border-gold py-1 pl-4 text-[14.5px] leading-relaxed text-ink-body">
+      <strong className="text-ink-strong">Package price: {price}.</strong> {FIRST_SESSION_NOTE}
+    </p>
+  );
+}
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -79,6 +88,7 @@ export function BookingForm({
           <strong className="text-ink-strong">{b.when}</strong>. This time is held for you, but your booking is{" "}
           <strong className="text-ink-strong">not confirmed yet</strong>. We&rsquo;ll email {b.email} as soon as it is.
         </p>
+        {b.specialPrice && <SpecialNote price={b.specialPrice} />}
         <a className="btn btn-line" href={business.whatsapp}>
           Questions? WhatsApp us
         </a>
@@ -118,13 +128,15 @@ export function BookingForm({
                 <optgroup key={g.label} label={g.label}>
                   {g.items.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} · {t.durationMin} min · {t.price}
+                      {t.name} · {t.special ? "first session " : ""}
+                      {t.durationMin} min · {t.price}
                     </option>
                   ))}
                 </optgroup>
               ))}
             </select>
           </label>
+          {treatment?.special && <SpecialNote price={treatment.price} />}
         </Step>
 
         <Step n={2} title="Pick a date">
@@ -232,7 +244,8 @@ export function BookingForm({
 
         {treatment && date && time && (
           <div className="border-y border-gold/50 py-5 text-center font-serif text-[21px] text-ink-body">
-            <strong className="text-ink-strong">{treatment.name}</strong> ({treatment.durationMin} min) on{" "}
+            <strong className="text-ink-strong">{treatment.name}</strong> ({treatment.special ? "first session, " : ""}
+            {treatment.durationMin} min) on{" "}
             <strong className="text-ink-strong">
               {formatDate(date)} at {time}
             </strong>

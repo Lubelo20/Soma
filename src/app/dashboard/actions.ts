@@ -4,6 +4,7 @@ import { timingSafeEqual } from "node:crypto";
 import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { MIN_PASSWORD, changePassword, endSession, requireStaff, setPassword, startSession, verifyPassword } from "@/lib/auth";
+import { formatPrice } from "@/lib/data";
 import { sql } from "@/lib/db";
 import { clearEvents, clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail } from "@/lib/email";
@@ -109,14 +110,21 @@ export async function updateBooking(fd: FormData) {
   const reason = str(fd, "reason", 1000);
   if (!t) return;
 
-  const [b] = await sql<{ ref: string; treatmentName: string; startsAt: Date; clientName: string; clientEmail: string }[]>`
+  const [b] = await sql<{ ref: string; treatmentName: string; startsAt: Date; clientName: string; clientEmail: string; isSpecial: boolean; bookedPriceCents: number | null }[]>`
     update bookings set status = ${t.to}, staff_note = ${reason}, updated_at = now()
     where id = ${id} and status in ${sql(t.from)}
-    returning ref, treatment_name, starts_at, client_name, client_email`;
+    returning ref, treatment_name, starts_at, client_name, client_email, is_special, booked_price_cents`;
 
   if (b) audit(`booking ${t.to}`, { ref: b.ref });
   if (b && t.email) {
-    const summary = { ref: b.ref, treatmentName: b.treatmentName, when: formatDateTime(b.startsAt), clientName: b.clientName };
+    const summary = {
+      ref: b.ref,
+      treatmentName: b.treatmentName,
+      when: formatDateTime(b.startsAt),
+      clientName: b.clientName,
+      // From the booking, not the treatment: the special may have changed or been deleted since.
+      specialPrice: b.isSpecial ? formatPrice(b.bookedPriceCents) : undefined,
+    };
     const mail =
       t.email === "confirmed"
         ? emails.bookingConfirmed(summary)
@@ -151,7 +159,7 @@ export async function saveTreatment(_prev: FormResult, fd: FormData): Promise<Fo
     await sql`
       update treatments set name = ${name}, category = ${category}, section = ${section}, description = ${description},
         duration_min = ${durationMin}, price_cents = ${priceCents}, active = ${active}
-      where id = ${id}`;
+      where id = ${id} and category <> 'special'`;
   } else {
     const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     await sql`
