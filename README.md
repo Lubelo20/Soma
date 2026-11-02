@@ -27,6 +27,12 @@ npm test                          # slot-availability tests
 4. In Resend, verify the `infinitysoma.co.za` domain and create an API key.
 5. In Vercel, set `DATABASE_URL`, `SITE_URL`, `SETUP_CODE`, `RESEND_API_KEY`, `EMAIL_FROM`, `STAFF_EMAIL`, then deploy.
 
+## Updating the live database
+
+`npm run db:live` applies database structure changes to production and leaves all content alone. The team owns live prices through the dashboard.
+
+`npm run db:menu` and `npm run db:seed` are for setting up a fresh database only. Run against the live site, they would restore deleted treatments, and `db:menu` would also overwrite the team's prices and hours.
+
 ## Where things live
 
 - `src/lib/site.ts`: business details and fixed page copy

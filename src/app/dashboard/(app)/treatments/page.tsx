@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/auth";
 import { formatPrice, type Treatment } from "@/lib/data";
 import { bySection } from "@/lib/sections";
 import { sql } from "@/lib/db";
+import { deleteTreatment } from "../../actions";
 import { TreatmentEditor } from "./TreatmentEditor";
 
 export const metadata: Metadata = { title: "Treatments & prices" };
@@ -26,6 +27,18 @@ function TreatmentRow({ t }: { t: Treatment }) {
       </summary>
       <div className="border-t border-line-soft px-4 py-5 sm:px-6">
         <TreatmentEditor treatment={t} />
+        <details className="mt-5 border-t border-line-soft pt-4">
+          <summary className="cursor-pointer text-sm font-medium text-red-700">Delete this treatment</summary>
+          <form action={deleteTreatment} className="mt-3 flex max-w-md flex-col gap-3">
+            <input type="hidden" name="id" value={t.id} />
+            <p className="m-0 text-sm leading-relaxed text-ink-muted">
+              Delete {t.name} permanently? Past bookings keep their details. To remove it temporarily, untick &ldquo;Show on website&rdquo; instead.
+            </p>
+            <button type="submit" className="btn min-h-10 border-none bg-red-700 px-5 text-white hover:bg-red-800 sm:self-start">
+              Delete treatment
+            </button>
+          </form>
+        </details>
       </div>
     </details>
   );

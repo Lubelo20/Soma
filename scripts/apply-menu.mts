@@ -1,4 +1,4 @@
-// Usage: npm run db:menu
+// Usage: npm run db:menu (for a fresh database only: on a live site it would undo the team's price changes)
 // Makes the database match the clinic's price list in scripts/menu.mts: adds or updates every listed
 // treatment (overwriting dashboard edits to those), hides treatments that aren't on the list (kept, so
 // past bookings still link to them) and sets the weekly opening hours. Closed days are left alone.
@@ -15,7 +15,7 @@ await sql.begin(async (tx) => {
         name = excluded.name, category = excluded.category, section = excluded.section, duration_min = excluded.duration_min,
         price_cents = excluded.price_cents, description = excluded.description, sort = excluded.sort, active = true`;
   }
-  const hidden = await tx`update treatments set active = false where active and slug not in ${tx(treatments.map((t) => t.slug))} returning name`;
+  const hidden = await tx`update treatments set active = false where active and category <> 'special' and slug not in ${tx(treatments.map((t) => t.slug))} returning name`;
   for (const [weekday, opens, closes] of hours) {
     await tx`
       insert into opening_hours (weekday, opens, closes) values (${weekday}, ${opens}, ${closes})

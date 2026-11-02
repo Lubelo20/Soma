@@ -165,6 +165,17 @@ export async function saveTreatment(_prev: FormResult, fd: FormData): Promise<Fo
   return { ok: true };
 }
 
+/** Removes a treatment for good. Bookings keep their own copy of its name, and their link to it is cleared. */
+export async function deleteTreatment(fd: FormData) {
+  await requireStaff();
+  const id = Number(fd.get("id"));
+  if (!Number.isInteger(id)) return;
+  const [t] = await sql<{ name: string }[]>`delete from treatments where id = ${id} and category <> 'special' returning name`;
+  if (t) audit("treatment deleted", { name: t.name });
+  updateTag("treatments");
+  refresh();
+}
+
 // ---------- Hours ----------
 
 export async function saveHours(_prev: FormResult, fd: FormData): Promise<FormResult> {
