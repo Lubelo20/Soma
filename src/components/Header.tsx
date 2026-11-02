@@ -17,7 +17,7 @@ export function Header({ showSpecials = false }: { showSpecials?: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-cream/95 backdrop-blur-sm">
       <div className="wrap flex min-h-20 items-center justify-between gap-3 sm:gap-6">
-        <Link href="/" className="flex items-center gap-3 no-underline">
+        <Link href="/" className="flex flex-none items-center gap-3 no-underline">
           <Image src="/images/logo.png" alt="" width={39} height={40} className="h-9 w-auto" priority />
           <span className="flex flex-col leading-[1.15] whitespace-nowrap">
             <span className="text-[13px] font-semibold tracking-[.18em] text-ink-strong sm:text-[15px] sm:tracking-[.2em]">INFINITY SOMA</span>
@@ -25,7 +25,7 @@ export function Header({ showSpecials = false }: { showSpecials?: boolean }) {
           </span>
         </Link>
 
-        <nav aria-label="Main" className="hidden gap-5 text-[11.5px] font-medium tracking-[.14em] uppercase lg:flex xl:gap-9 xl:tracking-[.2em]">
+        <nav aria-label="Main" className="hidden gap-4 text-[11.5px] font-medium tracking-[.1em] uppercase lg:flex xl:gap-8 xl:tracking-[.18em]">
           {links.map((l) => (
             <Link
               key={l.href}
@@ -38,10 +38,11 @@ export function Header({ showSpecials = false }: { showSpecials?: boolean }) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Link href="/book" className="btn btn-solid min-h-11 px-6 max-sm:min-h-10 max-sm:px-4">
-            <span className="sm:hidden">Book</span>
-            <span className="max-sm:hidden">Book now</span>
+        <div className="flex flex-none items-center gap-2">
+          {/* "Book" on phones and on narrower desktops, where the menu needs the room. */}
+          <Link href="/book" className="btn btn-solid min-h-11 px-6 whitespace-nowrap max-sm:min-h-10 max-sm:px-4">
+            <span className="sm:max-lg:hidden xl:hidden">Book</span>
+            <span className="max-sm:hidden lg:max-xl:hidden">Book now</span>
           </Link>
           <button
             type="button"

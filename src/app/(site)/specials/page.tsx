@@ -29,8 +29,9 @@ export default async function SpecialsPage() {
             </Link>
           </div>
         ) : (
-          <ul className="wrap m-0 grid list-none grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-2 xl:grid-cols-3">
-            {specials.map((s) => (
+          <div className="wrap">
+            <ul className="m-0 grid list-none grid-cols-1 gap-x-8 gap-y-14 p-0 md:grid-cols-2 xl:grid-cols-3">
+              {specials.map((s) => (
               <li key={s.id} className="flex min-w-0 flex-col gap-4">
                 <div className="relative aspect-[2/3] w-full bg-white">
                   <PosterZoom src={s.posterUrl} alt={s.name} sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 400px" />
@@ -42,8 +43,9 @@ export default async function SpecialsPage() {
                   Book this special
                 </Link>
               </li>
-            ))}
-          </ul>
+              ))}
+            </ul>
+          </div>
         )}
       </section>
     </>
