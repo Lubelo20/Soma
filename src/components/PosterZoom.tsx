@@ -1,8 +1,14 @@
 "use client";
 
-import Image from "next/image";
-import { useRef } from "react";
+import Image, { type ImageProps } from "next/image";
+import { useRef, useState } from "react";
 import { Icon } from "./Icon";
+
+/** If image optimisation fails or times out, loads the stored file directly rather than leaving a blank poster. */
+function PosterImage(props: ImageProps) {
+  const [direct, setDirect] = useState(false);
+  return <Image {...props} unoptimized={direct} onError={() => setDirect(true)} />;
+}
 
 /** A whole, uncropped poster. Tapping it opens it full width, so the small print can be read. */
 export function PosterZoom({ src, alt, sizes, eager = false }: { src: string; alt: string; sizes: string; eager?: boolean }) {
@@ -10,7 +16,7 @@ export function PosterZoom({ src, alt, sizes, eager = false }: { src: string; al
   return (
     <>
       <button type="button" onClick={() => dialog.current?.showModal()} aria-label={`Enlarge poster: ${alt}`} className="relative block size-full cursor-zoom-in border-none bg-transparent p-0">
-        <Image src={src} alt={alt} fill sizes={sizes} loading={eager ? "eager" : "lazy"} className="object-contain" />
+        <PosterImage src={src} alt={alt} fill sizes={sizes} loading={eager ? "eager" : "lazy"} className="object-contain" />
       </button>
       <dialog
         ref={dialog}
@@ -26,7 +32,7 @@ export function PosterZoom({ src, alt, sizes, eager = false }: { src: string; al
           </button>
         </form>
         <div className="mx-auto w-full max-w-3xl pb-6">
-          <Image src={src} alt="" width={1200} height={1700} sizes="(max-width: 768px) 100vw, 768px" className="h-auto w-full" />
+          <PosterImage src={src} alt="" width={1200} height={1700} sizes="(max-width: 768px) 100vw, 768px" className="h-auto w-full" />
         </div>
       </dialog>
     </>
