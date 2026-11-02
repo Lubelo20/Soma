@@ -28,7 +28,7 @@ export async function sendEmail({ to, subject, text, replyTo }: { to: string; su
         to,
         subject,
         text,
-        reply_to: replyTo ?? business.email,
+        reply_to: replyTo ?? staffInbox(),
       }),
     });
     if (!res.ok) console.error("[email] Resend error", res.status, await res.text());
