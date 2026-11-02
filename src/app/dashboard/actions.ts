@@ -7,6 +7,7 @@ import { MIN_PASSWORD, changePassword, endSession, requireStaff, setPassword, st
 import { sql } from "@/lib/db";
 import { clearEvents, clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail } from "@/lib/email";
+import { parsePriceCents } from "@/lib/price";
 import { formatDateTime } from "@/lib/slots";
 
 export type FormResult = {
@@ -137,14 +138,14 @@ export async function saveTreatment(_prev: FormResult, fd: FormData): Promise<Fo
   const section = str(fd, "section", 60);
   const description = str(fd, "description", 600);
   const durationMin = Number(fd.get("durationMin"));
-  const priceRaw = str(fd, "price", 20).replace(/[R\s,]/gi, "");
-  const priceCents = priceRaw === "" ? null : Math.round(Number(priceRaw) * 100);
+  const price = parsePriceCents(str(fd, "price", 20));
   const active = fd.get("active") === "on";
 
   if (name.length < 2) return { error: "Name is required." };
   if (!["wellness", "skincare"].includes(category)) return { error: "Choose a category." };
   if (!Number.isInteger(durationMin) || durationMin < 10 || durationMin > 480) return { error: "Duration must be 10–480 minutes." };
-  if (priceCents !== null && (!Number.isFinite(priceCents) || priceCents < 0)) return { error: "Price must be a number, e.g. 450 or 450.00." };
+  if (!price.ok) return { error: "Price must be a number, e.g. 450 or 450,50." };
+  const priceCents = price.cents;
 
   if (id) {
     await sql`
