@@ -5,9 +5,9 @@ import { useRef, useState } from "react";
 import { Icon } from "./Icon";
 
 /** If image optimisation fails or times out, loads the stored file directly rather than leaving a blank poster. */
-function PosterImage(props: ImageProps) {
+function PosterImage({ alt, ...props }: ImageProps) {
   const [direct, setDirect] = useState(false);
-  return <Image {...props} unoptimized={direct} onError={() => setDirect(true)} />;
+  return <Image alt={alt} {...props} unoptimized={direct} onError={() => setDirect(true)} />;
 }
 
 /** A whole, uncropped poster. Tapping it opens it full width, so the small print can be read. */
