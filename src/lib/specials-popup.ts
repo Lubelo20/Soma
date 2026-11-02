@@ -19,8 +19,20 @@ export function markDismissed(storage: Pick<Storage, "setItem"> | undefined): vo
   try {
     storage?.setItem(DISMISSED_KEY, "1");
   } catch {
-    // Not remembered: it may open again on the next page, which is harmless.
+    // Not stored; dismissalTracker still remembers it until the page is reloaded.
   }
+}
+
+/** Remembers a close in memory too, so blocked storage doesn't reopen the pop-up on every page. */
+export function dismissalTracker(getStorage: () => (Pick<Storage, "getItem"> & Pick<Storage, "setItem">) | undefined) {
+  let closed = false;
+  return {
+    wasDismissed: () => closed || wasDismissed(getStorage()),
+    markDismissed: () => {
+      closed = true;
+      markDismissed(getStorage());
+    },
+  };
 }
 
 export function wrapIndex(i: number, n: number): number {

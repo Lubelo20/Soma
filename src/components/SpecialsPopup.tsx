@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Special } from "@/lib/data";
-import { markDismissed, shouldOpenPopup, wasDismissed, wrapIndex } from "@/lib/specials-popup";
+import { dismissalTracker, shouldOpenPopup, wrapIndex } from "@/lib/specials-popup";
 import { Icon } from "./Icon";
 import { PosterZoom } from "./PosterZoom";
 
@@ -17,6 +17,7 @@ const visitStorage = () => {
     return undefined;
   }
 };
+const visit = dismissalTracker(visitStorage);
 
 /** Shows the specials that are switched on, one poster at a time, shortly after someone arrives. */
 export function SpecialsPopup({ specials }: { specials: Special[] }) {
@@ -30,7 +31,7 @@ export function SpecialsPopup({ specials }: { specials: Special[] }) {
 
   useEffect(() => {
     if (pathname === "/book") dialog.current?.close();
-    if (!shouldOpenPopup(pathname, count, wasDismissed(visitStorage()))) return;
+    if (!shouldOpenPopup(pathname, count, visit.wasDismissed())) return;
     const timer = setTimeout(() => {
       if (dialog.current && !dialog.current.open) {
         setOpened(true);
@@ -44,7 +45,7 @@ export function SpecialsPopup({ specials }: { specials: Special[] }) {
   const current = specials[Math.min(index, count - 1)];
 
   function dismiss() {
-    markDismissed(visitStorage());
+    visit.markDismissed();
     dialog.current?.close();
   }
 
@@ -61,7 +62,7 @@ export function SpecialsPopup({ specials }: { specials: Special[] }) {
     <dialog
       ref={dialog}
       aria-label="Current specials"
-      onCancel={() => markDismissed(visitStorage())}
+      onCancel={() => visit.markDismissed()}
       onClick={(e) => {
         if (e.target === dialog.current) dismiss();
       }}

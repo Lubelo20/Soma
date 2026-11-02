@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { markDismissed, shouldOpenPopup, wasDismissed, wrapIndex } from "./specials-popup";
+import { dismissalTracker, markDismissed, shouldOpenPopup, wasDismissed, wrapIndex } from "./specials-popup";
 
 describe("shouldOpenPopup", () => {
   it("opens on public pages while specials are on", () => {
@@ -46,6 +46,29 @@ describe("remembering it was closed", () => {
   it("still works when browser storage is missing", () => {
     expect(wasDismissed(undefined)).toBe(false);
     expect(() => markDismissed(undefined)).not.toThrow();
+  });
+});
+
+describe("dismissalTracker", () => {
+  it("stays closed on the next page when browser storage is blocked", () => {
+    const blocked = () => {
+      throw new Error("blocked");
+    };
+    const visit = dismissalTracker(() => ({ getItem: blocked, setItem: blocked }));
+    expect(visit.wasDismissed()).toBe(false);
+    visit.markDismissed();
+    expect(visit.wasDismissed()).toBe(true);
+  });
+
+  it("stays closed on the next page when browser storage is missing", () => {
+    const visit = dismissalTracker(() => undefined);
+    visit.markDismissed();
+    expect(visit.wasDismissed()).toBe(true);
+  });
+
+  it("uses a close already stored earlier in the visit", () => {
+    const visit = dismissalTracker(() => ({ getItem: () => "1", setItem: () => {} }));
+    expect(visit.wasDismissed()).toBe(true);
   });
 });
 
