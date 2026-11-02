@@ -7,10 +7,12 @@ import { useState } from "react";
 import { business, navLinks, socials } from "@/lib/site";
 import { Icon } from "./Icon";
 
-export function Header() {
+export function Header({ showSpecials = false }: { showSpecials?: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // Lets people who closed the pop-up get back to the offers. Only there while a special is on.
+  const links = showSpecials ? navLinks.flatMap((l) => (l.href === "/skincare" ? [l, { href: "/specials", label: "Specials" }] : [l])) : navLinks;
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-cream/95 backdrop-blur-sm">
@@ -23,8 +25,8 @@ export function Header() {
           </span>
         </Link>
 
-        <nav aria-label="Main" className="hidden gap-9 text-[11.5px] font-medium tracking-[.2em] uppercase lg:flex">
-          {navLinks.map((l) => (
+        <nav aria-label="Main" className="hidden gap-5 text-[11.5px] font-medium tracking-[.14em] uppercase lg:flex xl:gap-9 xl:tracking-[.2em]">
+          {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -57,7 +59,7 @@ export function Header() {
       {open && (
         <nav id="mobile-nav" aria-label="Mobile" className="border-t border-line bg-cream lg:hidden">
           <div className="wrap flex flex-col py-4">
-            {navLinks.map((l) => (
+            {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}

@@ -1,6 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
-import { getWeeklyHours } from "@/lib/data";
+import { SpecialsPopup } from "@/components/SpecialsPopup";
+import { getActiveSpecials, getWeeklyHours } from "@/lib/data";
 import { business, socials } from "@/lib/site";
 
 const jsonLd = {
@@ -52,11 +53,20 @@ async function BusinessJsonLd() {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ ...jsonLd, openingHoursSpecification }) }} />;
 }
 
+async function ActiveSpecialsPopup() {
+  return <SpecialsPopup specials={await getActiveSpecials()} />;
+}
+
+async function SiteHeader() {
+  return <Header showSpecials={(await getActiveSpecials()).length > 0} />;
+}
+
 export default function SiteLayout({ children }: LayoutProps<"/">) {
   return (
     <>
       <BusinessJsonLd />
-      <Header />
+      <ActiveSpecialsPopup />
+      <SiteHeader />
       <main className="w-full">{children}</main>
       <Footer />
     </>

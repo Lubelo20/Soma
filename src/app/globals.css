@@ -100,6 +100,10 @@ body {
   .hint {
     @apply font-normal tracking-normal text-ink-subtle normal-case;
   }
+  /* The page behind the specials pop-up doesn't scroll. */
+  html:has(.specials-popup[open]) {
+    overflow: hidden;
+  }
   .pill {
     @apply inline-flex items-center rounded-[2px] px-2.5 py-1 text-[11px] font-semibold tracking-[.16em] uppercase;
   }
