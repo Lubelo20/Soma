@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { isBlobUrl, posterFileError } from "./poster";
+import { POSTER_MAX_EDGE, fitWithin, isBlobUrl, posterFileError } from "./poster";
+
+describe("fitWithin", () => {
+  it("leaves posters within the limit alone", () => {
+    expect(fitWithin(1284, 1925)).toEqual({ width: 1284, height: 1925 });
+    expect(fitWithin(POSTER_MAX_EDGE, 100)).toEqual({ width: POSTER_MAX_EDGE, height: 100 });
+  });
+
+  it("shrinks a tall poster to the limit, keeping its shape", () => {
+    expect(fitWithin(2123, 4600)).toEqual({ width: 1015, height: POSTER_MAX_EDGE });
+  });
+
+  it("shrinks a wide poster to the limit, keeping its shape", () => {
+    expect(fitWithin(4400, 2200)).toEqual({ width: POSTER_MAX_EDGE, height: 1100 });
+  });
+});
 
 const MB = 1024 * 1024;
 

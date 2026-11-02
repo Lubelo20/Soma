@@ -6,6 +6,7 @@ import { saveSpecial } from "../../actions";
 import { Icon } from "@/components/Icon";
 import { POSTER_TYPES, posterFileError } from "@/lib/poster";
 import { parsePriceCents } from "@/lib/price";
+import { shrinkPoster } from "@/lib/shrink-poster";
 
 export type EditableSpecial = { id: number; name: string; durationMin: number; priceCents: number | null; posterUrl: string | null };
 
@@ -41,15 +42,19 @@ export function SpecialEditor({ special }: { special?: EditableSpecial }) {
     const price = parsePriceCents(details.price);
     if (!price.ok || price.cents === null) return setError("Enter the package price from the poster, e.g. 1489 or 1462,50.");
 
+    // Set here, not inside the transition, so the button changes straight away.
+    const needsUpload = Boolean(file) && uploaded.current?.file !== file;
+    setUploading(needsUpload);
+
     startSaving(async () => {
       let posterUrl = special?.posterUrl ?? "";
       if (file) {
         if (uploaded.current?.file === file) {
           posterUrl = uploaded.current.url;
         } else {
-          setUploading(true);
           try {
-            const blob = await upload(`posters/${file.name}`, file, { access: "public", handleUploadUrl: "/dashboard/specials/upload" });
+            const small = await shrinkPoster(file);
+            const blob = await upload(`posters/${small.name}`, small, { access: "public", handleUploadUrl: "/dashboard/specials/upload" });
             posterUrl = blob.url;
             uploaded.current = { file, url: blob.url };
           } catch (err) {
