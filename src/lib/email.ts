@@ -1,16 +1,18 @@
 import "server-only";
 import { business } from "./site";
-import { clientSpecialLines, staffSpecialLines } from "./special-copy";
+import { renderEmail } from "./email-template";
+import { FIRST_SESSION_NOTE, staffSpecialNote } from "./special-copy";
 
-const siteUrl = () => process.env.SITE_URL ?? business.url;
+// Links always use the clinic's own domain, so a stale hosting setting can't send people elsewhere.
+const siteUrl = business.url;
 export const staffInbox = () => process.env.STAFF_EMAIL ?? business.email;
 
 /**
- * Sends a plain-text email through Resend. Without RESEND_API_KEY the email is skipped (and, in
+ * Sends an email through Resend. Without RESEND_API_KEY the email is skipped (and, in
  * local development, printed to the server console instead). Never throws: a failed email
  * must not fail the booking it belongs to.
  */
-export async function sendEmail({ to, subject, text, replyTo }: { to: string; subject: string; text: string; replyTo?: string }) {
+export async function sendEmail({ to, subject, text, html, replyTo }: { to: string; subject: string; text: string; html?: string; replyTo?: string }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     // In development the email is printed so it can be checked. In production the details would land
@@ -28,6 +30,7 @@ export async function sendEmail({ to, subject, text, replyTo }: { to: string; su
         to,
         subject,
         text,
+        html,
         reply_to: replyTo ?? staffInbox(),
       }),
     });
@@ -37,36 +40,99 @@ export async function sendEmail({ to, subject, text, replyTo }: { to: string; su
   }
 }
 
-const signature = `\n\n${business.name}\n${business.address.lines.join(", ")}\n${business.phoneDisplay} (call or WhatsApp)\n${business.url.replace("https://", "")}`;
-
 // specialPrice is set only when a special was booked.
 type BookingSummary = { ref: string; treatmentName: string; when: string; clientName: string; specialPrice?: string };
-const clientSpecial = (b: BookingSummary) => (b.specialPrice ? clientSpecialLines(b.specialPrice) : "");
-const staffSpecial = (b: BookingSummary) => (b.specialPrice ? staffSpecialLines(b.specialPrice) : "");
+const specialPriceRow = (b: BookingSummary): [string, string][] => (b.specialPrice ? [["Package price", b.specialPrice]] : []);
+const clientSpecialNote = (b: BookingSummary) => (b.specialPrice ? FIRST_SESSION_NOTE : undefined);
+
+const whatsappUs = `WhatsApp us on ${business.phoneDisplay}`;
 
 export const emails = {
   bookingReceived: (b: BookingSummary) => ({
     subject: `We've received your booking request (${b.ref})`,
-    text: `Hi ${b.clientName},\n\nThank you for booking with us. Your request is not confirmed yet. We'll confirm by email shortly.\n\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nReference: ${b.ref}${clientSpecial(b)}\n\nNeed to change something? Reply to this email or WhatsApp us on ${business.phoneDisplay}.${signature}`,
+    ...renderEmail({
+      preheader: `We'll confirm your ${b.treatmentName} booking by email shortly.`,
+      title: "We've received your request",
+      greeting: `Hi ${b.clientName},`,
+      intro: ["Thank you for booking with us. Your request is not confirmed yet. We'll confirm by email shortly."],
+      details: [["Treatment", b.treatmentName], ["When", b.when], ["Reference", b.ref], ...specialPriceRow(b)],
+      note: clientSpecialNote(b),
+      after: [`Need to change something? Reply to this email or ${whatsappUs}.`],
+    }),
   }),
   bookingConfirmed: (b: BookingSummary) => ({
     subject: `Your booking is confirmed: ${b.when}`,
-    text: `Hi ${b.clientName},\n\nGood news, your booking is confirmed.\n\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nWhere: ${business.address.lines.join(", ")}\nReference: ${b.ref}${clientSpecial(b)}\n\nPlease arrive 10 minutes early. If you can't make it, let us know as soon as possible.${signature}`,
+    ...renderEmail({
+      preheader: `See you on ${b.when}.`,
+      title: "Your booking is confirmed",
+      greeting: `Hi ${b.clientName},`,
+      intro: ["Good news, your booking is confirmed."],
+      details: [
+        ["Treatment", b.treatmentName],
+        ["When", b.when],
+        ["Where", business.address.lines.join(", ")],
+        ["Reference", b.ref],
+        ...specialPriceRow(b),
+      ],
+      note: clientSpecialNote(b),
+      after: ["Please arrive 10 minutes early. If you can't make it, let us know as soon as possible."],
+    }),
   }),
   bookingDeclined: (b: BookingSummary & { reason: string }) => ({
     subject: `About your booking request (${b.ref})`,
-    text: `Hi ${b.clientName},\n\nUnfortunately we can't accommodate your request for ${b.treatmentName} on ${b.when}.${b.reason ? `\n\n${b.reason}` : ""}\n\nPlease choose another time at ${siteUrl()}/book or WhatsApp us on ${business.phoneDisplay}.${signature}`,
+    ...renderEmail({
+      preheader: "Please choose another time for your booking.",
+      title: "About your booking request",
+      greeting: `Hi ${b.clientName},`,
+      intro: [`Unfortunately we can't accommodate your request for ${b.treatmentName} on ${b.when}.`, ...(b.reason ? [b.reason] : [])],
+      button: { label: "Choose another time", href: `${siteUrl}/book` },
+      after: [`Or ${whatsappUs}.`],
+    }),
   }),
   bookingCancelled: (b: BookingSummary & { reason: string }) => ({
     subject: `Your booking has been cancelled (${b.ref})`,
-    text: `Hi ${b.clientName},\n\nYour booking for ${b.treatmentName} on ${b.when} has been cancelled.${b.reason ? `\n\n${b.reason}` : ""}\n\nTo book again, visit ${siteUrl()}/book or WhatsApp us on ${business.phoneDisplay}.${signature}`,
+    ...renderEmail({
+      preheader: `Your booking on ${b.when} has been cancelled.`,
+      title: "Your booking has been cancelled",
+      greeting: `Hi ${b.clientName},`,
+      intro: [`Your booking for ${b.treatmentName} on ${b.when} has been cancelled.`, ...(b.reason ? [b.reason] : [])],
+      button: { label: "Book again", href: `${siteUrl}/book` },
+      after: [`Or ${whatsappUs}.`],
+    }),
   }),
   staffNewBooking: (b: BookingSummary & { phone: string; email: string; notes: string }) => ({
     subject: `New booking request: ${b.treatmentName}, ${b.when}`,
-    text: `A new booking request needs confirming.\n\nClient: ${b.clientName}\nPhone / WhatsApp: ${b.phone}\nEmail: ${b.email}\nTreatment: ${b.treatmentName}\nWhen: ${b.when}\nReference: ${b.ref}\nNotes: ${b.notes || "(none)"}${staffSpecial(b)}\n\nConfirm or decline: ${siteUrl()}/dashboard`,
+    ...renderEmail({
+      preheader: `${b.clientName}, ${b.when}`,
+      title: "New booking request",
+      intro: ["A new booking request needs confirming."],
+      details: [
+        ["Client", b.clientName],
+        ["Phone / WhatsApp", b.phone],
+        ["Email", b.email],
+        ["Treatment", b.treatmentName],
+        ["When", b.when],
+        ["Reference", b.ref],
+        ["Notes", b.notes || "(none)"],
+      ],
+      note: b.specialPrice ? staffSpecialNote(b.specialPrice) : undefined,
+      button: { label: "Confirm or decline", href: `${siteUrl}/dashboard` },
+    }),
   }),
   staffNewEnquiry: (e: { kind: string; name: string; phone: string; email: string; interest: string; message: string }) => ({
     subject: `New ${e.kind} enquiry from ${e.name}`,
-    text: `Name: ${e.name}\nPhone / WhatsApp: ${e.phone}\nEmail: ${e.email || "(not given)"}\nInterested in: ${e.interest}\n\n${e.message || "(no message)"}\n\nView all enquiries: ${siteUrl()}/dashboard/enquiries`,
+    ...renderEmail({
+      preheader: `${e.name} is interested in ${e.interest}.`,
+      title: `New ${e.kind} enquiry`,
+      intro: [],
+      details: [
+        ["Name", e.name],
+        ["Phone / WhatsApp", e.phone],
+        ["Email", e.email || "(not given)"],
+        ["Interested in", e.interest],
+      ],
+      note: e.message || "(no message)",
+      button: { label: "View all enquiries", href: `${siteUrl}/dashboard/enquiries` },
+    }),
   }),
 };

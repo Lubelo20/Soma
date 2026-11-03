@@ -25,7 +25,7 @@ npm test                          # slot-availability tests
 2. Run `npm run db:migrate` and `npm run db:seed` against it (`DATABASE_URL=... npx tsx scripts/migrate.mts`, or temporarily point `.env.local` at Neon).
 3. Set `SETUP_CODE` in Vercel, then open `/dashboard/setup` on the live site to choose the shared staff password. Change it later from the dashboard's **Password** page; if it's forgotten, reset it from a terminal with `npm run password:set` (pointed at the live `DATABASE_URL`).
 4. In Resend, verify the `infinitysoma.co.za` domain and create an API key.
-5. In Vercel, set `DATABASE_URL`, `SITE_URL`, `SETUP_CODE`, `RESEND_API_KEY`, `EMAIL_FROM`, `STAFF_EMAIL`, then deploy.
+5. In Vercel, set `DATABASE_URL`, `SETUP_CODE`, `RESEND_API_KEY`, `EMAIL_FROM`, `STAFF_EMAIL`, then deploy.
 
 ## Updating the live database
 
