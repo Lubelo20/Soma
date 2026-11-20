@@ -7,8 +7,17 @@ import { logout } from "./actions";
 
 type Guard = { unsaved: () => boolean; askBeforeSignOut: () => void };
 const guards = new Set<Guard>();
-const draftListeners = new Set<() => void>();
+type DraftsPromptContext = { afterGuard: boolean };
+const draftListeners = new Set<(ctx: DraftsPromptContext) => void>();
 let signingOut = false;
+
+// Closing or reloading the tab ends the in-memory drafts too, so ask first wherever the user is in the dashboard
+// (the card editor's own guard only covers the editor while it's on screen). Not on the way out after sign-out.
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", (e) => {
+    if (!signingOut && cardDrafts.hasAny()) e.preventDefault();
+  });
+}
 
 export function registerSignOutGuard(guard: Guard) {
   guards.add(guard);
@@ -17,8 +26,11 @@ export function registerSignOutGuard(guard: Guard) {
   };
 }
 
-/** The sign-out buttons listen for this: there are unsaved drafts on cards that aren't open. */
-export function onDraftsBeforeSignOut(listener: () => void) {
+/**
+ * The sign-out buttons listen for this: there are unsaved drafts on cards that aren't open. `afterGuard`: the open
+ * form's own prompt was already answered (so the drafts prompt needn't ask the form again).
+ */
+export function onDraftsBeforeSignOut(listener: (ctx: DraftsPromptContext) => void) {
   draftListeners.add(listener);
   return () => {
     draftListeners.delete(listener);
@@ -33,8 +45,14 @@ export type SignOutOutcome = "asked" | "failed";
 /**
  * Signs out unless something unsaved needs an answer first ("asked"). On success the sign-in page loads in full and
  * this never resolves usefully; "failed" means the session couldn't be ended (offline) and nothing changed.
+ * skipGuards: the open form's prompt was just answered. except: that form's own card, whose draft the user chose
+ * to discard. draftsAccepted: the user already chose to discard drafts on other cards.
  */
-export async function requestSignOut({ skipGuards = false } = {}): Promise<SignOutOutcome | "done"> {
+export async function requestSignOut({
+  skipGuards = false,
+  except,
+  draftsAccepted = false,
+}: { skipGuards?: boolean; except?: string; draftsAccepted?: boolean } = {}): Promise<SignOutOutcome | "done"> {
   if (!skipGuards) {
     for (const g of guards) {
       if (g.unsaved()) {
@@ -43,8 +61,9 @@ export async function requestSignOut({ skipGuards = false } = {}): Promise<SignO
       }
     }
   }
-  if (cardDrafts.hasAny()) {
-    draftListeners.forEach((l) => l());
+  const drafts = except ? cardDrafts.hasOtherThan(except) : cardDrafts.hasAny();
+  if (drafts && !draftsAccepted) {
+    draftListeners.forEach((l) => l({ afterGuard: skipGuards }));
     return "asked";
   }
   return signOutNow();

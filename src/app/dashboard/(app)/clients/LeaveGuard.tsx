@@ -52,14 +52,19 @@ export function useLeaveGuard(hasUnsaved: () => boolean) {
 
 /**
  * The inline "unsaved changes" prompt. Save runs `onSave` (true when everything saved) and then goes to the target
- * (or signs out); Discard runs `onDiscard` and goes. It runs in the form's own transition (`pending`,
- * `startTransition`), so the form's buttons and inputs are disabled while it saves. Errors from a failed save are
- * shown by the form itself.
+ * (or signs out); Discard runs `onDiscard` and goes. It runs in the form's own transition, so the form's buttons
+ * and inputs are disabled while it saves, and its own buttons are disabled during any of the form's saves
+ * (`pending`); `saving` is whether the prompt itself started the save.
+ * For Sign out, Discard doesn't touch the form at all: the edits are only dropped by the sign-out itself (a full
+ * page load), so a sign-out that is cancelled (another card's draft, then Keep editing) or fails (offline) leaves
+ * the form exactly as it was. `draftId` is the form's own card, whose draft that sign-out would drop anyway.
  */
 export function LeavePrompt({
   target,
   backHref,
   pending,
+  saving = pending,
+  draftId,
   startTransition,
   onStart,
   onSave,
@@ -69,6 +74,8 @@ export function LeavePrompt({
   target: string;
   backHref?: string;
   pending: boolean;
+  saving?: boolean;
+  draftId?: string;
   startTransition: TransitionStartFunction;
   onStart?: () => void;
   onSave: () => Promise<boolean>;
@@ -85,15 +92,18 @@ export function LeavePrompt({
     ref.current?.querySelector("button")?.focus({ preventScroll: true });
   }, [target]);
 
-  /** Goes on to the target. Sign-out skips the guards: this form has just been saved or discarded. */
-  async function proceed() {
+  /**
+   * Goes on to the target. Sign-out skips the guards (this form's question has just been answered) and, after a
+   * discard, this card's own draft; drafts on other cards are asked about by the sign-out button's prompt.
+   */
+  async function proceed(discarding: boolean) {
     if (!signOut) {
       startTransition(() => router.push(target));
       return;
     }
-    const outcome = await requestSignOut({ skipGuards: true });
+    const outcome = await requestSignOut({ skipGuards: true, except: discarding ? draftId : undefined });
     if (outcome === "failed") setFailed("signout");
-    else if (outcome === "asked") onClose(); // drafts on other cards: the sign-out button asks about those
+    else if (outcome === "asked") onClose();
   }
 
   return (
@@ -123,21 +133,21 @@ export function LeavePrompt({
                 setFailed("save");
                 return;
               }
-              await proceed();
+              await proceed(false);
             });
           }}
           className="btn btn-solid min-h-12 px-5"
         >
-          {pending ? "Saving…" : signOut ? "Save and sign out" : target === backHref ? "Save and go back" : "Save and leave"}
+          {saving ? "Saving…" : signOut ? "Save and sign out" : target === backHref ? "Save and go back" : "Save and leave"}
         </button>
         <button
           type="button"
           disabled={pending}
           onClick={() => {
             setFailed(null);
-            onDiscard();
+            if (!signOut) onDiscard();
             onStart?.();
-            startTransition(proceed);
+            startTransition(() => proceed(true));
           }}
           className="btn btn-line min-h-12 px-5"
         >
