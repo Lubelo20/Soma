@@ -36,7 +36,7 @@ function detailValue(key: string, raw: unknown): string {
 
 function Grid({ rows }: { rows: [string, React.ReactNode][] }) {
   return (
-    <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[15px]">
+    <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-[15px]">
       {rows.map(([label, value]) => (
         <div key={label} className="contents">
           <dt className="text-ink-subtle">{label}</dt>

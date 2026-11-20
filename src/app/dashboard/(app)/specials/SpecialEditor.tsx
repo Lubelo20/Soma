@@ -104,7 +104,7 @@ export function SpecialEditor({ special }: { special?: EditableSpecial }) {
       </label>
       <label className="label">
         First session (minutes)
-        <input name="durationMin" {...bind("durationMin")} type="number" min={10} max={480} step={5} required className="field" />
+        <input name="durationMin" {...bind("durationMin")} type="number" inputMode="numeric" min={10} max={480} step={5} required className="field" />
       </label>
       <div className="col-span-2 flex flex-wrap items-center gap-4">
         <button type="submit" disabled={pending} className="btn btn-solid min-h-10 px-5">

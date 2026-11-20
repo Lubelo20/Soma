@@ -29,7 +29,7 @@ export default async function NewRecordCardPage(props: PageProps<"/dashboard/cli
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Link href="/dashboard/clients" className="text-sm text-gold-deep">
+      <Link href="/dashboard/clients" className="back-link">
         ‹ Clients
       </Link>
       <div>

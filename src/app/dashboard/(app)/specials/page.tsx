@@ -31,7 +31,7 @@ function SpecialRow({ s }: { s: Treatment }) {
             role="switch"
             aria-checked={s.active}
             aria-label={`Show ${s.name} on the website`}
-            className={`relative h-7 w-12 flex-none cursor-pointer rounded-full border-none transition-colors ${s.active ? "bg-brand" : "bg-slate-300"}`}
+            className={`relative h-7 w-12 flex-none cursor-pointer rounded-full border-none transition-colors before:absolute before:-inset-2 before:content-[''] ${s.active ? "bg-brand" : "bg-slate-300"}`}
           >
             <span className={`absolute top-1 size-5 rounded-full bg-white transition-all ${s.active ? "left-6" : "left-1"}`} />
           </button>
@@ -40,13 +40,13 @@ function SpecialRow({ s }: { s: Treatment }) {
       </div>
 
       <details className="border-t border-line-soft pt-3">
-        <summary className="cursor-pointer text-sm font-medium text-ink-body">Edit</summary>
+        <summary className="tap-y cursor-pointer text-sm font-medium text-ink-body">Edit</summary>
         <div className="pt-4">
           <SpecialEditor special={{ id: s.id, name: s.name, durationMin: s.durationMin, priceCents: s.priceCents, posterUrl: s.posterUrl }} />
         </div>
       </details>
       <details className="border-t border-line-soft pt-3">
-        <summary className="cursor-pointer text-sm font-medium text-red-700">Delete</summary>
+        <summary className="tap-y cursor-pointer text-sm font-medium text-red-700">Delete</summary>
         <form action={deleteSpecial} className="mt-3 flex max-w-md flex-col gap-3">
           <input type="hidden" name="id" value={s.id} />
           <p className="m-0 text-sm leading-relaxed text-ink-muted">
@@ -71,7 +71,7 @@ export default async function SpecialsAdminPage() {
       <p className="m-0 max-w-2xl text-[15px] leading-relaxed text-ink-muted">Specials switched on appear in the website pop-up straight away, newest first.</p>
 
       <details className="card border-dashed border-brand">
-        <summary className="cursor-pointer font-semibold text-brand">+ Add a new special</summary>
+        <summary className="tap-y cursor-pointer font-semibold text-brand">+ Add a new special</summary>
         <div className="pt-5">
           <SpecialEditor />
         </div>

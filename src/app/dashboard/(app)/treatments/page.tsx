@@ -30,7 +30,7 @@ function TreatmentRow({ t }: { t: MenuTreatment }) {
       <div className="border-t border-line-soft px-4 py-5 sm:px-6">
         <TreatmentEditor treatment={t} />
         <details className="mt-5 border-t border-line-soft pt-4">
-          <summary className="cursor-pointer text-sm font-medium text-red-700">Delete this treatment</summary>
+          <summary className="tap-y cursor-pointer text-sm font-medium text-red-700">Delete this treatment</summary>
           <form action={deleteTreatment} className="mt-3 flex max-w-md flex-col gap-3">
             <input type="hidden" name="id" value={t.id} />
             <p className="m-0 text-sm leading-relaxed text-ink-muted">
@@ -73,7 +73,7 @@ export default async function TreatmentsAdminPage() {
       </datalist>
 
       <details className="card border-dashed border-brand">
-        <summary className="cursor-pointer font-semibold text-brand">+ Add a new treatment</summary>
+        <summary className="tap-y cursor-pointer font-semibold text-brand">+ Add a new treatment</summary>
         <div className="pt-5">
           <TreatmentEditor isNew treatment={{ name: "", category: "wellness", section: "", description: "", durationMin: 60, priceCents: null, active: true }} />
         </div>
@@ -84,7 +84,7 @@ export default async function TreatmentsAdminPage() {
           <h2 className="m-0 font-serif text-[30px] leading-tight font-light text-ink-strong">{cat === "wellness" ? "Treatments page" : "Skincare page"}</h2>
           {bySection(treatments.filter((t) => t.category === cat && t.active)).map((s) => (
             <details key={s.title} open className="flex flex-col gap-3">
-              <summary className="cursor-pointer text-gold-deep">
+              <summary className="tap-y cursor-pointer text-gold-deep">
                 <span className="eyebrow">
                   {s.title || "No section"} · {s.items.length}
                 </span>
@@ -101,7 +101,7 @@ export default async function TreatmentsAdminPage() {
 
       {treatments.some((t) => !t.active) && (
         <details className="flex flex-col gap-3">
-          <summary className="cursor-pointer text-gold-deep">
+          <summary className="tap-y cursor-pointer text-gold-deep">
             <span className="eyebrow">Hidden from the website · {treatments.filter((t) => !t.active).length}</span>
           </summary>
           <div className="flex flex-col gap-2 pt-3">

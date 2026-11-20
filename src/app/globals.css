@@ -95,7 +95,7 @@ body {
     @apply m-0 font-serif text-[38px] leading-tight font-light tracking-[-.01em] text-ink-strong;
   }
   .label {
-    @apply flex flex-col gap-2 text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase;
+    @apply flex min-w-0 flex-col gap-2 text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase;
   }
   .hint {
     @apply font-normal tracking-normal text-ink-subtle normal-case;
@@ -111,7 +111,15 @@ body {
     @apply inline-flex min-h-10 items-center rounded-[2px] border border-line bg-white px-3.5 text-[11.5px] font-medium tracking-[.16em] text-ink uppercase no-underline transition-colors hover:border-brand hover:text-brand-dark;
   }
   .tab-underline {
-    @apply -mb-px border-b-2 border-transparent px-1 py-3 text-[11.5px] font-medium tracking-[.16em] text-ink-muted uppercase no-underline transition-colors hover:text-ink-strong aria-[current=page]:border-brand aria-[current=page]:text-ink-strong;
+    @apply -mb-px border-b-2 border-transparent px-1 py-3 text-center max-lg:min-w-11 text-[11.5px] font-medium tracking-[.16em] text-ink-muted uppercase no-underline transition-colors hover:text-ink-strong aria-[current=page]:border-brand aria-[current=page]:text-ink-strong;
+  }
+  /* A small text link, toggle or checkbox label made a 44px-tall tap target without moving anything around it. */
+  .tap-y {
+    @apply -my-3 py-3;
+  }
+  /* The "‹ Back" links at the top of a page. */
+  .back-link {
+    @apply -my-3 inline-flex min-h-11 items-center self-start text-sm text-gold-deep;
   }
   .note {
     @apply m-0 rounded-[3px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900;

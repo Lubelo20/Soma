@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }: LayoutProps<"/dashboard">)
       {/* Below lg this is a compact bar that stays at the top while scrolling; the menu opens from it (DashboardNav). */}
       <aside className="sticky top-0 z-40 flex min-h-14 items-center gap-2 bg-forest-deep px-4 py-1.5 text-white sm:px-5 lg:flex-col lg:items-stretch lg:gap-6 lg:h-screen lg:w-64 lg:flex-none lg:p-6 lg:z-auto">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/dashboard" className="flex min-h-11 items-center gap-3 no-underline lg:min-h-0">
+          <Link href="/dashboard" className="flex min-h-11 items-center gap-3 no-underline max-lg:-mx-2 max-lg:px-2 lg:min-h-0">
             <Image src="/images/logo.png" alt="" width={31} height={32} className="h-8 w-auto" />
             <span className="flex flex-col leading-[1.15] max-lg:sr-only">
               <span className="text-[13px] font-semibold tracking-[.2em] text-white">INFINITY SOMA</span>

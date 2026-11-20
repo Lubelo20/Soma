@@ -41,7 +41,7 @@ export function TreatmentEditor({ treatment, isNew = false }: { treatment: Edita
       </label>
       <label className={labelClass}>
         Minutes
-        <input name="durationMin" type="number" min={10} max={480} step={5} defaultValue={treatment.durationMin} required className="field" />
+        <input name="durationMin" type="number" inputMode="numeric" min={10} max={480} step={5} defaultValue={treatment.durationMin} required className="field" />
       </label>
       <label className={labelClass}>
         Price (R)
@@ -60,7 +60,7 @@ export function TreatmentEditor({ treatment, isNew = false }: { treatment: Edita
         <textarea name="description" rows={3} maxLength={600} defaultValue={treatment.description} className="field resize-y py-2" />
       </label>
       <div className="col-span-2 flex flex-wrap items-center gap-4 sm:col-span-4">
-        <label className="flex items-center gap-2 text-sm text-ink-body">
+        <label className="tap-y flex items-center gap-2 text-sm text-ink-body">
           <input type="checkbox" name="active" defaultChecked={treatment.active} className="size-4 accent-brand" />
           Show on website &amp; allow bookings
         </label>

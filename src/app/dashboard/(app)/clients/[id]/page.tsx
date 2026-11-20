@@ -26,7 +26,7 @@ function Section({ title, edit, updated, children }: { title: string; edit?: str
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="m-0 font-serif text-[22px] font-normal text-ink-strong">{title}</h2>
         {edit && (
-          <Link href={edit} className="inline-flex min-h-11 items-center text-sm font-medium text-gold-deep">
+          <Link href={edit} className="-mx-3 inline-flex min-h-11 items-center px-3 text-sm font-medium text-gold-deep">
             Edit
           </Link>
         )}
@@ -67,15 +67,15 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
 
   return (
     <div className="flex max-w-3xl flex-col gap-5">
-      <Link href="/dashboard/clients" className="text-sm text-gold-deep">
+      <Link href="/dashboard/clients" className="back-link">
         ‹ All clients
       </Link>
       <div className="flex flex-col gap-1">
         <span className="eyebrow">Record card</span>
         <h1 className="page-title">{client.fullName}</h1>
         <p className="m-0 text-[15px]">
-          <a href={`tel:${client.phone}`}>{client.phone}</a> ·{" "}
-          <a href={whatsappLink(client.phone)} target="_blank" rel="noopener noreferrer">
+          <a href={`tel:${client.phone}`} className="tap-y">{client.phone}</a> ·{" "}
+          <a href={whatsappLink(client.phone)} target="_blank" rel="noopener noreferrer" className="tap-y">
             WhatsApp
           </a>
         </p>
@@ -125,7 +125,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
             {!card.changedSinceSigned && (
               <>
                 {" · "}
-                <Link href={signSoon} className="font-normal text-ink-muted underline">
+                <Link href={signSoon} className="tap-y font-normal text-ink-muted underline">
                   Sign again
                 </Link>
               </>
@@ -142,7 +142,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
         {card.changedSinceSigned && (
           <div className="note flex flex-wrap items-center gap-3">
             <span className="font-semibold">Health history changed since last signed</span>
-            <Link href={signSoon} className="font-semibold underline">
+            <Link href={signSoon} className="tap-y font-semibold underline">
               Get a new signature
             </Link>
           </div>
@@ -164,7 +164,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
 
       <Section title="Treatments">
         <details className="rounded-[3px] border border-dashed border-brand p-4">
-          <summary className="cursor-pointer font-semibold text-brand">+ Add a treatment entry</summary>
+          <summary className="tap-y cursor-pointer font-semibold text-brand">+ Add a treatment entry</summary>
           <div className="pt-4">
             <TreatmentEntryForm clientId={client.id} bookings={card.bookings} today={today} />
           </div>
@@ -189,13 +189,13 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
                 {e.notes && <p className="m-0 text-[15px] break-words whitespace-pre-line">{e.notes}</p>}
                 <div className="flex flex-col gap-2">
                   <details>
-                    <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-gold-deep">Edit</summary>
+                    <summary className="-mx-3 inline-flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium text-gold-deep">Edit</summary>
                     <div className="pt-3">
                       <TreatmentEntryForm clientId={client.id} bookings={card.bookings} entry={e} today={today} />
                     </div>
                   </details>
                   <details>
-                    <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-red-700">Delete</summary>
+                    <summary className="-mx-3 inline-flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium text-red-700">Delete</summary>
                     <form action={deleteEntry} className="flex max-w-md flex-col gap-3 pb-2">
                       <input type="hidden" name="id" value={e.id} />
                       <input type="hidden" name="clientId" value={client.id} />
@@ -243,7 +243,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
                 <span className="font-semibold text-ink-strong">Signed {formatDateTime(c.signedAt)}</span>
                 <span className="text-sm text-ink-muted">Photo consent: {c.photoConsent ? "Yes" : "No"}</span>
                 <details>
-                  <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-gold-deep">View</summary>
+                  <summary className="-mx-3 inline-flex min-h-11 cursor-pointer items-center px-3 text-sm font-medium text-gold-deep">View</summary>
                   <div className="flex flex-col gap-4 pt-2">
                     {statementsOf(c.statements).length > 0 && (
                       <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-[15px]">

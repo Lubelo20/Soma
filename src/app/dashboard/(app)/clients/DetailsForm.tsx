@@ -270,6 +270,7 @@ export function DetailsForm({
             minLength={2}
             maxLength={120}
             autoComplete="off"
+            autoCapitalize="words"
             className="field"
           />
         </label>
@@ -390,6 +391,7 @@ export function DetailsForm({
             required
             maxLength={200}
             autoComplete="off"
+            autoCapitalize="words"
             className="field"
           />
         </label>

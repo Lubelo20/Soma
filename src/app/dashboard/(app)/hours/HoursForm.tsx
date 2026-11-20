@@ -17,7 +17,7 @@ export function HoursForm({ weekly }: { weekly: DayHours[] }) {
         return (
           <div key={d} className="grid grid-cols-[110px_auto] items-center gap-x-4 gap-y-2 sm:grid-cols-[130px_90px_1fr]">
             <span className="font-semibold text-ink-strong">{DAYS[d]}</span>
-            <label className="flex items-center gap-2 text-sm text-ink-body">
+            <label className="tap-y flex items-center gap-2 text-sm text-ink-body">
               <input type="checkbox" name={`open-${d}`} defaultChecked={!!h} className="size-4 accent-brand" />
               Open
             </label>

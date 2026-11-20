@@ -290,7 +290,7 @@ export function CardWizard({
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href={cardHref} className="self-start text-sm text-gold-deep">
+      <Link href={cardHref} className="back-link">
         ‹ Back to card
       </Link>
       {guard.target && (

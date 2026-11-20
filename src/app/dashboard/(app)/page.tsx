@@ -111,7 +111,7 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
               </div>
 
               {/* Labels sit beside their values even on phones, which keeps each card short. */}
-              <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-line-soft pt-4 text-[15px] sm:gap-x-8">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 border-t border-line-soft pt-4 text-[15px] sm:gap-x-8">
                 <span className="text-ink-subtle">Client</span>
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="font-semibold text-ink-strong">{treatedName(b)}</span>
@@ -124,28 +124,28 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
                   ) : (
                     <span className="pill bg-slate-100 text-slate-700">New client</span>
                   )}
-                  <Link href={`/dashboard/clients/from-booking/${b.id}`} prefetch={false} className="inline-flex items-center gap-1">
+                  <Link href={`/dashboard/clients/from-booking/${b.id}`} prefetch={false} className="tap-y inline-flex items-center gap-1">
                     <Icon name="person" size={14} strokeWidth={1.5} />
                     {withCards.has(b.id) ? "Open record card" : "Start record card"}
                   </Link>
                 </span>
                 <span className="text-ink-subtle">Phone</span>
                 <span>
-                  <a href={`tel:${b.clientPhone}`}>{b.clientPhone}</a> ·{" "}
-                  <a href={whatsappLink(b.clientPhone)} target="_blank" rel="noopener noreferrer">
+                  <a href={`tel:${b.clientPhone}`} className="tap-y">{b.clientPhone}</a> ·{" "}
+                  <a href={whatsappLink(b.clientPhone)} target="_blank" rel="noopener noreferrer" className="tap-y">
                     WhatsApp
                   </a>
                 </span>
                 <span className="text-ink-subtle">Email</span>
-                <a href={`mailto:${b.clientEmail}`} className="break-all">
+                <a href={`mailto:${b.clientEmail}`} className="tap-y break-all">
                   {b.clientEmail}
                 </a>
                 {b.forPhone && (
                   <>
                     <span className="text-ink-subtle">Their phone</span>
                     <span>
-                      <a href={`tel:${b.forPhone}`}>{b.forPhone}</a> ·{" "}
-                      <a href={whatsappLink(b.forPhone)} target="_blank" rel="noopener noreferrer">
+                      <a href={`tel:${b.forPhone}`} className="tap-y">{b.forPhone}</a> ·{" "}
+                      <a href={whatsappLink(b.forPhone)} target="_blank" rel="noopener noreferrer" className="tap-y">
                         WhatsApp
                       </a>
                     </span>
@@ -154,13 +154,13 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
                 {b.notes && (
                   <>
                     <span className="text-ink-subtle">Client notes</span>
-                    <span className="whitespace-pre-line">{b.notes}</span>
+                    <span className="break-words whitespace-pre-line">{b.notes}</span>
                   </>
                 )}
                 {b.staffNote && (
                   <>
                     <span className="text-ink-subtle">Message sent</span>
-                    <span className="whitespace-pre-line">{b.staffNote}</span>
+                    <span className="break-words whitespace-pre-line">{b.staffNote}</span>
                   </>
                 )}
                 <span className="text-ink-subtle">Requested</span>

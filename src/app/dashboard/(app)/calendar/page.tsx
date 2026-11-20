@@ -94,11 +94,11 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
             )}
           </p>
         </div>
-        <nav aria-label="Month" className="flex items-center gap-1">
+        <nav aria-label="Month" className="flex items-center gap-1 max-sm:w-full">
           <Link href={`/dashboard/calendar?month=${shiftMonth(ym, -1)}`} aria-label="Previous month" className="tab">
             ←
           </Link>
-          <span className="min-w-[160px] text-center font-serif text-[22px] text-ink-strong">{monthLabel(ym)}</span>
+          <span className="min-w-0 flex-1 text-center font-serif text-[20px] text-ink-strong sm:min-w-[160px] sm:flex-none sm:text-[22px]">{monthLabel(ym)}</span>
           <Link href={`/dashboard/calendar?month=${shiftMonth(ym, 1)}`} aria-label="Next month" className="tab">
             →
           </Link>
@@ -127,7 +127,7 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
               return (
                 <Link
                   key={d}
-                  href={`/dashboard/calendar?month=${ym}&day=${d}`}
+                  href={`/dashboard/calendar?month=${ym}&day=${d}#day`}
                   aria-current={isSelected ? "date" : undefined}
                   className={`flex min-h-20 flex-col gap-1 border-r border-b border-line-soft p-1.5 no-underline transition-colors md:min-h-28 md:p-2 ${
                     isSelected ? "bg-mint" : closed ? "bg-cream/80 hover:bg-mint-soft" : "bg-white hover:bg-mint-soft"
@@ -174,7 +174,9 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
           </div>
         </div>
 
-        <aside className="card flex flex-col gap-5">
+        <aside className="card relative flex flex-col gap-5">
+          {/* Where a tapped day scrolls to when this panel is below the calendar; beside it (xl) nothing scrolls. */}
+          <span id="day" aria-hidden="true" className="absolute top-0 xl:hidden" />
           {selected ? (
             <>
               <div className="flex flex-col gap-1">
@@ -209,15 +211,15 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
                         <span className="font-semibold text-ink-strong">{treatedName(b)}</span>
                         {b.forName && <span className="text-ink-muted">Booked by {b.clientName}</span>}
                         <span>
-                          <a href={`tel:${b.clientPhone}`}>{b.clientPhone}</a> ·{" "}
-                          <a href={whatsappLink(b.clientPhone)} target="_blank" rel="noopener noreferrer">
+                          <a href={`tel:${b.clientPhone}`} className="tap-y">{b.clientPhone}</a> ·{" "}
+                          <a href={whatsappLink(b.clientPhone)} target="_blank" rel="noopener noreferrer" className="tap-y">
                             WhatsApp
                           </a>
                         </span>
-                        <a href={`mailto:${b.clientEmail}`} className="break-all text-ink-muted">
+                        <a href={`mailto:${b.clientEmail}`} className="tap-y break-all text-ink-muted">
                           {b.clientEmail}
                         </a>
-                        {b.notes && <span className="pt-1 whitespace-pre-line text-ink-muted">{b.notes}</span>}
+                        {b.notes && <span className="pt-1 break-words whitespace-pre-line text-ink-muted">{b.notes}</span>}
                         <span className="pt-1 text-xs text-ink-subtle">{b.ref}</span>
                       </div>
                       <BookingActions id={b.id} status={b.status} startsAt={b.startsAt} />

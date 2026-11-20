@@ -50,7 +50,7 @@ export default async function HoursPage() {
               </span>
               <form action={removeClosure}>
                 <input type="hidden" name="day" value={c.day} />
-                <button type="submit" className="cursor-pointer text-sm font-semibold text-red-700">
+                <button type="submit" className="tap-y -mx-2 cursor-pointer px-2 text-sm font-semibold text-red-700">
                   Remove
                 </button>
               </form>

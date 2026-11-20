@@ -26,7 +26,7 @@ export default async function HistoryPage(props: PageProps<"/dashboard/clients/[
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Link href={`/dashboard/clients/${card.client.id}`} className="text-sm text-gold-deep">
+      <Link href={`/dashboard/clients/${card.client.id}`} className="back-link">
         ‹ Back to card
       </Link>
       <div>

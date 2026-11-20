@@ -37,8 +37,12 @@ export default async function EnquiriesPage() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-[15px]">
-                <a href={`tel:${e.phone}`}>{e.phone}</a>
-                {e.email && <a href={`mailto:${e.email}`}>{e.email}</a>}
+                <a href={`tel:${e.phone}`} className="tap-y">{e.phone}</a>
+                {e.email && (
+                  <a href={`mailto:${e.email}`} className="tap-y min-w-0 break-all">
+                    {e.email}
+                  </a>
+                )}
               </div>
               {e.message && <p className="m-0 text-[15px] leading-relaxed whitespace-pre-line text-ink-body">{e.message}</p>}
               <form action={setEnquiryHandled} className="max-sm:w-full">
