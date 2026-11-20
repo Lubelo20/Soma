@@ -51,7 +51,9 @@ export function BookingForm({
   const [slots, setSlots] = useState<string[] | null>(null);
   const [datePage, setDatePage] = useState(0);
   // Controlled so the details survive React's form reset after a rejected submit.
-  const [details, setDetails] = useState({ name: "", phone: "", email: "", notes: "" });
+  const [details, setDetails] = useState({ name: "", phone: "", email: "", notes: "", forName: "", forPhone: "" });
+  // "I'm booking for someone else": while unticked, their name and phone aren't rendered, so they aren't sent.
+  const [forOther, setForOther] = useState(false);
   const bind = (key: keyof typeof details) => ({
     name: key,
     value: details[key],
@@ -84,7 +86,14 @@ export function BookingForm({
         <span className="eyebrow">REQUEST RECEIVED · {b.ref}</span>
         <h2 className="m-0 font-serif text-[clamp(32px,3.6vw,42px)] leading-tight font-light">Thank you! We&rsquo;ll confirm shortly</h2>
         <p className="lede">
-          You&rsquo;ve requested <strong className="text-ink-strong">{b.treatmentName}</strong> on{" "}
+          You&rsquo;ve requested <strong className="text-ink-strong">{b.treatmentName}</strong>
+          {b.forName && (
+            <>
+              {" "}
+              for <strong className="text-ink-strong">{b.forName}</strong>
+            </>
+          )}{" "}
+          on{" "}
           <strong className="text-ink-strong">{b.when}</strong>. This time is held for you, but your booking is{" "}
           <strong className="text-ink-strong">not confirmed yet</strong>. We&rsquo;ll email {b.email} as soon as it is.
         </p>
@@ -214,6 +223,36 @@ export function BookingForm({
         </Step>
 
         <Step n={4} title="Your details">
+          <label className="flex items-center gap-3 text-[15px] text-ink-body">
+            <input
+              type="checkbox"
+              name="forSomeoneElse"
+              value="on"
+              checked={forOther}
+              onChange={(e) => setForOther(e.target.checked)}
+              className="size-4 accent-brand"
+            />
+            I&rsquo;m booking for someone else
+          </label>
+          {forOther && (
+            <div className="grid grid-cols-1 gap-6 border-l-2 border-gold pl-4 sm:grid-cols-2">
+              <p className="m-0 text-[14.5px] leading-relaxed text-ink-body sm:col-span-2">
+                We&rsquo;ll send the confirmation to you. Please give us the name of the person coming in for the treatment.
+              </p>
+              <label className={labelClass}>
+                Their full name
+                <input type="text" {...bind("forName")} autoComplete="off" className="field" aria-invalid={!!err.forName} />
+                {err.forName && <span className={fieldError}>{err.forName}</span>}
+              </label>
+              <label className={labelClass}>
+                <span>
+                  Their phone number <span className={hint}>(optional)</span>
+                </span>
+                <input type="tel" {...bind("forPhone")} autoComplete="off" className="field" aria-invalid={!!err.forPhone} />
+                {err.forPhone && <span className={fieldError}>{err.forPhone}</span>}
+              </label>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <label className={labelClass}>
               Full name

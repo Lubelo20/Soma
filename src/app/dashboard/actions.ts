@@ -119,10 +119,10 @@ export async function updateBooking(fd: FormData) {
   const reason = str(fd, "reason", 1000);
   if (!t) return;
 
-  const [b] = await sql<{ ref: string; treatmentName: string; startsAt: Date; clientName: string; clientEmail: string; isSpecial: boolean; bookedPriceCents: number | null }[]>`
+  const [b] = await sql<{ ref: string; treatmentName: string; startsAt: Date; clientName: string; clientEmail: string; forName: string; isSpecial: boolean; bookedPriceCents: number | null }[]>`
     update bookings set status = ${t.to}, staff_note = ${reason}, updated_at = now()
     where id = ${id} and status in ${sql(t.from)}
-    returning ref, treatment_name, starts_at, client_name, client_email, is_special, booked_price_cents`;
+    returning ref, treatment_name, starts_at, client_name, client_email, for_name, is_special, booked_price_cents`;
 
   if (b) audit(`booking ${t.to}`, { ref: b.ref });
   if (b && t.email) {
@@ -131,6 +131,8 @@ export async function updateBooking(fd: FormData) {
       treatmentName: b.treatmentName,
       when: formatDateTime(b.startsAt),
       clientName: b.clientName,
+      // Set when booked for someone else: the email still goes to the booker, and says who it's for.
+      forName: b.forName || undefined,
       // From the booking, not the treatment: the special may have changed or been deleted since.
       specialPrice: b.isSpecial ? formatPrice(b.bookedPriceCents) : undefined,
     };

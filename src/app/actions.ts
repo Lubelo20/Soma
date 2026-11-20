@@ -7,6 +7,7 @@ import { clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail, staffInbox } from "@/lib/email";
 import { enquiryKinds, type EnquiryKind } from "@/lib/site";
 import { EMAIL_RE, PHONE_RE } from "@/lib/validation";
+import { bookingFor } from "@/lib/booking-for";
 import { availableSlots, bookableDates, clinicTime, formatDate, weekday, type Busy } from "@/lib/slots";
 
 const field = (fd: FormData, name: string, max = 200) => String(fd.get(name) ?? "").trim().slice(0, max);
@@ -91,8 +92,9 @@ export async function getSlots(treatmentId: number, date: string): Promise<strin
 export type BookingState = {
   status: "idle" | "success" | "error";
   message?: string;
-  errors?: Partial<Record<"name" | "phone" | "email" | "slot", string>>;
-  booking?: { ref: string; treatmentName: string; when: string; email: string; specialPrice?: string };
+  errors?: Partial<Record<"name" | "phone" | "email" | "slot" | "forName" | "forPhone", string>>;
+  // forName is set only when the booking was made for someone else.
+  booking?: { ref: string; treatmentName: string; when: string; email: string; specialPrice?: string; forName?: string };
 };
 
 function newRef() {
@@ -110,11 +112,20 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   const phone = line(fd, "phone", 30);
   const email = line(fd, "email").toLowerCase();
   const notes = field(fd, "notes", 1000);
+  // "I'm booking for someone else": the fields above stay the booker's own; these name the person being treated.
+  const forOther = bookingFor({
+    ticked: fd.get("forSomeoneElse") === "on",
+    forName: line(fd, "forName"),
+    forPhone: line(fd, "forPhone", 30),
+    bookerName: name,
+  });
+  const { forName, forPhone } = forOther;
 
   const errors: BookingState["errors"] = {};
   if (name.length < 2) errors.name = "Please enter your name.";
   if (!PHONE_RE.test(phone)) errors.phone = "Please enter a valid phone number.";
   if (!EMAIL_RE.test(email)) errors.email = "Please enter a valid email address.";
+  Object.assign(errors, forOther.errors);
   if (Object.keys(errors).length) return { status: "error", errors };
 
   // Stops one person or bot holding many slots: a per-device hourly limit, and at most 3 upcoming
@@ -141,8 +152,8 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   const specialPrice = isSpecial ? formatPrice(treatment.priceCents) : undefined;
   try {
     await sql`
-      insert into bookings (ref, treatment_id, treatment_name, starts_at, ends_at, client_name, client_phone, client_email, notes, is_special, booked_price_cents)
-      values (${ref}, ${treatment.id}, ${treatment.name}, ${startsAt}, ${endsAt}, ${name}, ${phone}, ${email}, ${notes}, ${isSpecial}, ${bookedPriceCents})`;
+      insert into bookings (ref, treatment_id, treatment_name, starts_at, ends_at, client_name, client_phone, client_email, notes, is_special, booked_price_cents, for_name, for_phone)
+      values (${ref}, ${treatment.id}, ${treatment.name}, ${startsAt}, ${endsAt}, ${name}, ${phone}, ${email}, ${notes}, ${isSpecial}, ${bookedPriceCents}, ${forName}, ${forPhone})`;
   } catch (err) {
     // 23P01 = exclusion violation: someone else took an overlapping slot a moment ago.
     if ((err as { code?: string }).code === "23P01") {
@@ -153,10 +164,10 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
   }
 
   const when = `${formatDate(date)} at ${time}`;
-  const summary = { ref, treatmentName: treatment.name, when, clientName: name, specialPrice };
+  const summary = { ref, treatmentName: treatment.name, when, clientName: name, specialPrice, forName: forName || undefined };
   await Promise.all([
     sendEmail({ to: email, ...emails.bookingReceived(summary) }),
-    sendEmail({ to: staffInbox(), ...emails.staffNewBooking({ ...summary, phone, email, notes }), replyTo: email }),
+    sendEmail({ to: staffInbox(), ...emails.staffNewBooking({ ...summary, forPhone, phone, email, notes }), replyTo: email }),
   ]);
-  return { status: "success", booking: { ref, treatmentName: treatment.name, when, email, specialPrice } };
+  return { status: "success", booking: { ref, treatmentName: treatment.name, when, email, specialPrice, forName: forName || undefined } };
 }

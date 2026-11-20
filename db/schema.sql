@@ -65,6 +65,12 @@ create index if not exists bookings_starts_at_idx on bookings (starts_at);
 alter table bookings add column if not exists is_special boolean not null default false;
 alter table bookings add column if not exists booked_price_cents integer;
 
+-- "I'm booking for someone else". Empty for_name means the booking is for the person in client_name. Otherwise
+-- client_name/client_phone/client_email are the booker's contact details (who gets the emails) and for_name and
+-- for_phone (optional, may be empty) identify the person being treated, whose record card the booking belongs to.
+alter table bookings add column if not exists for_name text not null default '';
+alter table bookings add column if not exists for_phone text not null default '';
+
 create table if not exists enquiries (
   id         serial primary key,
   kind       text not null,
