@@ -217,3 +217,40 @@ export function isUnder18(dob: string, today: string): boolean {
   const cutoff = `${Number(today.slice(0, 4)) - 18}${today.slice(4)}`;
   return dob > cutoff;
 }
+
+/** How many health conditions have neither Yes nor No. A missing or malformed section counts every one. */
+export function unansweredHealthCount(health: unknown): number {
+  const h = typeof health === "object" && health !== null ? (health as Record<string, unknown>) : {};
+  return HEALTH_CONDITIONS.filter(({ key }) => {
+    const entry = h[key] as { answer?: unknown } | undefined;
+    return entry?.answer !== "yes" && entry?.answer !== "no";
+  }).length;
+}
+
+/** A real YYYY-MM-DD calendar date from 1900 on (rejects 2026-02-31). */
+export function isRealDate(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || s < "1900-01-01") return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+
+/** Initials as typed, with dots and spaces removed ("T.M." becomes "TM"). */
+export const normalizeInitials = (raw: string) => raw.normalize("NFC").replace(/[.\s]+/g, "");
+
+/** 1 to 6 letters once dots and spaces are removed. */
+export const isValidInitials = (raw: string) => /^\p{L}{1,6}$/u.test(normalizeInitials(raw));
+
+const nameKey = (name: string) => name.trim().replace(/\s+/g, " ").toLowerCase();
+
+/** Whether two names are the same, ignoring case, outer spaces and repeated inner spaces. */
+export const sameName = (a: string, b: string) => nameKey(a) === nameKey(b);
+
+/**
+ * Which card a booking opens, from the cards whose phone or email match it (newest first): the first card with
+ * the booking's name; else the only card; else none, so staff start a new card and see the duplicate warning.
+ */
+export function cardForBooking(bookingName: string, cards: { id: string; fullName: string }[]): string | null {
+  const byName = cards.find((c) => sameName(c.fullName, bookingName));
+  if (byName) return byName.id;
+  return cards.length === 1 ? cards[0].id : null;
+}

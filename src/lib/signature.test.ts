@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_SIGNATURE_EXTENT, MIN_SIGNATURE_POINTS, isValidSignaturePath, strokesToPath, type Point } from "./signature";
+import { MIN_SIGNATURE_EXTENT, MIN_SIGNATURE_POINTS, isValidSignaturePath, pathToStrokes, strokesToPath, type Point } from "./signature";
 
 const line = (n: number): Point[] => Array.from({ length: n }, (_, i) => [i * 10, 50] as Point);
 
@@ -67,5 +67,18 @@ describe("isValidSignaturePath: taps and tiny scribbles", () => {
   it("accepts a tall narrow stroke (40 high, 2 wide)", () => {
     const tall = Array.from({ length: 12 }, (_, i): Point => [200 + (i % 2) * 2, 50 + (i * 40) / 11]);
     expect(isValidSignaturePath(strokesToPath([tall]))).toBe(true);
+  });
+});
+
+describe("pathToStrokes", () => {
+  it("splits a valid path into strokes, keeping lone dots", () => {
+    expect(pathToStrokes("M1 2 L3 4.1 M600 0")).toEqual([
+      [[1, 2], [3, 4.1]],
+      [[600, 0]],
+    ]);
+  });
+  it("gives nothing for an invalid path", () => {
+    expect(pathToStrokes("M1 2 Z")).toEqual([]);
+    expect(pathToStrokes("")).toEqual([]);
   });
 });

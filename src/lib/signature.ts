@@ -32,18 +32,24 @@ const COMMAND = `[ML]${NUM} ${NUM}`;
 const PATH_RE = new RegExp(`^M${NUM} ${NUM}(?: ${COMMAND})*$`);
 const COMMAND_RE = new RegExp(`([ML])(${NUM}) (${NUM})`, "g");
 
-export function isValidSignaturePath(path: string): boolean {
-  if (path.length === 0 || path.length > MAX_PATH_LENGTH) return false;
-  if (!PATH_RE.test(path)) return false;
-  // Group the points into strokes: each M starts a new one.
+/** The strokes of a well-formed path inside the viewbox (each M starts one), or [] for anything else. */
+export function pathToStrokes(path: string): Point[][] {
+  if (path.length === 0 || path.length > MAX_PATH_LENGTH) return [];
+  if (!PATH_RE.test(path)) return [];
   const strokes: Point[][] = [];
   for (const m of path.matchAll(COMMAND_RE)) {
     const x = Number(m[2]);
     const y = Number(m[3]);
-    if (x > SIGNATURE_VIEWBOX.width || y > SIGNATURE_VIEWBOX.height) return false;
+    if (x > SIGNATURE_VIEWBOX.width || y > SIGNATURE_VIEWBOX.height) return [];
     if (m[1] === "M") strokes.push([]);
     strokes[strokes.length - 1].push([x, y]);
   }
+  return strokes;
+}
+
+export function isValidSignaturePath(path: string): boolean {
+  const strokes = pathToStrokes(path);
+  if (strokes.length === 0) return false;
   const drawn = strokes.filter((s) => s.length >= 2).flat();
   if (drawn.length < MIN_SIGNATURE_POINTS) return false;
   const xs = drawn.map(([x]) => x);

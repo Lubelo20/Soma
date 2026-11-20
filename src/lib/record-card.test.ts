@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   areaLabels,
   BODY_AREAS,
+  cardForBooking,
   CONSENT_STATEMENTS,
+  HEALTH_CONDITIONS,
+  isRealDate,
+  isValidInitials,
+  normalizeInitials,
+  sameName,
+  unansweredHealthCount,
   healthWarnings,
   isUnder18,
   normalizePhone,
@@ -116,5 +123,79 @@ describe("consent", () => {
     expect(CONSENT_STATEMENTS).toHaveLength(6);
     expect(CONSENT_STATEMENTS[3]).toBe("I understand there are no refunds on services/products.");
     expect(REQUIRED_CONSENT_COUNT).toBe(5);
+  });
+});
+
+describe("unansweredHealthCount", () => {
+  it("counts conditions with no Yes or No", () => {
+    const h = parseHealth(fd([["health.pregnancy", "yes"], ["health.heart", "no"]]));
+    expect(unansweredHealthCount(h)).toBe(HEALTH_CONDITIONS.length - 2);
+  });
+  it("is the full count for an all-unanswered section and 0 when all answered", () => {
+    expect(unansweredHealthCount(parseHealth(fd([])))).toBe(HEALTH_CONDITIONS.length);
+    const all = parseHealth(fd(HEALTH_CONDITIONS.map(({ key }) => [`health.${key}`, "no"] as [string, string])));
+    expect(unansweredHealthCount(all)).toBe(0);
+  });
+  it("treats a missing or malformed entry as unanswered", () => {
+    expect(unansweredHealthCount({ heart: { answer: "maybe" } })).toBe(HEALTH_CONDITIONS.length);
+    expect(unansweredHealthCount("nonsense")).toBe(HEALTH_CONDITIONS.length);
+  });
+});
+
+describe("isRealDate", () => {
+  it("accepts real dates from 1900 on", () => {
+    expect(isRealDate("2026-02-28")).toBe(true);
+    expect(isRealDate("1900-01-01")).toBe(true);
+    expect(isRealDate("2024-02-29")).toBe(true);
+  });
+  it("rejects impossible dates, other formats and years before 1900", () => {
+    expect(isRealDate("2026-02-31")).toBe(false);
+    expect(isRealDate("2026-2-3")).toBe(false);
+    expect(isRealDate("")).toBe(false);
+    expect(isRealDate("1899-12-31")).toBe(false);
+    expect(isRealDate("0001-01-01")).toBe(false);
+  });
+});
+
+describe("initials", () => {
+  it("strips dots and spaces", () => {
+    expect(normalizeInitials(" T.M. ")).toBe("TM");
+    expect(normalizeInitials("t. m. k.")).toBe("tmk");
+  });
+  it("accepts 1 to 6 letters after normalising, in any script", () => {
+    expect(isValidInitials("T.M.")).toBe(true);
+    expect(isValidInitials("Ž")).toBe(true);
+    expect(isValidInitials("A.B.C.D.E.F.")).toBe(true);
+  });
+  it("rejects empty, digits, other punctuation and more than 6 letters", () => {
+    expect(isValidInitials(" . ")).toBe(false);
+    expect(isValidInitials("T1")).toBe(false);
+    expect(isValidInitials("T-M")).toBe(false);
+    expect(isValidInitials("ABCDEFG")).toBe(false);
+  });
+});
+
+describe("cardForBooking", () => {
+  const a = { id: "a", fullName: "Thandi Mokoena" };
+  const b = { id: "b", fullName: "Sipho Mokoena" };
+  it("prefers the card with the booking's name, ignoring case and spacing", () => {
+    expect(cardForBooking("  thandi   MOKOENA ", [b, a])).toBe("a");
+  });
+  it("opens the only matching card even when the name differs", () => {
+    expect(cardForBooking("T. Mokoena", [a])).toBe("a");
+  });
+  it("gives no card when several match and none by name, or none match", () => {
+    expect(cardForBooking("Lerato", [a, b])).toBeNull();
+    expect(cardForBooking("Lerato", [])).toBeNull();
+  });
+  it("takes the first (newest) of several with the same name", () => {
+    expect(cardForBooking("Thandi Mokoena", [b, { id: "c", fullName: "Thandi Mokoena" }, a])).toBe("c");
+  });
+});
+
+describe("sameName", () => {
+  it("compares trimmed, case-insensitive, with inner spaces collapsed", () => {
+    expect(sameName("Thandi  Mokoena", " thandi mokoena")).toBe(true);
+    expect(sameName("Thandi", "Thando")).toBe(false);
   });
 });
