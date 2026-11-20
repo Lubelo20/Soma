@@ -7,10 +7,10 @@ import { redirect } from "next/navigation";
 import { sql } from "./db";
 import { SESSION_COOKIE as COOKIE } from "./session-cookie";
 
-// A session ends after 12 hours without dashboard activity (the database expiry slides forward on each
+// A session ends after 60 minutes without dashboard activity (the database expiry slides forward on each
 // request), and after 30 days at most, when the cookie itself expires.
 const SESSION_DAYS = 30;
-const IDLE_HOURS = 12;
+const IDLE_MINUTES = 60;
 
 const PASSWORD_KEY = "dashboard_password_hash";
 
@@ -38,7 +38,7 @@ export async function verifyPassword(password: string) {
 export async function startSession() {
   const token = randomBytes(32).toString("base64url");
   const expires = new Date(Date.now() + SESSION_DAYS * 86400_000);
-  await sql`insert into sessions (token_hash, expires_at) values (${hashToken(token)}, now() + make_interval(hours => ${IDLE_HOURS}))`;
+  await sql`insert into sessions (token_hash, expires_at) values (${hashToken(token)}, now() + make_interval(mins => ${IDLE_MINUTES}))`;
   await sql`delete from sessions where expires_at < now()`;
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
@@ -62,7 +62,7 @@ export const isSignedIn = cache(async () => {
   const token = (await cookies()).get(COOKIE)?.value;
   if (!token) return false;
   const [row] = await sql`
-    update sessions set expires_at = now() + make_interval(hours => ${IDLE_HOURS})
+    update sessions set expires_at = now() + make_interval(mins => ${IDLE_MINUTES})
     where token_hash = ${hashToken(token)} and expires_at > now()
     returning 1`;
   return Boolean(row);
@@ -71,6 +71,14 @@ export const isSignedIn = cache(async () => {
 /** Use at the top of every dashboard page and server action. */
 export async function requireStaff() {
   if (!(await isSignedIn())) redirect("/dashboard/login");
+}
+
+/** Shown when a form is saved after the session has ended. */
+export const SIGNED_OUT = "Your session has ended. Sign in again in a new tab, then press Save here. Nothing you typed has been lost.";
+
+/** Like requireStaff, but answers instead of redirecting, for server actions that report back to the form. */
+export async function staffCheck(): Promise<boolean> {
+  return isSignedIn();
 }
 
 export const MIN_PASSWORD = 12;

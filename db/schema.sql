@@ -107,3 +107,72 @@ create table if not exists rate_events (
   at   timestamptz not null default now()
 );
 create index if not exists rate_events_lookup on rate_events (kind, key, at);
+
+-- Client Record Card (staff dashboard). Holds health information, which POPIA treats as special personal
+-- information: only ever read or written behind the staff sign-in.
+create table if not exists clients (
+  id                  uuid primary key default gen_random_uuid(),
+  full_name           text not null,
+  phone               text not null,
+  phone_digits        text not null,  -- digits only, leading 0 as 27 (mirrors normalizePhone in src/lib/record-card.ts)
+  email               text not null default '',
+  id_number           text not null default '',
+  date_of_birth       date,
+  gender              text not null default '',
+  address             text not null default '',
+  emergency_contact   text not null default '',
+  occupation          text not null default '',
+  initial_appointment date not null default current_date,
+  client_type         text not null default 'first' check (client_type in ('first', 'returning')),
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
+);
+create index if not exists clients_phone_digits_idx on clients (phone_digits);
+create index if not exists clients_email_idx on clients (lower(email));
+create index if not exists clients_id_number_idx on clients (id_number);
+create index if not exists clients_name_idx on clients (lower(full_name));
+
+-- Each save of a form section adds a row; the newest row per section is the current answer, older rows are history.
+create table if not exists client_sections (
+  id        serial primary key,
+  client_id uuid not null references clients(id) on delete cascade,
+  section   text not null check (section in ('health', 'massage', 'skin')),
+  answers   jsonb not null,
+  saved_at  timestamptz not null default now()
+);
+create index if not exists client_sections_lookup on client_sections (client_id, section, saved_at desc);
+
+-- A signed consent: the exact statements shown, plus a snapshot of the card at the time of signing.
+create table if not exists consents (
+  id             serial primary key,
+  client_id      uuid not null references clients(id) on delete cascade,
+  statements     jsonb not null,
+  photo_consent  boolean not null,
+  initials       text not null,
+  signature_path text not null,
+  snapshot       jsonb not null,
+  signed_at      timestamptz not null default now()
+);
+create index if not exists consents_client_idx on consents (client_id, signed_at desc);
+
+create table if not exists therapists (
+  id     serial primary key,
+  name   text not null,
+  active boolean not null default true
+);
+
+-- Treatment notes. Deleting one only sets deleted_at, so the history is kept.
+create table if not exists treatment_entries (
+  id           serial primary key,
+  client_id    uuid not null references clients(id) on delete cascade,
+  booking_id   uuid references bookings(id) on delete set null,
+  day          date not null,
+  kind         text not null check (kind in ('skin', 'massage')),
+  products     text not null default '',
+  notes        text not null default '',
+  therapist_id integer references therapists(id) on delete set null,
+  created_at   timestamptz not null default now(),
+  edited_at    timestamptz,
+  deleted_at   timestamptz
+);
+create index if not exists treatment_entries_client_idx on treatment_entries (client_id, day desc);
