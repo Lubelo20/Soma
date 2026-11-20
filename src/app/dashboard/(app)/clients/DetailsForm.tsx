@@ -304,25 +304,27 @@ export function DetailsForm({
           />
         </label>
         <label className="label">
-          ID / passport number <span className="hint">(optional)</span>
+          ID / passport number
           {flag("idNumber")}
           <input
             name="idNumber"
             value={v.idNumber}
             onChange={(e) => set("idNumber", e.target.value)}
+            required
             maxLength={30}
             autoComplete="off"
             className="field"
           />
         </label>
         <label className="label">
-          Date of birth <span className="hint">(optional)</span>
+          Date of birth
           {flag("dateOfBirth")}
           <input
             name="dateOfBirth"
             type="date"
             value={v.dateOfBirth}
             onChange={(e) => set("dateOfBirth", e.target.value)}
+            required
             max={clinicDate(new Date())}
             autoComplete="off"
             className="field"
@@ -334,13 +336,14 @@ export function DetailsForm({
           </p>
         )}
         <label className="label">
-          Gender <span className="hint">(optional)</span>
+          Gender
           {flag("gender")}
           <input
             name="gender"
             list="gender-options"
             value={v.gender}
             onChange={(e) => set("gender", e.target.value)}
+            required
             maxLength={30}
             autoComplete="off"
             className="field"
@@ -352,36 +355,39 @@ export function DetailsForm({
           </datalist>
         </label>
         <label className="label">
-          Occupation <span className="hint">(optional)</span>
+          Occupation
           {flag("occupation")}
           <input
             name="occupation"
             value={v.occupation}
             onChange={(e) => set("occupation", e.target.value)}
+            required
             maxLength={100}
             autoComplete="off"
             className="field"
           />
         </label>
         <label className="label sm:col-span-2">
-          Address <span className="hint">(optional)</span>
+          Address
           {flag("address")}
           <input
             name="address"
             value={v.address}
             onChange={(e) => set("address", e.target.value)}
+            required
             maxLength={300}
             autoComplete="off"
             className="field"
           />
         </label>
         <label className="label sm:col-span-2">
-          Emergency contact <span className="hint">(name and phone, optional)</span>
+          Emergency contact <span className="hint">(name and phone)</span>
           {flag("emergencyContact")}
           <input
             name="emergencyContact"
             value={v.emergencyContact}
             onChange={(e) => set("emergencyContact", e.target.value)}
+            required
             maxLength={200}
             autoComplete="off"
             className="field"

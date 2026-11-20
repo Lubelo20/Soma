@@ -25,7 +25,7 @@ import {
 } from "@/lib/record-card";
 import { isValidSignaturePath } from "@/lib/signature";
 import { clinicDate } from "@/lib/slots";
-import { EMAIL_RE, INT_ID_RE, PHONE_RE, UUID_RE as UUID } from "@/lib/validation";
+import { EMAIL_RE, INT_ID_RE, PHONE_RE, UUID_RE as UUID, firstMissingDetail } from "@/lib/validation";
 
 export type ClientResult = {
   error?: string;
@@ -83,6 +83,7 @@ export async function saveDetails(_prev: ClientResult, fd: FormData): Promise<Cl
     error = "Please enter a valid phone number.";
   }
   else if (v.email.length > 200 || (v.email && !EMAIL_RE.test(v.email))) error = "Please enter a valid email address.";
+  else if (firstMissingDetail(v)) error = firstMissingDetail(v);
   else if (v.idNumber.length > 30) error = "The ID / passport number is too long (30 characters at most).";
   else if (v.dateOfBirth && (!isRealDate(v.dateOfBirth) || v.dateOfBirth > today)) error = "Please enter a valid date of birth.";
   else if (v.gender.length > 30) error = "Gender is too long (30 characters at most).";
