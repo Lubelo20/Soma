@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
+import { useRef, useState, useSyncExternalStore, useTransition, type ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import type { ClientDetails } from "@/lib/clients";
 import {
@@ -13,7 +13,7 @@ import {
   type SkinAnswers,
 } from "@/lib/record-card";
 import { saveSection } from "../../clients-actions";
-import { DetailsForm } from "./DetailsForm";
+import { DetailsForm, type DetailsHandle } from "./DetailsForm";
 import { HealthForm, MassageForm, SkinForm, sectionFormData } from "./SectionForms";
 
 const STEPS = ["details", "health", "massage", "skin"] as const;
@@ -85,6 +85,8 @@ export function CardWizard({
   const [pending, startTransition] = useTransition();
   const [leaving, setLeaving] = useState(false);
   const [savingNow, setSavingNow] = useState<Section | null>(null);
+  const details = useRef<DetailsHandle>(null);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
   const busy = pending || leaving;
 
   const signHref = `/dashboard/sign/${client.id}`;
@@ -141,12 +143,21 @@ export function CardWizard({
     });
   }
 
-  // Desktop: save whatever changed, then go to signing.
+  // Desktop: save every section with unsaved edits (details included), then go to signing. If any save fails,
+  // stay here with that section's error showing and everything typed still in place.
   function ready() {
+    setDetailsError(null);
     startTransition(async () => {
-      for (const s of SECTIONS) {
-        if (fingerprint(s, answers) !== saved[s] && !(await save(s))) return;
+      let ok = true;
+      const detailsFailed = details.current ? await details.current.saveIfChanged() : null;
+      if (detailsFailed) {
+        setDetailsError(detailsFailed);
+        ok = false;
       }
+      for (const s of SECTIONS) {
+        if (fingerprint(s, answers) !== saved[s] && !(await save(s))) ok = false;
+      }
+      if (!ok) return;
       setLeaving(true);
       router.push(signHref);
     });
@@ -159,8 +170,10 @@ export function CardWizard({
   };
   const stepIndex = STEPS.indexOf(step);
   const currentError = step === "details" ? null : errors[step];
-  const firstError = SECTIONS.find((s) => errors[s] !== null);
-  const unsavedElsewhere = SECTIONS.some((s) => fingerprint(s, answers) !== saved[s]);
+  const readyErrors = [
+    ...(detailsError ? [`Client details: ${detailsError}`] : []),
+    ...SECTIONS.filter((s) => errors[s] !== null).map((s) => `${TITLES[s]}: ${errors[s]}`),
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -178,7 +191,7 @@ export function CardWizard({
             {s === "details" ? "Client details" : TITLES[s]}
           </h2>
           {s === "details" ? (
-            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} />
+            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} handle={details} />
           ) : (
             <>
               {forms[s]}
@@ -205,16 +218,19 @@ export function CardWizard({
 
       {/* Wide screens: the end of the one-page card. */}
       <div className="hidden flex-col gap-3 lg:flex">
-        {unsavedElsewhere && (
-          <p className="m-0 text-sm text-ink-muted">Unsaved health, massage and skin answers are saved first.</p>
-        )}
+        <p className="m-0 text-sm text-ink-muted">Anything not saved yet, in any section, is saved first.</p>
         <button type="button" disabled={busy} onClick={ready} className="btn btn-solid min-h-12 self-start px-6">
           {busy && savingNow === null ? "Saving…" : "Ready for the client to sign"}
         </button>
-        {firstError && (
-          <p role="alert" className="m-0 text-sm font-medium text-red-700">
-            {TITLES[firstError]}: {errors[firstError]}
-          </p>
+        {readyErrors.length > 0 && (
+          <div role="alert" className="flex flex-col gap-1 text-sm font-medium text-red-700">
+            <p className="m-0">Not ready yet. Nothing you typed has been lost.</p>
+            {readyErrors.map((e) => (
+              <p key={e} className="m-0">
+                {e}
+              </p>
+            ))}
+          </div>
         )}
       </div>
 

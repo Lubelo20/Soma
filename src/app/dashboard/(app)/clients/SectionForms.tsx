@@ -11,7 +11,8 @@ import {
 import { BodyMap } from "./BodyMap";
 
 // Controlled forms for the health, massage and skin sections. Their state lives in CardWizard, so moving
-// between steps never loses what was typed. Field names match the parsers in src/lib/record-card.ts.
+// between steps never loses what was typed. sectionFormData builds the fields the parsers in
+// src/lib/record-card.ts read; the chip inputs keep a name only so each radio row works as one group.
 
 /** Form fields for one section, as the server action expects them. Ticked options keep their defined order. */
 export function sectionFormData(
@@ -61,7 +62,6 @@ export function HealthForm({ value, onChange }: { value: HealthAnswers; onChange
               key={key}
               className="grid gap-3 border-t border-line-soft py-4 first:border-t-0 first:pt-0 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-4"
             >
-              {entry.answer && <input type="hidden" name={`health.${key}`} value={entry.answer} />}
               <span id={labelId} className="font-medium text-ink-strong">
                 {label}
               </span>
@@ -91,7 +91,6 @@ export function HealthForm({ value, onChange }: { value: HealthAnswers; onChange
               <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
                 {noteLabel ?? "Notes"}
                 <input
-                  name={`health.${key}.note`}
                   value={entry.note}
                   onChange={(e) => set(key, { note: e.target.value })}
                   maxLength={500}
@@ -123,7 +122,6 @@ export function MassageForm({ value, onChange }: { value: MassageAnswers; onChan
       <label className="label">
         Additional notes
         <textarea
-          name="massage.notes"
           value={value.notes}
           onChange={(e) => onChange({ ...value, notes: e.target.value })}
           maxLength={2000}
@@ -191,7 +189,6 @@ export function SkinForm({ value, onChange }: { value: SkinAnswers; onChange: (v
               <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
                 Other (specify)
                 <input
-                  name={`skin.${row.key}.other`}
                   value={entry.other}
                   onChange={(e) => set(row.key, { other: e.target.value })}
                   maxLength={200}
@@ -204,7 +201,6 @@ export function SkinForm({ value, onChange }: { value: SkinAnswers; onChange: (v
             <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
               {row.noteLabel ?? "Notes"}
               <input
-                name={`skin.${row.key}.note`}
                 value={entry.note}
                 onChange={(e) => set(row.key, { note: e.target.value })}
                 maxLength={500}

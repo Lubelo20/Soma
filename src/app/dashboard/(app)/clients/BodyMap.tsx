@@ -90,7 +90,7 @@ const LABEL = new Map(BODY_AREAS.map((a) => [a.id, a.label]));
 
 /**
  * Areas of tension or discomfort, marked on front, back and side outlines or from the list underneath
- * (both stay in sync). The ticked areas are sent as hidden "massage.areas" inputs.
+ * (both stay in sync). The parent keeps the value and sends it as "massage.areas".
  */
 export function BodyMap({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }) {
   const selected = new Set(value);
@@ -111,10 +111,6 @@ export function BodyMap({ value, onChange }: { value: string[]; onChange: (ids: 
 
   return (
     <div className="flex flex-col gap-5">
-      {ordered.map((id) => (
-        <input key={id} type="hidden" name="massage.areas" value={id} />
-      ))}
-
       <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0">
         {FIGURES.map((f) => (
           <figure
@@ -178,29 +174,29 @@ export function BodyMap({ value, onChange }: { value: string[]; onChange: (ids: 
 
       <div className="flex flex-col gap-4 border-t border-line-soft pt-4">
         <p className="m-0 text-sm text-ink-muted">Or tap the areas in this list:</p>
-          {FIGURES.map((f) => (
-            <div key={f.view} role="group" aria-label={f.title} className="flex flex-col gap-2">
-              <span className="text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase">{f.title}</span>
-              <div className="flex flex-wrap gap-2">
-                {BODY_AREAS.filter((a) => a.view === f.view).map((a) => {
-                  const on = selected.has(a.id);
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => toggle(a.id)}
-                      className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm transition-colors ${
-                        on ? "border-brand bg-brand text-cream" : "border-line bg-white text-ink hover:border-brand"
-                      }`}
-                    >
-                      {a.label}
-                    </button>
-                  );
-                })}
-              </div>
+        {FIGURES.map((f) => (
+          <div key={f.view} role="group" aria-label={f.title} className="flex flex-col gap-2">
+            <span className="text-[11.5px] font-medium tracking-[.2em] text-ink-body uppercase">{f.title}</span>
+            <div className="flex flex-wrap gap-2">
+              {BODY_AREAS.filter((a) => a.view === f.view).map((a) => {
+                const on = selected.has(a.id);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggle(a.id)}
+                    className={`inline-flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm transition-colors ${
+                      on ? "border-brand bg-brand text-cream" : "border-line bg-white text-ink hover:border-brand"
+                    }`}
+                  >
+                    {a.label}
+                  </button>
+                );
+              })}
             </div>
-          ))}
+          </div>
+        ))}
       </div>
     </div>
   );

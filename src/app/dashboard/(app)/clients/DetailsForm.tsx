@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useImperativeHandle, useRef, useState, useTransition, type Ref } from "react";
 import { Icon } from "@/components/Icon";
 import type { ClientDetails } from "@/lib/clients";
 import { isUnder18 } from "@/lib/record-card";
@@ -24,18 +24,25 @@ type Values = {
 };
 
 const CONNECTION_ERROR = "Couldn't save. Check your connection and try again.";
+const DUPLICATE_ERROR = "A card with this phone or ID number already exists. See the client details above.";
+
+/** Lets CardWizard save unsaved details before leaving the page. Resolves to an error message, or null when saved. */
+export type DetailsHandle = { saveIfChanged: () => Promise<string | null> };
 
 /**
  * The client details section of a record card. Every value lives in React state, so a failed save
  * (signed out, offline, validation) never clears what was typed. Nothing is kept in browser storage.
  * After saving: "card" opens the card, "next" moves on to the health section, "stay" shows a Saved tick.
+ * `handle` (optional) exposes saveIfChanged, which saves only when something was edited since the last save.
  */
 export function DetailsForm({
   initial,
   onSaved = "next",
+  handle,
 }: {
   initial: Partial<ClientDetails>;
   onSaved?: "card" | "next" | "stay";
+  handle?: Ref<DetailsHandle>;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -53,6 +60,8 @@ export function DetailsForm({
     initialAppointment: initial.initialAppointment ?? clinicDate(new Date()),
     clientType: initial.clientType ?? "first",
   });
+  // The values as last saved (or as loaded), to tell whether anything is unsaved.
+  const [savedValues, setSavedValues] = useState<Values>(v);
   const [result, setResult] = useState<ClientResult | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -68,32 +77,53 @@ export function DetailsForm({
   const duplicates = result?.error === "duplicate" ? (result.duplicates ?? []) : [];
   const message = failed ?? (result?.error && result.error !== "duplicate" ? result.error : null);
 
-  function submit(differentPerson: boolean) {
+  const dirty = JSON.stringify(v) !== JSON.stringify(savedValues);
+
+  /** Sends the details; the result, or null when the request itself failed (offline). Never clears the form. */
+  async function save(differentPerson: boolean): Promise<ClientResult | null> {
+    const sent = v;
     const fd = new FormData();
     if (initial.id) fd.set("id", initial.id);
-    for (const [k, val] of Object.entries(v)) fd.set(k, val);
+    for (const [k, val] of Object.entries(sent)) fd.set(k, val);
     if (differentPerson) fd.set("differentPerson", "on");
     setFailed(null);
+    try {
+      const res = await saveDetails({}, fd);
+      setResult(res);
+      if (res.ok) setSavedValues(sent);
+      return res;
+    } catch {
+      setFailed(CONNECTION_ERROR);
+      return null;
+    }
+  }
+
+  useImperativeHandle(handle, () => ({
+    async saveIfChanged() {
+      if (!dirty) return null;
+      const res = await save(false);
+      if (res?.ok) return null;
+      if (res?.error === "duplicate") return DUPLICATE_ERROR;
+      return res?.error ?? CONNECTION_ERROR;
+    },
+  }));
+
+  function submit(differentPerson: boolean) {
     const editsAtSubmit = edits.current;
     startTransition(async () => {
-      try {
-        const res = await saveDetails({}, fd);
-        setResult(res);
-        if (res.ok && res.id) {
-          if (onSaved === "stay") {
-            setTick(edits.current === editsAtSubmit);
-          } else if (onSaved === "next" && pathname === `/dashboard/clients/${res.id}/edit`) {
-            // Already inside the card's step-by-step editor: change step in place so unsaved answers in the
-            // other sections are kept.
-            window.history.pushState(null, "", "?step=health");
-            window.scrollTo(0, 0);
-          } else {
-            setSaved(true);
-            router.push(onSaved === "card" ? `/dashboard/clients/${res.id}` : `/dashboard/clients/${res.id}/edit?step=health`);
-          }
+      const res = await save(differentPerson);
+      if (res?.ok && res.id) {
+        if (onSaved === "stay") {
+          setTick(edits.current === editsAtSubmit);
+        } else if (onSaved === "next" && pathname === `/dashboard/clients/${res.id}/edit`) {
+          // Already inside the card's step-by-step editor: change step in place so unsaved answers in the
+          // other sections are kept.
+          window.history.pushState(null, "", "?step=health");
+          window.scrollTo(0, 0);
+        } else {
+          setSaved(true);
+          router.push(onSaved === "card" ? `/dashboard/clients/${res.id}` : `/dashboard/clients/${res.id}/edit?step=health`);
         }
-      } catch {
-        setFailed(CONNECTION_ERROR);
       }
     });
   }
