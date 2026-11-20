@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useLayoutEffect, useState, useTransition } from "react";
 import type { MatchedBooking, TreatmentEntry } from "@/lib/clients";
+import { CONNECTION_ERROR } from "@/lib/form-messages";
 import { clinicDate, formatDate } from "@/lib/slots";
 import { saveEntry } from "../../clients-actions";
-
-const CONNECTION_ERROR = "Couldn't save. Check your connection and try again.";
+import { useHydrated } from "../../useHydrated";
 
 type Therapist = { id: number; name: string };
 
 /**
  * Adds a treatment log entry, or edits one when `entry` is given. Values live in React state, so a failed
  * save (signed out, offline, validation) never clears what was typed. A new entry clears after it saves.
+ * The form belongs to one client's card, so a draft kept while the card page is hidden (Next keeps recently
+ * left pages mounted) only ever comes back on that same card; the "Saved" and error messages are cleared on hide.
  */
 export function TreatmentEntryForm({
   clientId,
@@ -39,6 +41,15 @@ export function TreatmentEntryForm({
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  // Disabled until hydrated, so a tap before JavaScript has loaded can't submit the form natively.
+  const hydrated = useHydrated();
+  useLayoutEffect(
+    () => () => {
+      setSaved(false);
+      setMessage(null);
+    },
+    [],
+  );
   const set = <K extends keyof typeof v>(key: K, value: (typeof v)[K]) => {
     setSaved(false);
     setV((prev) => ({ ...prev, [key]: value }));
@@ -78,9 +89,10 @@ export function TreatmentEntryForm({
 
   return (
     <form
+      method="post"
       onSubmit={(e) => {
         e.preventDefault();
-        if (!pending) submit();
+        if (!pending && hydrated) submit();
       }}
       autoComplete="off"
       className="flex flex-col gap-4"
@@ -156,7 +168,7 @@ export function TreatmentEntryForm({
       )}
 
       <div className="flex flex-wrap items-center gap-4">
-        <button type="submit" disabled={pending} className="btn btn-solid min-h-12 px-6 max-sm:w-full">
+        <button type="submit" disabled={pending || !hydrated} className="btn btn-solid min-h-12 px-6 max-sm:w-full">
           {pending ? "Saving…" : entry ? "Save changes" : "Add entry"}
         </button>
         {saved && !pending && (

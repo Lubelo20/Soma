@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { UUID_RE } from "@/lib/validation";
+import { FreshOnOpen } from "../../../FreshOnOpen";
 import { DetailsForm } from "../DetailsForm";
 
 export const metadata: Metadata = { title: "New record card" };
 // Staff always need live data, so these pages render on request rather than from a prefetched shell.
 export const instant = false;
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export default async function NewRecordCardPage(props: PageProps<"/dashboard/clients/new">) {
   await requireStaff();
   const requested = (await props.searchParams).booking;
-  const bookingId = typeof requested === "string" && UUID.test(requested) ? requested : null;
+  const bookingId = typeof requested === "string" && UUID_RE.test(requested) ? requested : null;
 
   // From a booking, the name, phone and email are filled in; a booking that isn't found is ignored.
   const [booking] = bookingId
@@ -31,14 +31,17 @@ export default async function NewRecordCardPage(props: PageProps<"/dashboard/cli
         <h1 className="page-title">New record card</h1>
       </div>
       <div className="card">
-        <DetailsForm
-          initial={{
-            fullName: booking?.clientName ?? "",
-            phone: booking?.clientPhone ?? "",
-            email: booking?.clientEmail ?? "",
-            clientType: "first",
-          }}
-        />
+        {/* Each visit starts empty (or from this booking), never with the last client typed in. */}
+        <FreshOnOpen>
+          <DetailsForm
+            initial={{
+              fullName: booking?.clientName ?? "",
+              phone: booking?.clientPhone ?? "",
+              email: booking?.clientEmail ?? "",
+              clientType: "first",
+            }}
+          />
+        </FreshOnOpen>
       </div>
     </div>
   );

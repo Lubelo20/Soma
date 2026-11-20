@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { CONSENT_STATEMENTS, REQUIRED_CONSENT_COUNT } from "@/lib/record-card";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { CONNECTION_ERROR } from "@/lib/form-messages";
+import { CONSENT_STATEMENTS, REQUIRED_CONSENT_COUNT, isValidInitials, normalizeInitials } from "@/lib/record-card";
 import { SIGNATURE_VIEWBOX, isValidSignaturePath, strokesToPath, type Point } from "@/lib/signature";
 import { signConsent } from "../../clients-actions";
+import { useHydrated } from "../../useHydrated";
 
-const CONNECTION_ERROR = "Couldn't save. Check your connection and try again.";
 const TICK_ERROR = `Please tick statements 1 to ${REQUIRED_CONSENT_COUNT}.`;
 const INITIALS_ERROR = "Please enter your initials.";
 const SIGN_ERROR = "Please sign in the box.";
-const INITIALS_RE = /^\p{L}{1,6}$/u;
 
 const VW = SIGNATURE_VIEWBOX.width;
 const VH = SIGNATURE_VIEWBOX.height;
@@ -95,6 +95,8 @@ function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Po
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", redraw);
+      // Hidden after leaving the page: wipe the pixels, so the signature isn't kept in the hidden page.
+      canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     };
   }, [redraw]);
 
@@ -189,6 +191,9 @@ function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Po
 /**
  * The client-facing consent form. Ticks, initials and strokes all stay in this component, so any failed save
  * (signed out, offline, validation) keeps everything the client did. Nothing is put in browser storage.
+ * Next keeps a left page mounted but hidden; this form clears itself when hidden, so opening the signing screen
+ * again (or Back) never shows an earlier client's ticks, initials or signature. The page also wraps it in
+ * FreshOnOpen.
  */
 export function SignatureForm({ clientId, today }: { clientId: string; today: string }) {
   const router = useRouter();
@@ -197,15 +202,26 @@ export function SignatureForm({ clientId, today }: { clientId: string; today: st
   const strokesRef = useRef<Point[][]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [done, setDone] = useState(false);
-  const busy = pending || done;
+  // Disabled until hydrated, so a tap before JavaScript has loaded can't submit the form natively.
+  const hydrated = useHydrated();
+  const busy = pending || !hydrated;
+
+  useLayoutEffect(
+    () => () => {
+      setTicked(CONSENT_STATEMENTS.map(() => false));
+      setInitials("");
+      setMessage(null);
+      strokesRef.current.splice(0);
+    },
+    [],
+  );
 
   function submit() {
     // Same checks, in the same order, as signConsent, so the client gets the message without a round trip.
-    const typed = initials.trim().normalize("NFC");
+    const typed = normalizeInitials(initials);
     let error: string | null = null;
     if (ticked.slice(0, REQUIRED_CONSENT_COUNT).some((t) => !t)) error = TICK_ERROR;
-    else if (!INITIALS_RE.test(typed)) error = INITIALS_ERROR;
+    else if (!isValidInitials(typed)) error = INITIALS_ERROR;
     // The server's own rule: taps and tiny scribbles don't count as a signature.
     else if (!isValidSignaturePath(strokesToPath(strokesRef.current))) error = SIGN_ERROR;
     if (error) {
@@ -223,9 +239,10 @@ export function SignatureForm({ clientId, today }: { clientId: string; today: st
       try {
         const res = await signConsent({}, fd);
         if (res.ok && res.id) {
-          setDone(true);
-          // Replace, so Back from the card doesn't return to a signed form.
-          router.replace(`/dashboard/clients/${res.id}`);
+          const card = `/dashboard/clients/${res.id}`;
+          // Replace, so Back from the card doesn't return to a signed form. Inside the transition, so the
+          // button stays at "Saving…" until the card is showing.
+          startTransition(() => router.replace(card));
         } else {
           setMessage(res.error ?? CONNECTION_ERROR);
         }
@@ -237,6 +254,7 @@ export function SignatureForm({ clientId, today }: { clientId: string; today: st
 
   return (
     <form
+      method="post"
       onSubmit={(e) => {
         e.preventDefault();
         if (!busy) submit();
@@ -283,7 +301,7 @@ export function SignatureForm({ clientId, today }: { clientId: string; today: st
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
-          maxLength={6}
+          maxLength={12}
           disabled={busy}
           className="field w-36 text-[18px] tracking-[.15em] uppercase"
         />
@@ -300,7 +318,7 @@ export function SignatureForm({ clientId, today }: { clientId: string; today: st
           </p>
         )}
         <button type="submit" disabled={busy} className="btn btn-solid min-h-14 px-8 max-sm:w-full sm:self-start">
-          {busy ? "Saving…" : "Sign and finish"}
+          {pending ? "Saving…" : "Sign and finish"}
         </button>
         <Link href={`/dashboard/clients/${clientId}`} className="inline-flex min-h-11 items-center self-center text-sm text-ink-muted underline sm:self-start">
           Cancel

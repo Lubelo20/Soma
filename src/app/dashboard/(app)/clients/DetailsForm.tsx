@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useImperativeHandle, useRef, useState, useTransition, type Ref } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, useTransition, type Ref } from "react";
 import { Icon } from "@/components/Icon";
 import type { ClientDetails } from "@/lib/clients";
+import { CONNECTION_ERROR } from "@/lib/form-messages";
 import { isUnder18 } from "@/lib/record-card";
 import { clinicDate } from "@/lib/slots";
 import { saveDetails, type ClientResult } from "../../clients-actions";
+import { useHydrated } from "../../useHydrated";
+import { LeavePrompt, useLeaveGuard } from "./LeaveGuard";
 
 type Values = {
   fullName: string;
@@ -23,17 +26,36 @@ type Values = {
   clientType: "first" | "returning";
 };
 
-const CONNECTION_ERROR = "Couldn't save. Check your connection and try again.";
-const DUPLICATE_ERROR = "A card with this phone or ID number already exists. See the client details above.";
+const DUPLICATE_ERROR = "A card with this phone or ID / passport number already exists. See the client details above.";
 
-/** Lets CardWizard save unsaved details before leaving the page. Resolves to an error message, or null when saved. */
-export type DetailsHandle = { saveIfChanged: () => Promise<string | null> };
+/**
+ * Lets CardWizard save unsaved details before leaving the page. saveIfChanged resolves to an error message, or null
+ * when saved; isDirty tells whether anything is unsaved; discard puts the saved values back once the page is left.
+ */
+export type DetailsHandle = { saveIfChanged: () => Promise<string | null>; isDirty: () => boolean; discard: () => void };
+
+const valuesFrom = (initial: Partial<ClientDetails>): Values => ({
+  fullName: initial.fullName ?? "",
+  phone: initial.phone ?? "",
+  email: initial.email ?? "",
+  idNumber: initial.idNumber ?? "",
+  dateOfBirth: initial.dateOfBirth ?? "",
+  gender: initial.gender ?? "",
+  address: initial.address ?? "",
+  emergencyContact: initial.emergencyContact ?? "",
+  occupation: initial.occupation ?? "",
+  initialAppointment: initial.initialAppointment ?? clinicDate(new Date()),
+  clientType: initial.clientType ?? "first",
+});
 
 /**
  * The client details section of a record card. Every value lives in React state, so a failed save
  * (signed out, offline, validation) never clears what was typed. Nothing is kept in browser storage.
  * After saving: "card" opens the card, "next" moves on to the health section, "stay" shows a Saved tick.
- * `handle` (optional) exposes saveIfChanged, which saves only when something was edited since the last save.
+ * `handle` (optional) is for CardWizard, which then also guards leaving the page; without it (the new-card page)
+ * this form guards leaving with unsaved edits itself.
+ * Next keeps a left page mounted but hidden: once a save has moved on to another page, the form empties itself
+ * when hidden, so Back never shows one client's details in a blank new card.
  */
 export function DetailsForm({
   initial,
@@ -47,26 +69,33 @@ export function DetailsForm({
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
-  const [v, setV] = useState<Values>({
-    fullName: initial.fullName ?? "",
-    phone: initial.phone ?? "",
-    email: initial.email ?? "",
-    idNumber: initial.idNumber ?? "",
-    dateOfBirth: initial.dateOfBirth ?? "",
-    gender: initial.gender ?? "",
-    address: initial.address ?? "",
-    emergencyContact: initial.emergencyContact ?? "",
-    occupation: initial.occupation ?? "",
-    initialAppointment: initial.initialAppointment ?? clinicDate(new Date()),
-    clientType: initial.clientType ?? "first",
-  });
+  const hydrated = useHydrated();
+  const [v, setV] = useState<Values>(() => valuesFrom(initial));
   // The values as last saved (or as loaded), to tell whether anything is unsaved.
   const [savedValues, setSavedValues] = useState<Values>(v);
   const [result, setResult] = useState<ClientResult | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [tick, setTick] = useState(false);
   const edits = useRef(0); // counts edits, so a save that finishes after more typing doesn't claim "Saved"
+  // Set once a save has sent us to another page, or edits were discarded: the form resets when it is hidden.
+  const resetOnHide = useRef(false);
+  const latestInitial = useRef(initial);
+  useEffect(() => {
+    latestInitial.current = initial;
+  }, [initial]);
+  useLayoutEffect(
+    () => () => {
+      if (!resetOnHide.current) return;
+      resetOnHide.current = false;
+      const fresh = valuesFrom(latestInitial.current);
+      setV(fresh);
+      setSavedValues(fresh);
+      setResult(null);
+      setFailed(null);
+      setTick(false);
+    },
+    [],
+  );
 
   const set = <K extends keyof Values>(key: K, value: Values[K]) => {
     edits.current += 1;
@@ -98,15 +127,24 @@ export function DetailsForm({
     }
   }
 
+  async function saveIfChanged() {
+    if (!dirty) return null;
+    const res = await save(false);
+    if (res?.ok) return null;
+    if (res?.error === "duplicate") return DUPLICATE_ERROR;
+    return res?.error ?? CONNECTION_ERROR;
+  }
+
   useImperativeHandle(handle, () => ({
-    async saveIfChanged() {
-      if (!dirty) return null;
-      const res = await save(false);
-      if (res?.ok) return null;
-      if (res?.error === "duplicate") return DUPLICATE_ERROR;
-      return res?.error ?? CONNECTION_ERROR;
+    saveIfChanged,
+    isDirty: () => dirty,
+    discard: () => {
+      resetOnHide.current = true;
     },
   }));
+
+  // The new-card page: hold links away while something typed isn't saved. (In CardWizard, the wizard does this.)
+  const guard = useLeaveGuard(() => !handle && dirty);
 
   function submit(differentPerson: boolean) {
     const editsAtSubmit = edits.current;
@@ -121,17 +159,21 @@ export function DetailsForm({
           window.history.pushState(null, "", "?step=health");
           window.scrollTo(0, 0);
         } else {
-          setSaved(true);
-          router.push(onSaved === "card" ? `/dashboard/clients/${res.id}` : `/dashboard/clients/${res.id}/edit?step=health`);
+          resetOnHide.current = true;
+          const next = onSaved === "card" ? `/dashboard/clients/${res.id}` : `/dashboard/clients/${res.id}/edit?step=health`;
+          // Inside the transition, so the button stays at "Saving…" until the next page is showing.
+          startTransition(() => router.push(next));
         }
       }
     });
   }
 
-  const busy = pending || saved;
+  // Disabled until hydrated, so a tap before JavaScript has loaded can't submit the form natively.
+  const busy = pending || !hydrated;
 
   return (
     <form
+      method="post"
       onSubmit={(e) => {
         e.preventDefault();
         if (!busy) submit(false);
@@ -139,6 +181,20 @@ export function DetailsForm({
       autoComplete="off"
       className="flex flex-col gap-5"
     >
+      {guard.target && (
+        <LeavePrompt
+          target={guard.target}
+          onSave={async () => {
+            const ok = (await saveIfChanged()) === null;
+            if (ok) resetOnHide.current = true;
+            return ok;
+          }}
+          onDiscard={() => {
+            resetOnHide.current = true;
+          }}
+          onClose={guard.close}
+        />
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="label sm:col-span-2">
           Full name
@@ -182,10 +238,9 @@ export function DetailsForm({
           />
         </label>
         <label className="label">
-          ID number <span className="hint">(optional)</span>
+          ID / passport number <span className="hint">(optional)</span>
           <input
             name="idNumber"
-            inputMode="numeric"
             value={v.idNumber}
             onChange={(e) => set("idNumber", e.target.value)}
             maxLength={30}
@@ -288,7 +343,7 @@ export function DetailsForm({
 
       {duplicates.length > 0 && (
         <div role="alert" className="note flex flex-col gap-3">
-          <p className="m-0 font-medium">A card with this phone or ID number already exists.</p>
+          <p className="m-0 font-medium">A card with this phone or ID / passport number already exists.</p>
           <ul className="m-0 flex list-none flex-col gap-1 p-0">
             {duplicates.map((d) => (
               <li key={d.id}>
@@ -313,7 +368,7 @@ export function DetailsForm({
 
       <div className="flex flex-wrap items-center gap-4">
         <button type="submit" disabled={busy} className="btn btn-solid min-h-12 px-6 max-sm:w-full">
-          {busy ? "Saving…" : onSaved === "next" ? "Save and continue" : "Save"}
+          {pending ? "Saving…" : onSaved === "next" ? "Save and continue" : "Save"}
         </button>
         {tick && !busy && (
           <span role="status" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand">

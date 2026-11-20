@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getCard } from "@/lib/clients";
 import { clinicDate, formatDate } from "@/lib/slots";
+import { FreshOnOpen } from "../../FreshOnOpen";
 import { SignatureForm } from "./SignatureForm";
 
 export const metadata: Metadata = { title: "Consent" };
@@ -25,7 +26,9 @@ export default async function SignPage(props: PageProps<"/dashboard/sign/[id]">)
         <h1 className="m-0 font-serif text-[32px] leading-tight font-light text-ink-strong sm:text-[38px]">Consent for {firstName}</h1>
         <p className="m-0 text-[16px] text-ink-body">Please read each statement, tick it, then add your initials and signature.</p>
       </div>
-      <SignatureForm clientId={card.client.id} today={today} />
+      <FreshOnOpen>
+        <SignatureForm clientId={card.client.id} today={today} />
+      </FreshOnOpen>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getCard } from "@/lib/clients";
+import { FreshOnOpen } from "../../../../FreshOnOpen";
 import { CardWizard, type Step } from "../../CardWizard";
 
 export const metadata: Metadata = { title: "Edit record card" };
@@ -22,14 +22,21 @@ export default async function EditRecordCardPage(props: PageProps<"/dashboard/cl
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
-      <Link href={`/dashboard/clients/${card.client.id}`} className="text-sm text-gold-deep">
-        ‹ Back to card
-      </Link>
-      <div>
-        <span className="eyebrow">Record card</span>
-        <h1 className="page-title">{card.client.fullName}</h1>
-      </div>
-      <CardWizard client={card.client} health={card.health} massage={card.massage} skin={card.skin} initialStep={step} />
+      <FreshOnOpen>
+        <CardWizard
+          client={card.client}
+          health={card.health}
+          massage={card.massage}
+          skin={card.skin}
+          initialStep={step}
+          heading={
+            <div>
+              <span className="eyebrow">Record card</span>
+              <h1 className="page-title">{card.client.fullName}</h1>
+            </div>
+          }
+        />
+      </FreshOnOpen>
     </div>
   );
 }
