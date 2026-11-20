@@ -1,9 +1,10 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
 import { SIGNED_OUT, requireStaff, staffCheck } from "@/lib/auth";
-import { findDuplicates } from "@/lib/clients";
+import { bookingBelongsToClient, findDuplicates } from "@/lib/clients";
 import { sql } from "@/lib/db";
 import {
   BODY_AREAS,
@@ -234,4 +235,97 @@ export async function saveSection(section: Section, _prev: ClientResult, fd: For
     refresh();
   }
   return { ok: true, id };
+}
+
+// ---------- Treatment log ----------
+
+export async function saveEntry(_prev: ClientResult, fd: FormData): Promise<ClientResult> {
+  if (!(await staffCheck())) return { error: SIGNED_OUT };
+  const today = clinicDate(new Date());
+  const clientId = text(fd, "clientId").trim();
+  const rawId = text(fd, "id").trim();
+  const day = text(fd, "day").trim() || today;
+  const kind = text(fd, "kind").trim();
+  const products = text(fd, "products").trim();
+  const notes = text(fd, "notes").trim();
+  const rawTherapist = text(fd, "therapistId").trim();
+  const bookingId = text(fd, "bookingId").trim();
+
+  if (!UUID.test(clientId)) return { error: "That record card no longer exists." };
+  const entryId = rawId ? Number(rawId) : null;
+  if (rawId && (!/^\d{1,9}$/.test(rawId) || !entryId)) return { error: "That entry no longer exists." };
+
+  if (!isRealDate(day)) return { error: "Please enter a valid date." };
+  if (day > today) return { error: "The date can't be in the future." };
+  if (day < "2000-01-01") return { error: "Please enter a valid date." };
+  if (kind !== "skin" && kind !== "massage") return { error: "Please choose skin or massage." };
+  if (products.length > 1000) return { error: "Products/tools used is too long (1000 characters at most)." };
+  if (notes.length > 2000) return { error: "Notes are too long (2000 characters at most)." };
+  if (!products && !notes) return { error: "Add the products used or a note." };
+  if (rawTherapist && !/^\d{1,9}$/.test(rawTherapist)) return { error: "Please choose a therapist from the list." };
+  const therapistId = rawTherapist ? Number(rawTherapist) : null;
+  if (bookingId && !UUID.test(bookingId)) return { error: "Please choose a booking from the list." };
+
+  const [client] = await sql`select 1 from clients where id = ${clientId}`;
+  if (!client) return { error: "That record card no longer exists." };
+
+  let existing: { therapistId: number | null; bookingId: string | null } | undefined;
+  if (entryId) {
+    [existing] = await sql<{ therapistId: number | null; bookingId: string | null }[]>`
+      select therapist_id, booking_id from treatment_entries where id = ${entryId} and client_id = ${clientId} and deleted_at is null`;
+    if (!existing) return { error: "That entry no longer exists." };
+  }
+
+  if (therapistId !== null && therapistId !== existing?.therapistId) {
+    const [t] = await sql`select 1 from therapists where id = ${therapistId} and active`;
+    if (!t) return { error: "Please choose a therapist from the list." };
+  }
+  if (bookingId && bookingId !== existing?.bookingId && !(await bookingBelongsToClient(bookingId, clientId))) {
+    return { error: "Please choose one of this client's bookings." };
+  }
+
+  const booking = bookingId || null;
+  if (entryId) {
+    const [row] = await sql`
+      update treatment_entries set day = ${day}, kind = ${kind}, products = ${products}, notes = ${notes},
+        therapist_id = ${therapistId}, booking_id = ${booking}, edited_at = now()
+      where id = ${entryId} and client_id = ${clientId} and deleted_at is null returning id`;
+    if (!row) return { error: "That entry no longer exists." };
+  } else {
+    await sql`
+      insert into treatment_entries (client_id, booking_id, day, kind, products, notes, therapist_id)
+      values (${clientId}, ${booking}, ${day}, ${kind}, ${products}, ${notes}, ${therapistId})`;
+  }
+  audit("treatment entry saved", { id: clientId });
+  refresh();
+  return { ok: true };
+}
+
+async function setEntryDeleted(fd: FormData, deleted: boolean) {
+  await requireStaff();
+  const clientId = text(fd, "clientId").trim();
+  const id = Number(text(fd, "id"));
+  if (!UUID.test(clientId) || !Number.isInteger(id)) return;
+  const [row] = await sql`
+    update treatment_entries set deleted_at = ${deleted ? sql`now()` : null}
+    where id = ${id} and client_id = ${clientId} and (deleted_at is null) = ${deleted} returning id`;
+  if (row) audit(deleted ? "treatment entry deleted" : "treatment entry restored", { id: clientId });
+  refresh();
+}
+
+export async function deleteEntry(fd: FormData) {
+  await setEntryDeleted(fd, true);
+}
+
+export async function restoreEntry(fd: FormData) {
+  await setEntryDeleted(fd, false);
+}
+
+export async function deleteClient(fd: FormData) {
+  await requireStaff();
+  const id = text(fd, "id").trim();
+  if (!UUID.test(id)) return;
+  const [row] = await sql<{ id: string }[]>`delete from clients where id = ${id} returning id`;
+  if (row) audit("client deleted", { id: row.id });
+  redirect("/dashboard/clients");
 }

@@ -242,6 +242,15 @@ export async function clientForBooking(bookingId: string): Promise<string | null
   return row?.id ?? null;
 }
 
+/** Whether a booking belongs to a client, by the same phone/email matching getCard uses. */
+export async function bookingBelongsToClient(bookingId: string, clientId: string): Promise<boolean> {
+  if (!UUID.test(bookingId) || !UUID.test(clientId)) return false;
+  const [row] = await sql`
+    select 1 from bookings b join clients c on c.id = ${clientId}
+    where b.id = ${bookingId} and ${BOOKING_MATCHES_CLIENT}`;
+  return row !== undefined;
+}
+
 export async function listTherapists(includeRemoved = false) {
   return sql<{ id: number; name: string; active: boolean }[]>`
     select id, name, active from therapists
