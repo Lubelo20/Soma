@@ -10,7 +10,9 @@ import { isUnder18 } from "@/lib/record-card";
 import { clinicDate } from "@/lib/slots";
 import { saveDetails, type ClientResult } from "../../clients-actions";
 import { useHydrated } from "../../useHydrated";
+import { makeSectionDraft } from "@/lib/draft-merge";
 import { cardDrafts } from "./card-drafts";
+import { ChangedElsewhere } from "./SectionForms";
 import { LeavePrompt, useLeaveGuard } from "./LeaveGuard";
 
 export type Values = {
@@ -38,11 +40,13 @@ export type DetailsHandle = {
   isDirty: () => boolean;
   /** Puts the saved values back once the page is left (after "Discard changes" in the leave prompt). */
   discard: () => void;
+  /** Undoes `discard` when the navigation it was chosen for didn't happen. */
+  cancelDiscard: () => void;
   /** Puts the saved values back now (the "changes from earlier" note's Discard). */
   resetNow: () => void;
 };
 
-const valuesFrom = (initial: Partial<ClientDetails>): Values => ({
+export const valuesFrom = (initial: Partial<ClientDetails>): Values => ({
   fullName: initial.fullName ?? "",
   phone: initial.phone ?? "",
   email: initial.email ?? "",
@@ -65,7 +69,8 @@ const valuesFrom = (initial: Partial<ClientDetails>): Values => ({
  * Next keeps a left page mounted but hidden: once a save has moved on to another page, the form empties itself
  * when hidden, so Back never shows one client's details in a blank new card.
  * In CardWizard (`draftId` = the card's id), unsaved values are kept in the in-memory card draft when the form is
- * hidden, and `draft` (that card's earlier unsaved values) is where it starts. The new-card page has no drafts.
+ * hidden (only the changed inputs), and `draft` (those earlier changes merged over the newest saved details) is
+ * where it starts; `flagged` inputs were changed on another device too. The new-card page has no drafts.
  */
 export function DetailsForm({
   initial,
@@ -73,12 +78,14 @@ export function DetailsForm({
   handle,
   draftId,
   draft,
+  flagged: flaggedFromDraft = [],
 }: {
   initial: Partial<ClientDetails>;
   onSaved?: "card" | "next" | "stay";
   handle?: Ref<DetailsHandle>;
   draftId?: string;
   draft?: Values;
+  flagged?: string[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -90,6 +97,8 @@ export function DetailsForm({
   const [result, setResult] = useState<ClientResult | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [tick, setTick] = useState(false);
+  const [flagged, setFlagged] = useState<string[]>(flaggedFromDraft);
+  const flag = (key: keyof Values) => <ChangedElsewhere show={flagged.includes(key)} />;
   const edits = useRef(0); // counts edits, so a save that finishes after more typing doesn't claim "Saved"
   // Set once a save has sent us to another page, or edits were discarded: the form resets when it is hidden.
   const resetOnHide = useRef(false);
@@ -107,6 +116,7 @@ export function DetailsForm({
     setResult(null);
     setFailed(null);
     setTick(false);
+    setFlagged([]);
   }
 
   useLayoutEffect(
@@ -120,7 +130,9 @@ export function DetailsForm({
       // Left with unsaved details (Back, a swipe): keep them for the next time this card's editor opens.
       if (draftId) {
         const { v: now, savedValues: was } = latest.current;
-        cardDrafts.update(draftId, { details: JSON.stringify(now) !== JSON.stringify(was) ? now : undefined });
+        const dirtyNow = JSON.stringify(now) !== JSON.stringify(was);
+        // Only the inputs that differ from the newest saved details, with what those were.
+        cardDrafts.update(draftId, { details: dirtyNow ? makeSectionDraft(now, valuesFrom(latestInitial.current)) : undefined });
       }
     },
     // Runs only when hidden or unmounted; the draft id is fixed for the form's life (FreshOnOpen keys the editor).
@@ -152,6 +164,7 @@ export function DetailsForm({
       setResult(res);
       if (res.ok) {
         setSavedValues(sent);
+        setFlagged([]);
         if (draftId) cardDrafts.update(draftId, { details: undefined });
       }
       return res;
@@ -174,6 +187,9 @@ export function DetailsForm({
     isDirty: () => dirty,
     discard: () => {
       resetOnHide.current = true;
+    },
+    cancelDiscard: () => {
+      resetOnHide.current = false;
     },
     resetNow: resetToSaved,
   }));
@@ -209,6 +225,13 @@ export function DetailsForm({
   // typed meanwhile, so nothing typed is dropped. (In CardWizard the wizard locks the form when it leaves.)
   const locked = pending && !handle;
 
+  // New-card page: a reset is armed for a save-and-leave or a discard, and is only meant to happen if the page is
+  // actually left. If the transition ends with this form still on screen (effects don't run while it's hidden), the
+  // navigation didn't happen: disarm, so nothing is reset by a later, unrelated hide.
+  useEffect(() => {
+    if (!handle && !pending) resetOnHide.current = false;
+  }, [pending, handle]);
+
   return (
     <form
       method="post"
@@ -238,6 +261,7 @@ export function DetailsForm({
       <div inert={locked} className="grid gap-5 sm:grid-cols-2">
         <label className="label sm:col-span-2">
           Full name
+          {flag("fullName")}
           <input
             name="fullName"
             value={v.fullName}
@@ -251,6 +275,7 @@ export function DetailsForm({
         </label>
         <label className="label">
           Phone
+          {flag("phone")}
           <input
             name="phone"
             type="tel"
@@ -265,6 +290,7 @@ export function DetailsForm({
         </label>
         <label className="label">
           Email <span className="hint">(optional)</span>
+          {flag("email")}
           <input
             name="email"
             type="email"
@@ -279,6 +305,7 @@ export function DetailsForm({
         </label>
         <label className="label">
           ID / passport number <span className="hint">(optional)</span>
+          {flag("idNumber")}
           <input
             name="idNumber"
             value={v.idNumber}
@@ -290,6 +317,7 @@ export function DetailsForm({
         </label>
         <label className="label">
           Date of birth <span className="hint">(optional)</span>
+          {flag("dateOfBirth")}
           <input
             name="dateOfBirth"
             type="date"
@@ -307,6 +335,7 @@ export function DetailsForm({
         )}
         <label className="label">
           Gender <span className="hint">(optional)</span>
+          {flag("gender")}
           <input
             name="gender"
             list="gender-options"
@@ -324,6 +353,7 @@ export function DetailsForm({
         </label>
         <label className="label">
           Occupation <span className="hint">(optional)</span>
+          {flag("occupation")}
           <input
             name="occupation"
             value={v.occupation}
@@ -335,6 +365,7 @@ export function DetailsForm({
         </label>
         <label className="label sm:col-span-2">
           Address <span className="hint">(optional)</span>
+          {flag("address")}
           <input
             name="address"
             value={v.address}
@@ -346,6 +377,7 @@ export function DetailsForm({
         </label>
         <label className="label sm:col-span-2">
           Emergency contact <span className="hint">(name and phone, optional)</span>
+          {flag("emergencyContact")}
           <input
             name="emergencyContact"
             value={v.emergencyContact}
@@ -357,6 +389,7 @@ export function DetailsForm({
         </label>
         <label className="label">
           Initial appointment
+          {flag("initialAppointment")}
           <input
             name="initialAppointment"
             type="date"
@@ -369,6 +402,7 @@ export function DetailsForm({
         </label>
         <label className="label">
           Client
+          {flag("clientType")}
           <select
             name="clientType"
             value={v.clientType}

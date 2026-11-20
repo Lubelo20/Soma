@@ -43,9 +43,23 @@ export function sectionFormData(
   return fd;
 }
 
+/** Marks a field that was also changed on another device since this unsaved draft was made. */
+export function ChangedElsewhere({ show }: { show: boolean | undefined }) {
+  if (!show) return null;
+  return <span className="block text-xs font-semibold text-amber-800">Changed on another device too</span>;
+}
+
 // ---------- Health ----------
 
-export function HealthForm({ value, onChange }: { value: HealthAnswers; onChange: (v: HealthAnswers) => void }) {
+export function HealthForm({
+  value,
+  onChange,
+  flagged = [],
+}: {
+  value: HealthAnswers;
+  onChange: (v: HealthAnswers) => void;
+  flagged?: string[];
+}) {
   const set = (key: keyof HealthAnswers, patch: Partial<HealthAnswers[keyof HealthAnswers]>) =>
     onChange({ ...value, [key]: { ...value[key], ...patch } });
   const unanswered = HEALTH_CONDITIONS.filter(({ key }) => value[key].answer === null).length;
@@ -62,8 +76,11 @@ export function HealthForm({ value, onChange }: { value: HealthAnswers; onChange
               key={key}
               className="grid gap-3 border-t border-line-soft py-4 first:border-t-0 first:pt-0 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-4"
             >
-              <span id={labelId} className="font-medium text-ink-strong">
-                {label}
+              <span className="flex flex-col gap-0.5">
+                <span id={labelId} className="font-medium text-ink-strong">
+                  {label}
+                </span>
+                <ChangedElsewhere show={flagged.includes(key)} />
               </span>
               <div role="group" aria-labelledby={labelId} className="grid grid-cols-2 gap-2 lg:w-44">
                 {(["yes", "no"] as const).map((answer) => {
@@ -114,13 +131,23 @@ export function HealthForm({ value, onChange }: { value: HealthAnswers; onChange
 
 // ---------- Massage ----------
 
-export function MassageForm({ value, onChange }: { value: MassageAnswers; onChange: (v: MassageAnswers) => void }) {
+export function MassageForm({
+  value,
+  onChange,
+  flagged = [],
+}: {
+  value: MassageAnswers;
+  onChange: (v: MassageAnswers) => void;
+  flagged?: string[];
+}) {
   return (
     <div className="flex flex-col gap-6">
       <p className="m-0 text-sm text-ink-muted">Tap the areas of tension or discomfort.</p>
+      <ChangedElsewhere show={flagged.includes("areas")} />
       <BodyMap value={value.areas} onChange={(areas) => onChange({ ...value, areas })} />
       <label className="label">
         Additional notes
+        <ChangedElsewhere show={flagged.includes("notes")} />
         <textarea
           value={value.notes}
           onChange={(e) => onChange({ ...value, notes: e.target.value })}
@@ -146,7 +173,15 @@ function nextSelection(row: SkinRow, selected: string[], option: string, checked
   return [...selected.filter((v) => v !== "none"), option];
 }
 
-export function SkinForm({ value, onChange }: { value: SkinAnswers; onChange: (v: SkinAnswers) => void }) {
+export function SkinForm({
+  value,
+  onChange,
+  flagged = [],
+}: {
+  value: SkinAnswers;
+  onChange: (v: SkinAnswers) => void;
+  flagged?: string[];
+}) {
   const set = (key: SkinRow["key"], patch: Partial<SkinAnswers[SkinRow["key"]]>) =>
     onChange({ ...value, [key]: { ...value[key], ...patch } });
 
@@ -160,6 +195,7 @@ export function SkinForm({ value, onChange }: { value: SkinAnswers; onChange: (v
             <legend className="float-left mb-3 w-full p-0 font-medium text-ink-strong">
               {row.label}
               {multi && <span className="ml-2 text-xs font-normal text-ink-subtle">(tick all that apply)</span>}
+              <ChangedElsewhere show={flagged.includes(row.key)} />
             </legend>
             <div className="clear-both flex flex-wrap gap-2">
               {row.options.map((o) => {

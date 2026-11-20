@@ -15,7 +15,8 @@ import {
   type SkinAnswers,
 } from "@/lib/record-card";
 import { saveSection } from "../../clients-actions";
-import { DetailsForm, type DetailsHandle } from "./DetailsForm";
+import { DetailsForm, valuesFrom, type DetailsHandle } from "./DetailsForm";
+import { applySectionDraft, makeSectionDraft } from "@/lib/draft-merge";
 import { cardDrafts } from "./card-drafts";
 import { LeavePrompt, useLeaveGuard } from "./LeaveGuard";
 import { HealthForm, MassageForm, SkinForm, sectionFormData } from "./SectionForms";
@@ -88,19 +89,32 @@ export function CardWizard({
   const step: Step = isStep(requested) ? requested : initialStep;
   const wide = useWide();
 
-  // Unsaved edits left on this card earlier (only ever read under this card's own id).
-  const [draft] = useState(() => cardDrafts.get(client.id));
-  const [fromDraft, setFromDraft] = useState(draft !== undefined);
+  // Unsaved edits left on this card earlier (only ever read under this card's own id): only the changed fields,
+  // merged over the newest saved answers, with the sections saved elsewhere since and the fields changed in both.
+  const [restored] = useState(() => {
+    const draft = cardDrafts.get(client.id);
+    const server = initialAnswers({ health, massage, skin });
+    const h = applySectionDraft(server.health, draft?.health);
+    const m = applySectionDraft(server.massage, draft?.massage);
+    const sk = applySectionDraft(server.skin, draft?.skin);
+    const d = applySectionDraft(valuesFrom(client), draft?.details);
+    return {
+      hasDraft: draft !== undefined,
+      answers: { health: h.value, massage: m.value, skin: sk.value },
+      details: draft?.details ? d.value : undefined,
+      updatedElsewhere: { health: h.serverChanged, massage: m.serverChanged, skin: sk.serverChanged, details: d.serverChanged },
+      conflicts: { health: h.conflicts, massage: m.conflicts, skin: sk.conflicts, details: d.conflicts },
+    };
+  });
+  const [fromDraft, setFromDraft] = useState(restored.hasDraft);
+  const [conflicts, setConflicts] = useState<Record<Section, string[]>>(restored.conflicts);
   // Whether the draft still holds unsaved client details (cleared when they save, or on Discard).
   const detailsInDraft = useSyncExternalStore(
     cardDrafts.subscribe,
     () => cardDrafts.get(client.id)?.details !== undefined,
     () => false,
   );
-  const [answers, setAnswers] = useState<Answers>(() => {
-    const server = initialAnswers({ health, massage, skin });
-    return { health: draft?.health ?? server.health, massage: draft?.massage ?? server.massage, skin: draft?.skin ?? server.skin };
-  });
+  const [answers, setAnswers] = useState<Answers>(restored.answers);
   // Fingerprint of each section as last saved, and of the save that earned a "Saved" tick.
   const [saved, setSaved] = useState<Record<Section, string>>(() => fingerprints(initialAnswers({ health, massage, skin })));
   const [ticked, setTicked] = useState<Record<Section, string | null>>({ health: null, massage: null, skin: null });
@@ -141,15 +155,18 @@ export function CardWizard({
         setAnswers(fresh);
         setSaved(fingerprints(fresh));
         setFromDraft(false);
+        setConflicts({ health: [], massage: [], skin: [] });
         cardDrafts.clear(client.id);
         return;
       }
-      const { answers: now, saved: was } = latest.current;
+      // Only the fields that differ from the newest saved answers, with what those were.
+      const { answers: now, saved: was, server } = latest.current;
+      const base = initialAnswers(server);
       const changed = (s: Section) => fingerprint(s, now) !== was[s];
       cardDrafts.update(client.id, {
-        health: changed("health") ? now.health : undefined,
-        massage: changed("massage") ? now.massage : undefined,
-        skin: changed("skin") ? now.skin : undefined,
+        health: changed("health") ? makeSectionDraft(now.health, base.health) : undefined,
+        massage: changed("massage") ? makeSectionDraft(now.massage, base.massage) : undefined,
+        skin: changed("skin") ? makeSectionDraft(now.skin, base.skin) : undefined,
       });
     },
     // Runs only when hidden or unmounted; client.id is fixed for the editor's life (FreshOnOpen keys it per visit).
@@ -167,7 +184,17 @@ export function CardWizard({
     setDetailsError(null);
     details.current?.resetNow();
     setFromDraft(false);
+    setConflicts({ health: [], massage: [], skin: [] });
   }
+
+  // A discard chosen in the leave prompt is armed for the hide that its navigation causes. If the prompt's
+  // transition ends with the editor still on screen (effects don't run while hidden), that navigation didn't
+  // happen: disarm, so a later Back keeps the edits as a draft as usual.
+  useEffect(() => {
+    if (pending || !discardOnHide.current) return;
+    discardOnHide.current = false;
+    details.current?.cancelDiscard();
+  }, [pending]);
 
   function update<S extends Section>(section: S, value: Answers[S]) {
     setAnswers((prev) => ({ ...prev, [section]: value }));
@@ -184,6 +211,7 @@ export function CardWizard({
       const res = await saveSection(section, {}, fd);
       if (res.ok) {
         cardDrafts.update(client.id, { [section]: undefined });
+        setConflicts((prev) => ({ ...prev, [section]: [] }));
         setSaved((prev) => ({ ...prev, [section]: print }));
         setTicked((prev) => ({ ...prev, [section]: print }));
         return true;
@@ -250,9 +278,9 @@ export function CardWizard({
   }
 
   const forms: Record<Section, ReactNode> = {
-    health: <HealthForm value={answers.health} onChange={(v) => update("health", v)} />,
-    massage: <MassageForm value={answers.massage} onChange={(v) => update("massage", v)} />,
-    skin: <SkinForm value={answers.skin} onChange={(v) => update("skin", v)} />,
+    health: <HealthForm value={answers.health} onChange={(v) => update("health", v)} flagged={conflicts.health} />,
+    massage: <MassageForm value={answers.massage} onChange={(v) => update("massage", v)} flagged={conflicts.massage} />,
+    skin: <SkinForm value={answers.skin} onChange={(v) => update("skin", v)} flagged={conflicts.skin} />,
   };
   const stepIndex = STEPS.indexOf(step);
   const allErrors = [
@@ -269,14 +297,16 @@ export function CardWizard({
         <LeavePrompt
           target={guard.target}
           backHref={cardHref}
-          pending={pending && doing === "prompt"}
+          pending={pending}
+          saving={pending && doing === "prompt"}
+          draftId={client.id}
           startTransition={startTransition}
           onStart={() => setDoing("prompt")}
           onSave={saveAll}
           onDiscard={() => {
+            // Armed only: applied when the navigation hides the editor, disarmed if it doesn't (see above).
             discardOnHide.current = true;
             details.current?.discard();
-            cardDrafts.clear(client.id);
           }}
           onClose={guard.close}
         />
@@ -286,6 +316,14 @@ export function CardWizard({
       {fromDraft && (dirtySections.length > 0 || detailsInDraft) && (
         <div role="status" className="flex flex-col gap-3 rounded-[3px] border-4 border-amber-500 bg-amber-50 p-4 text-amber-950 sm:p-5">
           <p className="m-0 font-semibold">You have changes from earlier that aren&rsquo;t saved yet.</p>
+          {(["details", ...SECTIONS] as const)
+            .filter((s) => restored.updatedElsewhere[s] && (s === "details" ? detailsInDraft : dirtySections.includes(s)))
+            .map((s) => (
+              <p key={s} className="m-0 text-[15px] font-semibold">
+                {s === "details" ? "Client details" : TITLES[s]} was updated on another device after these changes were made. Check every
+                answer before saving.
+              </p>
+            ))}
           <p className="m-0 text-[15px]">Check them, then save as usual.</p>
           <button type="button" disabled={busy} onClick={discardDraft} className="btn btn-line min-h-12 px-5 sm:self-start">
             Discard changes
@@ -308,7 +346,7 @@ export function CardWizard({
             {s === "details" ? "Client details" : TITLES[s]}
           </h2>
           {s === "details" ? (
-            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} handle={details} draftId={client.id} draft={draft?.details} />
+            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} handle={details} draftId={client.id} draft={restored.details} flagged={restored.conflicts.details} />
           ) : (
             <>
               {forms[s]}

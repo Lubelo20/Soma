@@ -72,3 +72,15 @@ describe("createDraftStore", () => {
     expect(fn).toHaveBeenCalledTimes(3);
   });
 });
+
+describe("hasOtherThan", () => {
+  it("tells whether any id other than the given one has a draft", () => {
+    const s = createDraftStore<D>();
+    expect(s.hasOtherThan(A)).toBe(false);
+    s.update(A, { health: "yes" });
+    expect(s.hasOtherThan(A)).toBe(false);
+    expect(s.hasOtherThan(B)).toBe(true);
+    s.update(B, { health: "no" });
+    expect(s.hasOtherThan(A)).toBe(true);
+  });
+});

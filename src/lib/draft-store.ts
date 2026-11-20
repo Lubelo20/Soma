@@ -9,6 +9,8 @@ export type DraftStore<D extends object> = {
   get(id: string): D | undefined;
   has(id: string): boolean;
   hasAny(): boolean;
+  /** Whether any card other than this one has a draft. */
+  hasOtherThan(id: string): boolean;
   /** Some id with a draft (the oldest), or undefined. */
   firstId(): string | undefined;
   /** Merges parts into this id's draft. A part given as undefined is removed; a draft with no parts is dropped. */
@@ -30,6 +32,7 @@ export function createDraftStore<D extends object>(): DraftStore<D> {
     },
     has: (id) => drafts.has(id),
     hasAny: () => drafts.size > 0,
+    hasOtherThan: (id) => [...drafts.keys()].some((k) => k !== id),
     firstId: () => drafts.keys().next().value,
     update(id, patch) {
       if (!UUID_RE.test(id)) return;
