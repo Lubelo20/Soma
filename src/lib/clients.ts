@@ -52,8 +52,6 @@ export type TreatmentEntry = {
   kind: "skin" | "massage";
   products: string;
   notes: string;
-  therapistId: number | null;
-  therapistName: string | null;
   createdAt: Date;
   editedAt: Date | null;
   deletedAt: Date | null;
@@ -104,7 +102,7 @@ const CLIENT_COLUMNS = sql`
 
 const ENTRY_COLUMNS = sql`
   e.id, e.client_id, e.booking_id, to_char(e.day, 'YYYY-MM-DD') as day, e.kind, e.products, e.notes,
-  e.therapist_id, t.name as therapist_name, e.created_at, e.edited_at, e.deleted_at`;
+  e.created_at, e.edited_at, e.deleted_at`;
 
 // The bookings that belong to a client: same phone number in any format, or same email when there is one.
 const BOOKING_MATCHES_CLIENT = sql`(
@@ -174,7 +172,7 @@ export async function getCard(id: string): Promise<Card | null> {
       select id, statements, photo_consent, initials, signature_path, snapshot, signed_at
       from consents where client_id = ${id} order by signed_at desc, id desc`,
     sql<TreatmentEntry[]>`
-      select ${ENTRY_COLUMNS} from treatment_entries e left join therapists t on t.id = e.therapist_id
+      select ${ENTRY_COLUMNS} from treatment_entries e
       where e.client_id = ${id} and e.deleted_at is null
       order by e.day desc, e.id desc`,
     sql<MatchedBooking[]>`
@@ -222,7 +220,7 @@ export async function getSectionHistory(id: string) {
 export async function getDeletedEntries(id: string): Promise<TreatmentEntry[]> {
   if (!UUID.test(id)) return [];
   return sql<TreatmentEntry[]>`
-    select ${ENTRY_COLUMNS} from treatment_entries e left join therapists t on t.id = e.therapist_id
+    select ${ENTRY_COLUMNS} from treatment_entries e
     where e.client_id = ${id} and e.deleted_at is not null
     order by e.deleted_at desc, e.id desc`;
 }
@@ -262,11 +260,4 @@ export async function bookingBelongsToClient(bookingId: string, clientId: string
     select 1 from bookings b join clients c on c.id = ${clientId}
     where b.id = ${bookingId} and ${BOOKING_MATCHES_CLIENT}`;
   return row !== undefined;
-}
-
-export async function listTherapists(includeRemoved = false) {
-  return sql<{ id: number; name: string; active: boolean }[]>`
-    select id, name, active from therapists
-    ${includeRemoved ? sql`` : sql`where active`}
-    order by name`;
 }

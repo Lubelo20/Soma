@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
-import { getCard, listTherapists } from "@/lib/clients";
+import { getCard } from "@/lib/clients";
 import { sameName, unansweredHealthCount } from "@/lib/record-card";
 import { clinicDate, formatDate, formatDateTime } from "@/lib/slots";
 import { deleteClient, deleteEntry } from "../../../clients-actions";
@@ -39,7 +39,7 @@ function Section({ title, edit, updated, children }: { title: string; edit?: str
 export default async function RecordCardPage(props: PageProps<"/dashboard/clients/[id]">) {
   await requireStaff();
   const { id } = await props.params;
-  const [card, therapists] = await Promise.all([getCard(id), listTherapists()]);
+  const card = await getCard(id);
   if (!card) notFound();
 
   const { client } = card;
@@ -154,7 +154,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
         <details className="rounded-[3px] border border-dashed border-brand p-4">
           <summary className="cursor-pointer font-semibold text-brand">+ Add a treatment entry</summary>
           <div className="pt-4">
-            <TreatmentEntryForm clientId={client.id} therapists={therapists} bookings={card.bookings} today={today} />
+            <TreatmentEntryForm clientId={client.id} bookings={card.bookings} today={today} />
           </div>
         </details>
         {card.entries.length === 0 ? (
@@ -166,7 +166,6 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="font-semibold text-ink-strong">{formatDate(e.day, SHORT_DATE)}</span>
                   <span className={`pill ${e.kind === "skin" ? "bg-mint text-brand-dark" : "bg-slate-100 text-slate-700"}`}>{e.kind}</span>
-                  {e.therapistName && <span className="text-sm text-ink-muted">{e.therapistName}</span>}
                   {e.editedAt && <span className="text-xs text-ink-subtle">edited {formatDate(clinicDate(e.editedAt), SHORT_DATE)}</span>}
                 </div>
                 {e.products && (
@@ -180,7 +179,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
                   <details>
                     <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-gold-deep">Edit</summary>
                     <div className="pt-3">
-                      <TreatmentEntryForm clientId={client.id} therapists={therapists} bookings={card.bookings} entry={e} today={today} />
+                      <TreatmentEntryForm clientId={client.id} bookings={card.bookings} entry={e} today={today} />
                     </div>
                   </details>
                   <details>

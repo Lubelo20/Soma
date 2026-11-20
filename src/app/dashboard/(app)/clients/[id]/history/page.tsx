@@ -69,7 +69,6 @@ export default async function HistoryPage(props: PageProps<"/dashboard/clients/[
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="font-semibold text-ink-strong">{formatDate(e.day, { day: "numeric", month: "short", year: "numeric" })}</span>
                   <span className="pill bg-slate-100 text-slate-700">{e.kind}</span>
-                  {e.therapistName && <span className="text-sm text-ink-muted">{e.therapistName}</span>}
                   {e.deletedAt && <span className="text-xs text-ink-subtle">removed {formatDate(clinicDate(e.deletedAt), { day: "numeric", month: "short", year: "numeric" })}</span>}
                 </div>
                 {e.products && <p className="m-0 text-[15px] break-words whitespace-pre-line">{e.products}</p>}

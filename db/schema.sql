@@ -155,12 +155,6 @@ create table if not exists consents (
 );
 create index if not exists consents_client_idx on consents (client_id, signed_at desc);
 
-create table if not exists therapists (
-  id     serial primary key,
-  name   text not null,
-  active boolean not null default true
-);
-
 -- Treatment notes. Deleting one only sets deleted_at, so the history is kept.
 create table if not exists treatment_entries (
   id           serial primary key,
@@ -170,7 +164,6 @@ create table if not exists treatment_entries (
   kind         text not null check (kind in ('skin', 'massage')),
   products     text not null default '',
   notes        text not null default '',
-  therapist_id integer references therapists(id) on delete set null,
   created_at   timestamptz not null default now(),
   edited_at    timestamptz,
   deleted_at   timestamptz

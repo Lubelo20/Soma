@@ -30,10 +30,6 @@ export default async function ClientsPage() {
       <FreshOnOpen>
         <ClientList initial={clients} />
       </FreshOnOpen>
-
-      <Link href="/dashboard/clients/therapists" className="text-link self-start">
-        Therapist names
-      </Link>
     </div>
   );
 }

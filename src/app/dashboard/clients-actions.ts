@@ -37,45 +37,6 @@ export type ClientResult = {
   values?: Record<string, string>;
 };
 
-// ---------- Therapist names ----------
-
-export async function saveTherapist(_prev: ClientResult, fd: FormData): Promise<ClientResult> {
-  const name = String(fd.get("name") ?? "").trim().replace(/\s+/g, " ");
-  const values = { name };
-  if (!(await staffCheck())) return { error: SIGNED_OUT, values };
-  const rawId = String(fd.get("id") ?? "").trim();
-  if (rawId && !INT_ID_RE.test(rawId)) return { error: "That therapist no longer exists." };
-  const id = rawId ? Number(rawId) : null;
-
-  if (name.length < 2 || name.length > 60) return { error: "Name must be 2–60 characters.", values };
-  const [clash] = await sql`select 1 from therapists where active and lower(name) = lower(${name}) and id is distinct from ${id}`;
-  if (clash) return { error: "That name is already on the list.", values };
-
-  let savedId: number;
-  if (id) {
-    const [row] = await sql<{ id: number }[]>`update therapists set name = ${name} where id = ${id} returning id`;
-    if (!row) return { error: "That therapist no longer exists." };
-    savedId = row.id;
-  } else {
-    const [row] = await sql<{ id: number }[]>`insert into therapists (name) values (${name}) returning id`;
-    savedId = row.id;
-  }
-  audit("therapist saved", { id: savedId });
-  refresh();
-  return { ok: true };
-}
-
-export async function setTherapistActive(fd: FormData) {
-  await requireStaff();
-  const rawId = String(fd.get("id") ?? "").trim();
-  const active = fd.get("active") === "true";
-  if (!INT_ID_RE.test(rawId)) return;
-  const id = Number(rawId);
-  const [row] = await sql<{ id: number }[]>`update therapists set active = ${active} where id = ${id} returning id`;
-  if (row) audit(active ? "therapist restored" : "therapist removed", { id: row.id });
-  refresh();
-}
-
 // ---------- Client list ----------
 
 /**
@@ -327,7 +288,6 @@ export async function saveEntry(_prev: ClientResult, fd: FormData): Promise<Clie
   const kind = text(fd, "kind").trim();
   const products = text(fd, "products").trim();
   const notes = text(fd, "notes").trim();
-  const rawTherapist = text(fd, "therapistId").trim();
   const bookingId = text(fd, "bookingId").trim();
 
   if (!UUID.test(clientId)) return { error: "That record card no longer exists." };
@@ -341,24 +301,18 @@ export async function saveEntry(_prev: ClientResult, fd: FormData): Promise<Clie
   if (products.length > 1000) return { error: "Products/tools used is too long (1000 characters at most)." };
   if (notes.length > 2000) return { error: "Notes are too long (2000 characters at most)." };
   if (!products && !notes) return { error: "Add the products used or a note." };
-  if (rawTherapist && !INT_ID_RE.test(rawTherapist)) return { error: "Please choose a therapist from the list." };
-  const therapistId = rawTherapist ? Number(rawTherapist) : null;
   if (bookingId && !UUID.test(bookingId)) return { error: "Please choose a booking from the list." };
 
   const [client] = await sql`select 1 from clients where id = ${clientId}`;
   if (!client) return { error: "That record card no longer exists." };
 
-  let existing: { therapistId: number | null; bookingId: string | null } | undefined;
+  let existing: { bookingId: string | null } | undefined;
   if (entryId) {
-    [existing] = await sql<{ therapistId: number | null; bookingId: string | null }[]>`
-      select therapist_id, booking_id from treatment_entries where id = ${entryId} and client_id = ${clientId} and deleted_at is null`;
+    [existing] = await sql<{ bookingId: string | null }[]>`
+      select booking_id from treatment_entries where id = ${entryId} and client_id = ${clientId} and deleted_at is null`;
     if (!existing) return { error: "That entry no longer exists." };
   }
 
-  if (therapistId !== null && therapistId !== existing?.therapistId) {
-    const [t] = await sql`select 1 from therapists where id = ${therapistId} and active`;
-    if (!t) return { error: "Please choose a therapist from the list." };
-  }
   if (bookingId && bookingId !== existing?.bookingId && !(await bookingBelongsToClient(bookingId, clientId))) {
     return { error: "Please choose one of this client's bookings." };
   }
@@ -367,13 +321,13 @@ export async function saveEntry(_prev: ClientResult, fd: FormData): Promise<Clie
   if (entryId) {
     const [row] = await sql`
       update treatment_entries set day = ${day}, kind = ${kind}, products = ${products}, notes = ${notes},
-        therapist_id = ${therapistId}, booking_id = ${booking}, edited_at = now()
+        booking_id = ${booking}, edited_at = now()
       where id = ${entryId} and client_id = ${clientId} and deleted_at is null returning id`;
     if (!row) return { error: "That entry no longer exists." };
   } else {
     await sql`
-      insert into treatment_entries (client_id, booking_id, day, kind, products, notes, therapist_id)
-      values (${clientId}, ${booking}, ${day}, ${kind}, ${products}, ${notes}, ${therapistId})`;
+      insert into treatment_entries (client_id, booking_id, day, kind, products, notes)
+      values (${clientId}, ${booking}, ${day}, ${kind}, ${products}, ${notes})`;
   }
   audit("treatment entry saved", { id: clientId });
   refresh();

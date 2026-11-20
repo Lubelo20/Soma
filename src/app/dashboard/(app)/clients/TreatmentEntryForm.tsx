@@ -1,14 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useLayoutEffect, useState, useTransition } from "react";
 import type { MatchedBooking, TreatmentEntry } from "@/lib/clients";
 import { CONNECTION_ERROR } from "@/lib/form-messages";
 import { clinicDate, formatDate } from "@/lib/slots";
 import { saveEntry } from "../../clients-actions";
 import { useHydrated } from "../../useHydrated";
-
-type Therapist = { id: number; name: string };
 
 /**
  * Adds a treatment log entry, or edits one when `entry` is given. Values live in React state, so a failed
@@ -18,24 +15,21 @@ type Therapist = { id: number; name: string };
  */
 export function TreatmentEntryForm({
   clientId,
-  therapists,
   bookings,
   entry,
   today,
 }: {
   clientId: string;
-  therapists: Therapist[];
   bookings: MatchedBooking[];
   entry?: TreatmentEntry;
   today: string;
 }) {
-  const blank = { day: today, kind: "" as "" | "skin" | "massage", products: "", notes: "", therapistId: "", bookingId: "" };
+  const blank = { day: today, kind: "" as "" | "skin" | "massage", products: "", notes: "", bookingId: "" };
   const [v, setV] = useState({
     day: entry?.day ?? blank.day,
     kind: (entry?.kind ?? blank.kind) as "" | "skin" | "massage",
     products: entry?.products ?? "",
     notes: entry?.notes ?? "",
-    therapistId: entry?.therapistId ? String(entry.therapistId) : "",
     bookingId: entry?.bookingId ?? "",
   });
   const [pending, startTransition] = useTransition();
@@ -55,11 +49,6 @@ export function TreatmentEntryForm({
     setV((prev) => ({ ...prev, [key]: value }));
   };
 
-  // A therapist who has since been removed stays selectable on the entry they were saved against.
-  const options =
-    entry?.therapistId && !therapists.some((t) => t.id === entry.therapistId)
-      ? [...therapists, { id: entry.therapistId, name: entry.therapistName ?? "Removed therapist" }]
-      : therapists;
   // The linked booking may no longer match (phone changed); keep it visible rather than silently dropping it.
   const showMissingBooking = entry?.bookingId && !bookings.some((b) => b.id === entry.bookingId);
 
@@ -129,24 +118,6 @@ export function TreatmentEntryForm({
         <textarea id={id("notes")} value={v.notes} onChange={(e) => set("notes", e.target.value)} rows={3} maxLength={2000} className="field resize-y py-2" />
       </label>
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="label" htmlFor={id("therapist")}>
-          Therapist
-          <select id={id("therapist")} value={v.therapistId} onChange={(e) => set("therapistId", e.target.value)} className="field">
-            <option value="">Not set</option>
-            {options.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          {therapists.length === 0 && (
-            <span className="hint">
-              <Link href="/dashboard/clients/therapists" className="underline">
-                Add therapist names first
-              </Link>
-            </span>
-          )}
-        </label>
         <label className="label" htmlFor={id("booking")}>
           Linked booking (optional)
           <select id={id("booking")} value={v.bookingId} onChange={(e) => set("bookingId", e.target.value)} className="field">
