@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/privacy",
 });
 
-const UPDATED = "1 November 2026";
+const UPDATED = "20 November 2026";
 
 const sections: { title: string; body: React.ReactNode }[] = [
   {
@@ -41,6 +41,10 @@ const sections: { title: string; body: React.ReactNode }[] = [
           <strong>When you send an enquiry:</strong> your name, phone number, email address (optional), what you&rsquo;re interested in and your
           message.
         </li>
+        <li>
+          <strong>When you visit the clinic:</strong> your contact details, date of birth, ID or passport number, emergency contact, health and
+          skin history, the treatments you receive, and your signed consent.
+        </li>
       </ul>
     ),
   },
@@ -50,7 +54,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
       <p>
         To confirm, change or cancel your booking, to reply to your enquiry, to prepare your treatment safely, and to keep the records we need
         for accounting and legal purposes. We don&rsquo;t sell your information or use it for advertising, and we only send you marketing if you
-        ask for it.
+        ask for it. The health information in your client record is used only to treat you safely and is seen only by clinic staff.
       </p>
     ),
   },
@@ -77,8 +81,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "How we protect it",
     body: (
       <p>
-        Information is sent over encrypted connections (HTTPS) and stored in an encrypted database. Only our staff can see bookings and
-        enquiries, through a password-protected dashboard.
+        Information is sent over encrypted connections (HTTPS) and stored in an encrypted database. Only our staff can see bookings,
+        enquiries and client records, through a password-protected dashboard.
       </p>
     ),
   },
@@ -86,7 +90,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "How long we keep it",
     body: (
       <p>
-        We keep booking and enquiry records only for as long as we need them for the reasons above and to meet our legal and tax obligations,
+        We keep booking, enquiry and client records only for as long as we need them for the reasons above and to meet our legal and tax obligations,
         and then delete them.
       </p>
     ),

@@ -107,7 +107,13 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
               {/* Labels sit beside their values even on phones, which keeps each card short. */}
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-line-soft pt-4 text-[15px] sm:gap-x-8">
                 <span className="text-ink-subtle">Client</span>
-                <span className="font-semibold text-ink-strong">{b.clientName}</span>
+                <span>
+                  <span className="font-semibold text-ink-strong">{b.clientName}</span> ·{" "}
+                  <Link href={`/dashboard/clients/from-booking/${b.id}`} prefetch={false} className="inline-flex items-center gap-1">
+                    <Icon name="person" size={14} strokeWidth={1.5} />
+                    Record card
+                  </Link>
+                </span>
                 <span className="text-ink-subtle">Phone</span>
                 <span>
                   <a href={`tel:${b.clientPhone}`}>{b.clientPhone}</a> ·{" "}
