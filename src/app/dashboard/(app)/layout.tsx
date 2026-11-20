@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Icon } from "@/components/Icon";
 import { requireStaff } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { logout } from "../actions";
+import { IdleLock } from "../IdleLock";
+import { SignOutButton } from "../SignOutButton";
 import { DashboardNav } from "./DashboardNav";
 
 async function Sidebar() {
@@ -16,12 +16,10 @@ async function Sidebar() {
     <>
       <DashboardNav counts={{ pending, enquiries }} />
       <div className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-5 text-sm max-lg:hidden">
-        <form action={logout}>
-          <button type="submit" className="flex cursor-pointer items-center gap-3 p-0 px-3.5 text-[11.5px] font-medium tracking-[.16em] text-brand-light uppercase hover:text-white">
-            <Icon name="logout" size={20} strokeWidth={1.5} />
-            Sign out
-          </button>
-        </form>
+        <SignOutButton
+          iconSize={20}
+          className="flex cursor-pointer items-center gap-3 p-0 px-3.5 text-[11.5px] font-medium tracking-[.16em] text-brand-light uppercase hover:text-white"
+        />
       </div>
     </>
   );
@@ -40,12 +38,11 @@ export default function DashboardLayout({ children }: LayoutProps<"/dashboard">)
             </span>
           </Link>
           {/* On phones the sidebar footer is hidden, so sign-out lives up here. */}
-          <form action={logout} className="lg:hidden">
-            <button type="submit" className="flex min-h-11 cursor-pointer items-center gap-2 p-2 text-[11px] font-medium tracking-[.16em] text-brand-light uppercase hover:text-white">
-              <Icon name="logout" size={18} strokeWidth={1.5} />
-              Sign out
-            </button>
-          </form>
+          <SignOutButton
+            iconSize={18}
+            formClassName="lg:hidden"
+            className="flex min-h-11 cursor-pointer items-center gap-2 p-2 text-[11px] font-medium tracking-[.16em] text-brand-light uppercase hover:text-white"
+          />
         </div>
         <Suspense fallback={<div className="h-40" />}>
           <Sidebar />
@@ -54,6 +51,7 @@ export default function DashboardLayout({ children }: LayoutProps<"/dashboard">)
       <div className="min-w-0 flex-1 p-5 lg:p-12">
         <Suspense fallback={<p className="text-ink-subtle">Loading…</p>}>{children}</Suspense>
       </div>
+      <IdleLock />
     </div>
   );
 }

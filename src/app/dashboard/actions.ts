@@ -5,7 +5,7 @@ import { del } from "@vercel/blob";
 import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
-import { MIN_PASSWORD, changePassword, endSession, requireStaff, setPassword, startSession, verifyPassword } from "@/lib/auth";
+import { MIN_PASSWORD, changePassword, endSession, isSignedIn, requireStaff, setPassword, startSession, verifyPassword } from "@/lib/auth";
 import { formatPrice } from "@/lib/data";
 import { sql } from "@/lib/db";
 import { clearEvents, clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
@@ -49,10 +49,19 @@ export async function login(_prev: { error?: string }, fd: FormData): Promise<{ 
   redirect("/dashboard");
 }
 
+/**
+ * Ends the session. It doesn't redirect: the sign-out button then loads the sign-in page in full
+ * (window.location), so the cards and lists kept hidden in the page by client-side navigation are discarded.
+ * Without JavaScript, the form posts and the page reloads to the sign-in page, as every dashboard page requires a session.
+ */
 export async function logout() {
   await endSession();
   audit("signed out");
-  redirect("/dashboard/login");
+}
+
+/** For the idle screen lock: whether this browser's session is still valid (checking it also counts as activity). */
+export async function sessionActive(): Promise<boolean> {
+  return isSignedIn();
 }
 
 export async function updatePassword(_prev: FormResult, fd: FormData): Promise<FormResult> {

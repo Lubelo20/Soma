@@ -6,11 +6,11 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { sql } from "./db";
 import { SESSION_COOKIE as COOKIE } from "./session-cookie";
+import { IDLE_MINUTES } from "./session-rules";
 
 // A session ends after 60 minutes without dashboard activity (the database expiry slides forward on each
 // request), and after 30 days at most, when the cookie itself expires.
 const SESSION_DAYS = 30;
-const IDLE_MINUTES = 60;
 
 const PASSWORD_KEY = "dashboard_password_hash";
 
@@ -74,7 +74,7 @@ export async function requireStaff() {
 }
 
 /** Shown when a form is saved after the session has ended. */
-export const SIGNED_OUT = "Your session has ended. Sign in again in a new tab, then press Save here. Nothing you typed has been lost.";
+export const SIGNED_OUT = "Your session has ended. Sign in again in a new tab, then try again here. Nothing you typed has been lost.";
 
 /** Like requireStaff, but answers instead of redirecting, for server actions that report back to the form. */
 export async function staffCheck(): Promise<boolean> {
