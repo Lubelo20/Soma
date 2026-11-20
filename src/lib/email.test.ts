@@ -93,3 +93,81 @@ describe("special bookings", () => {
     expect(emails.bookingReceived(booking).text).not.toContain("Package price");
   });
 });
+
+describe("bookings made for someone else", () => {
+  const forOther = { ...booking, forName: "Zanele Dube" };
+  const clientMails = async () => {
+    const { emails } = await import("./email");
+    return [
+      emails.bookingReceived(forOther),
+      emails.bookingConfirmed(forOther),
+      emails.bookingDeclined({ ...forOther, reason: "" }),
+      emails.bookingCancelled({ ...forOther, reason: "" }),
+    ];
+  };
+
+  it("still greets the booker and says who the treatment is for", async () => {
+    for (const mail of await clientMails()) {
+      for (const version of [mail.html, mail.text]) {
+        expect(version).toContain("Hi Thandi,");
+        expect(version).toContain("Zanele Dube");
+      }
+    }
+  });
+
+  it("uses the agreed wording in the plain-text versions", async () => {
+    const [received, confirmed, declined, cancelled] = await clientMails();
+    expect(received.text).toContain("For: Zanele Dube");
+    expect(received.text).toContain("Your request for Zanele Dube is not confirmed yet.");
+    expect(confirmed.text).toContain("For: Zanele Dube");
+    expect(confirmed.text).toContain("Good news, your booking for Zanele Dube is confirmed.");
+    expect(confirmed.text).toContain("Please ask Zanele Dube to arrive 10 minutes early.");
+    expect(declined.text).toContain("Unfortunately we can't accommodate your request for Zanele Dube: Classic Facial on Wednesday, 18 November at 16:00.");
+    expect(cancelled.text).toContain("Your booking for Zanele Dube: Classic Facial on Wednesday, 18 November at 16:00 has been cancelled.");
+  });
+
+  it("leaves the wording unchanged for a booking for the booker themselves", async () => {
+    const { emails } = await import("./email");
+    for (const mail of [emails.bookingReceived(booking), emails.bookingConfirmed({ ...booking, forName: "" })]) {
+      expect(mail.text).not.toContain("For:");
+      expect(mail.text).not.toContain(" for Thandi");
+    }
+    expect(emails.bookingReceived(booking).text).toContain("Thank you for booking with us. Your request is not confirmed yet.");
+    expect(emails.bookingConfirmed(booking).text).toContain("Please arrive 10 minutes early.");
+    expect(emails.bookingDeclined({ ...booking, reason: "" }).text).toContain(
+      "Unfortunately we can't accommodate your request for Classic Facial on Wednesday, 18 November at 16:00.",
+    );
+  });
+
+  it("shows staff who it is for and who booked it, with the booker's contact details", async () => {
+    const { emails } = await import("./email");
+    const mail = emails.staffNewBooking({ ...forOther, forPhone: "+27 71 555 0152", phone: "0821234567", email: "t@example.com", notes: "" });
+    for (const line of ["For: Zanele Dube", "Their phone: +27 71 555 0152", "Booked by: Thandi", "Phone / WhatsApp: 0821234567", "Email: t@example.com"]) {
+      expect(mail.text).toContain(line);
+    }
+    expect(mail.html).toContain("Booked by");
+    const noPhone = emails.staffNewBooking({ ...forOther, phone: "0821234567", email: "t@example.com", notes: "" });
+    expect(noPhone.text).toContain("Their phone: (not given)");
+    const self = emails.staffNewBooking({ ...booking, phone: "0821234567", email: "t@example.com", notes: "" });
+    expect(self.text).toContain("Client: Thandi");
+    expect(self.text).not.toContain("Booked by");
+  });
+
+  it("escapes the treated person's name so it can't add HTML", async () => {
+    const { emails } = await import("./email");
+    const evil = { ...booking, forName: "<b>x</b>" };
+    const all = [
+      emails.bookingReceived(evil),
+      emails.bookingConfirmed(evil),
+      emails.bookingDeclined({ ...evil, reason: "" }),
+      emails.bookingCancelled({ ...evil, reason: "" }),
+      emails.staffNewBooking({ ...evil, forPhone: "<i>1</i>", phone: "0821234567", email: "t@example.com", notes: "" }),
+    ];
+    for (const mail of all) {
+      expect(mail.html).not.toContain("<b>x</b>");
+      expect(mail.html).not.toContain("<i>");
+      expect(mail.html).toContain("&lt;b&gt;x&lt;/b&gt;");
+      expect(mail.text).toContain("<b>x</b>");
+    }
+  });
+});
