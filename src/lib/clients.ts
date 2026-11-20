@@ -261,3 +261,14 @@ export async function bookingBelongsToClient(bookingId: string, clientId: string
     where b.id = ${bookingId} and ${BOOKING_MATCHES_CLIENT}`;
   return row !== undefined;
 }
+
+/** Which of the given bookings have at least one matching record card, in one query. Ids that are not uuids are ignored. */
+export async function bookingsWithCards(bookingIds: string[]): Promise<Set<string>> {
+  const ids = [...new Set(bookingIds.filter((id) => UUID.test(id)))];
+  if (ids.length === 0) return new Set();
+  const rows = await sql<{ id: string }[]>`
+    select b.id from bookings b
+    where b.id in ${sql(ids)}
+      and exists (select 1 from clients c where ${BOOKING_MATCHES_CLIENT})`;
+  return new Set(rows.map((r) => r.id));
+}

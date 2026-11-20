@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { formatPrice } from "@/lib/data";
+import { bookingsWithCards } from "@/lib/clients";
 import { sql } from "@/lib/db";
 import { formatDateTime } from "@/lib/slots";
 import { BookingActions, StatusPill, whatsappLink, type BookingStatus } from "./BookingActions";
@@ -54,6 +55,7 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
   const requested = (await props.searchParams).view;
   const view: View = typeof requested === "string" && requested in views ? (requested as View) : "pending";
   const bookings = await loadBookings(view);
+  const withCards = await bookingsWithCards(bookings.map((b) => b.id));
 
   return (
     <div className="flex max-w-5xl flex-col gap-8">
@@ -107,11 +109,16 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
               {/* Labels sit beside their values even on phones, which keeps each card short. */}
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-line-soft pt-4 text-[15px] sm:gap-x-8">
                 <span className="text-ink-subtle">Client</span>
-                <span>
-                  <span className="font-semibold text-ink-strong">{b.clientName}</span> ·{" "}
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="font-semibold text-ink-strong">{b.clientName}</span>
+                  {withCards.has(b.id) ? (
+                    <span className="pill bg-mint text-brand-dark">Existing client</span>
+                  ) : (
+                    <span className="pill bg-slate-100 text-slate-700">New client</span>
+                  )}
                   <Link href={`/dashboard/clients/from-booking/${b.id}`} prefetch={false} className="inline-flex items-center gap-1">
                     <Icon name="person" size={14} strokeWidth={1.5} />
-                    Record card
+                    {withCards.has(b.id) ? "Open record card" : "Start record card"}
                   </Link>
                 </span>
                 <span className="text-ink-subtle">Phone</span>
