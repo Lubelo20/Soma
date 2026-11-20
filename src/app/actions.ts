@@ -6,10 +6,9 @@ import { sql } from "@/lib/db";
 import { clientIp, countRecent, recordEvent } from "@/lib/rate-limit";
 import { emails, sendEmail, staffInbox } from "@/lib/email";
 import { enquiryKinds, type EnquiryKind } from "@/lib/site";
+import { EMAIL_RE, PHONE_RE } from "@/lib/validation";
 import { availableSlots, bookableDates, clinicTime, formatDate, weekday, type Busy } from "@/lib/slots";
 
-const PHONE_RE = /^[+\d][\d\s()-]{7,19}$/;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const field = (fd: FormData, name: string, max = 200) => String(fd.get(name) ?? "").trim().slice(0, max);
 // Single-line fields (names, phones, emails) end up in email subjects and headers, so line breaks are removed.
 const line = (fd: FormData, name: string, max = 200) => field(fd, name, max).replace(/[\x00-\x1f\x7f]+/g, " ");

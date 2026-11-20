@@ -9,6 +9,7 @@ const links: { href: string; label: string; short?: string; icon: IconName; coun
   { href: "/dashboard", label: "Bookings", icon: "bookings", count: "pending" },
   { href: "/dashboard/calendar", label: "Calendar", icon: "calendarGrid" },
   { href: "/dashboard/enquiries", label: "Enquiries", icon: "chat", count: "enquiries" },
+  { href: "/dashboard/clients", label: "Clients", icon: "person" },
   { href: "/dashboard/treatments", label: "Treatments & prices", short: "Treatments", icon: "tag" },
   { href: "/dashboard/specials", label: "Specials", icon: "sparkle" },
   { href: "/dashboard/hours", label: "Opening hours", short: "Hours", icon: "clock" },
@@ -23,9 +24,9 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
   const pathname = usePathname();
   // On phones every link shows at once in a grid, so nothing hides off-screen; on desktop it's the sidebar list.
   return (
-    <nav aria-label="Dashboard" className="grid grid-cols-3 gap-1.5 pb-4 sm:grid-cols-4 lg:flex lg:flex-col lg:gap-0.5 lg:pb-0">
+    <nav aria-label="Dashboard" className="grid grid-cols-3 gap-1.5 pb-4 sm:grid-cols-5 lg:flex lg:flex-col lg:gap-0.5 lg:pb-0">
       {links.map((l) => {
-        const active = pathname === l.href;
+        const active = l.href === "/dashboard/clients" ? pathname.startsWith(l.href) : pathname === l.href;
         const n = l.count ? counts[l.count] : 0;
         return (
           <Link
