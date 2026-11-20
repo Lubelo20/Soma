@@ -1,7 +1,20 @@
 // Client record card: field definitions, FormData parsers and health warnings.
 // Pure module (no database, no React) so it can be used on server and client.
 
-export const HEALTH_CONDITIONS = [
+export type HealthKey =
+  | "bloodPressure"
+  | "heart"
+  | "diabetes"
+  | "epilepsy"
+  | "respiratory"
+  | "pregnancy"
+  | "chronicPain"
+  | "recentSurgery"
+  | "injuries"
+  | "skinAllergies"
+  | "medications";
+
+export const HEALTH_CONDITIONS: readonly { key: HealthKey; label: string; noteLabel?: string }[] = [
   { key: "bloodPressure", label: "High/low blood pressure" },
   { key: "heart", label: "Heart condition" },
   { key: "diabetes", label: "Diabetes" },
@@ -13,9 +26,8 @@ export const HEALTH_CONDITIONS = [
   { key: "injuries", label: "Joint or muscle injuries" },
   { key: "skinAllergies", label: "Skin allergies/dermatitis", noteLabel: "Trigger" },
   { key: "medications", label: "Medications", noteLabel: "List" },
-] as const;
+];
 
-export type HealthKey = (typeof HEALTH_CONDITIONS)[number]["key"];
 export type HealthAnswers = Record<HealthKey, { answer: "yes" | "no" | null; note: string }>;
 
 export type SkinKey =
@@ -37,11 +49,16 @@ type SkinRow = {
   hasOther?: boolean;
 };
 
+// Sentence-case a camelCase id: "lowerBack" -> "Lower back".
+const sentence = (id: string) => {
+  const spaced = id.replace(/([A-Z])/g, " $1").toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+};
+
 const opts = (...items: (string | [string, string])[]): SkinOption[] =>
   items.map((item) => {
     if (Array.isArray(item)) return { value: item[0], label: item[1] };
-    const spaced = item.replace(/([A-Z])/g, " $1").toLowerCase();
-    return { value: item, label: spaced.charAt(0).toUpperCase() + spaced.slice(1) };
+    return { value: item, label: sentence(item) };
   });
 
 const YES_NO = opts("yes", "no");
@@ -84,11 +101,6 @@ export const SKIN_ROWS: readonly SkinRow[] = [
 ];
 
 export type SkinAnswers = Record<SkinKey, { selected: string[]; note: string; other: string }>;
-
-const sentence = (id: string) => {
-  const spaced = id.replace(/([A-Z])/g, " $1").toLowerCase();
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-};
 
 const areas = (view: "front" | "back" | "side", ids: string[]) =>
   ids.map((id) => ({ id, label: sentence(id), view }));
