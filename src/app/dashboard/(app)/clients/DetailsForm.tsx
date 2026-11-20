@@ -10,9 +10,10 @@ import { isUnder18 } from "@/lib/record-card";
 import { clinicDate } from "@/lib/slots";
 import { saveDetails, type ClientResult } from "../../clients-actions";
 import { useHydrated } from "../../useHydrated";
+import { cardDrafts } from "./card-drafts";
 import { LeavePrompt, useLeaveGuard } from "./LeaveGuard";
 
-type Values = {
+export type Values = {
   fullName: string;
   phone: string;
   email: string;
@@ -32,7 +33,14 @@ const DUPLICATE_ERROR = "A card with this phone or ID / passport number already 
  * Lets CardWizard save unsaved details before leaving the page. saveIfChanged resolves to an error message, or null
  * when saved; isDirty tells whether anything is unsaved; discard puts the saved values back once the page is left.
  */
-export type DetailsHandle = { saveIfChanged: () => Promise<string | null>; isDirty: () => boolean; discard: () => void };
+export type DetailsHandle = {
+  saveIfChanged: () => Promise<string | null>;
+  isDirty: () => boolean;
+  /** Puts the saved values back once the page is left (after "Discard changes" in the leave prompt). */
+  discard: () => void;
+  /** Puts the saved values back now (the "changes from earlier" note's Discard). */
+  resetNow: () => void;
+};
 
 const valuesFrom = (initial: Partial<ClientDetails>): Values => ({
   fullName: initial.fullName ?? "",
@@ -56,23 +64,29 @@ const valuesFrom = (initial: Partial<ClientDetails>): Values => ({
  * this form guards leaving with unsaved edits itself.
  * Next keeps a left page mounted but hidden: once a save has moved on to another page, the form empties itself
  * when hidden, so Back never shows one client's details in a blank new card.
+ * In CardWizard (`draftId` = the card's id), unsaved values are kept in the in-memory card draft when the form is
+ * hidden, and `draft` (that card's earlier unsaved values) is where it starts. The new-card page has no drafts.
  */
 export function DetailsForm({
   initial,
   onSaved = "next",
   handle,
+  draftId,
+  draft,
 }: {
   initial: Partial<ClientDetails>;
   onSaved?: "card" | "next" | "stay";
   handle?: Ref<DetailsHandle>;
+  draftId?: string;
+  draft?: Values;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const hydrated = useHydrated();
-  const [v, setV] = useState<Values>(() => valuesFrom(initial));
+  const [v, setV] = useState<Values>(() => draft ?? valuesFrom(initial));
   // The values as last saved (or as loaded), to tell whether anything is unsaved.
-  const [savedValues, setSavedValues] = useState<Values>(v);
+  const [savedValues, setSavedValues] = useState<Values>(() => valuesFrom(initial));
   const [result, setResult] = useState<ClientResult | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [tick, setTick] = useState(false);
@@ -80,20 +94,37 @@ export function DetailsForm({
   // Set once a save has sent us to another page, or edits were discarded: the form resets when it is hidden.
   const resetOnHide = useRef(false);
   const latestInitial = useRef(initial);
+  const latest = useRef({ v, savedValues });
   useEffect(() => {
     latestInitial.current = initial;
-  }, [initial]);
+    latest.current = { v, savedValues };
+  }, [initial, v, savedValues]);
+
+  function resetToSaved() {
+    const fresh = valuesFrom(latestInitial.current);
+    setV(fresh);
+    setSavedValues(fresh);
+    setResult(null);
+    setFailed(null);
+    setTick(false);
+  }
+
   useLayoutEffect(
     () => () => {
-      if (!resetOnHide.current) return;
-      resetOnHide.current = false;
-      const fresh = valuesFrom(latestInitial.current);
-      setV(fresh);
-      setSavedValues(fresh);
-      setResult(null);
-      setFailed(null);
-      setTick(false);
+      if (resetOnHide.current) {
+        resetOnHide.current = false;
+        resetToSaved();
+        if (draftId) cardDrafts.update(draftId, { details: undefined });
+        return;
+      }
+      // Left with unsaved details (Back, a swipe): keep them for the next time this card's editor opens.
+      if (draftId) {
+        const { v: now, savedValues: was } = latest.current;
+        cardDrafts.update(draftId, { details: JSON.stringify(now) !== JSON.stringify(was) ? now : undefined });
+      }
     },
+    // Runs only when hidden or unmounted; the draft id is fixed for the form's life (FreshOnOpen keys the editor).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -119,7 +150,10 @@ export function DetailsForm({
     try {
       const res = await saveDetails({}, fd);
       setResult(res);
-      if (res.ok) setSavedValues(sent);
+      if (res.ok) {
+        setSavedValues(sent);
+        if (draftId) cardDrafts.update(draftId, { details: undefined });
+      }
       return res;
     } catch {
       setFailed(CONNECTION_ERROR);
@@ -141,6 +175,7 @@ export function DetailsForm({
     discard: () => {
       resetOnHide.current = true;
     },
+    resetNow: resetToSaved,
   }));
 
   // The new-card page: hold links away while something typed isn't saved. (In CardWizard, the wizard does this.)
@@ -170,6 +205,9 @@ export function DetailsForm({
 
   // Disabled until hydrated, so a tap before JavaScript has loaded can't submit the form natively.
   const busy = pending || !hydrated;
+  // On the new-card page every save leaves the page, and the form is emptied once it's hidden: nothing can be
+  // typed meanwhile, so nothing typed is dropped. (In CardWizard the wizard locks the form when it leaves.)
+  const locked = pending && !handle;
 
   return (
     <form
@@ -184,6 +222,8 @@ export function DetailsForm({
       {guard.target && (
         <LeavePrompt
           target={guard.target}
+          pending={pending}
+          startTransition={startTransition}
           onSave={async () => {
             const ok = (await saveIfChanged()) === null;
             if (ok) resetOnHide.current = true;
@@ -195,7 +235,7 @@ export function DetailsForm({
           onClose={guard.close}
         />
       )}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div inert={locked} className="grid gap-5 sm:grid-cols-2">
         <label className="label sm:col-span-2">
           Full name
           <input

@@ -9,6 +9,7 @@ import { deleteClient, deleteEntry } from "../../../clients-actions";
 import { StatusPill, whatsappLink, type BookingStatus } from "../../BookingActions";
 import { DetailsSummary, HealthSummary, MassageSummary, SignatureView, SkinSummary, SnapshotView } from "../Summaries";
 import { TreatmentEntryForm } from "../TreatmentEntryForm";
+import { UnsavedDraftBanner } from "../UnsavedDraftBanner";
 
 export const metadata: Metadata = { title: "Record card" };
 // Staff always need live data, so these pages render on request rather than from a prefetched shell.
@@ -80,6 +81,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
           </ul>
         </section>
       )}
+      <UnsavedDraftBanner clientId={client.id} />
       {!card.health ? (
         <section role="region" aria-label="Health history" className="rounded-[3px] border-4 border-amber-500 bg-amber-50 p-4 sm:p-5">
           <h2 className="m-0 mb-1 text-lg font-bold text-amber-950">Health history not filled in yet</h2>

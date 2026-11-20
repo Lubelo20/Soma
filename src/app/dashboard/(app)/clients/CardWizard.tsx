@@ -16,6 +16,7 @@ import {
 } from "@/lib/record-card";
 import { saveSection } from "../../clients-actions";
 import { DetailsForm, type DetailsHandle } from "./DetailsForm";
+import { cardDrafts } from "./card-drafts";
 import { LeavePrompt, useLeaveGuard } from "./LeaveGuard";
 import { HealthForm, MassageForm, SkinForm, sectionFormData } from "./SectionForms";
 
@@ -62,7 +63,9 @@ const fingerprint = (section: Section, a: Answers) => JSON.stringify([...section
  * "Save and back to card"; the step is kept in ?step= so a reload stays put. From lg: every section on one page,
  * each with its own Save. All answers live here in React state, so moving between steps or a failed save never
  * loses them. Leaving by a link with anything unsaved shows an inline prompt; closing the tab asks first.
- * Nothing is kept in browser storage. The page wraps this in FreshOnOpen, so each visit starts from server data.
+ * Nothing is kept in browser storage. The page wraps this in FreshOnOpen, so each visit starts from server data,
+ * unless the editor was last left with unsaved edits by Back, a swipe or a history jump: those are kept in the
+ * in-memory card draft (card-drafts.ts, keyed by this card's id) and the next visit starts from them, with a note.
  */
 export function CardWizard({
   client,
@@ -85,14 +88,26 @@ export function CardWizard({
   const step: Step = isStep(requested) ? requested : initialStep;
   const wide = useWide();
 
-  const [answers, setAnswers] = useState<Answers>(() => initialAnswers({ health, massage, skin }));
+  // Unsaved edits left on this card earlier (only ever read under this card's own id).
+  const [draft] = useState(() => cardDrafts.get(client.id));
+  const [fromDraft, setFromDraft] = useState(draft !== undefined);
+  // Whether the draft still holds unsaved client details (cleared when they save, or on Discard).
+  const detailsInDraft = useSyncExternalStore(
+    cardDrafts.subscribe,
+    () => cardDrafts.get(client.id)?.details !== undefined,
+    () => false,
+  );
+  const [answers, setAnswers] = useState<Answers>(() => {
+    const server = initialAnswers({ health, massage, skin });
+    return { health: draft?.health ?? server.health, massage: draft?.massage ?? server.massage, skin: draft?.skin ?? server.skin };
+  });
   // Fingerprint of each section as last saved, and of the save that earned a "Saved" tick.
   const [saved, setSaved] = useState<Record<Section, string>>(() => fingerprints(initialAnswers({ health, massage, skin })));
   const [ticked, setTicked] = useState<Record<Section, string | null>>({ health: null, massage: null, skin: null });
   const [errors, setErrors] = useState<Record<Section, string | null>>({ health: null, massage: null, skin: null });
   const [pending, startTransition] = useTransition();
   // What the pending transition is doing, for the button that says "Saving…".
-  const [doing, setDoing] = useState<Section | "next" | "ready" | "back" | null>(null);
+  const [doing, setDoing] = useState<Section | "next" | "ready" | "back" | "prompt" | null>(null);
   const details = useRef<DetailsHandle>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const busy = pending;
@@ -103,13 +118,17 @@ export function CardWizard({
   const dirtySections = SECTIONS.filter((s) => fingerprint(s, answers) !== saved[s]);
   const guard = useLeaveGuard(() => dirtySections.length > 0 || Boolean(details.current?.isDirty()));
 
+  // While a save that leaves the page is in flight, nothing can be typed (it would be dropped once hidden).
+  const locked = pending && (doing === "ready" || doing === "back" || doing === "prompt" || (doing === "next" && step === "skin"));
+
   // Next keeps this page mounted but hidden after leaving it. When hidden: messages and ticks go; after
-  // "Discard changes", the answers go back to the newest saved ones, so Back doesn't bring discarded edits back.
+  // "Discard changes", the answers go back to the newest saved ones, so Back doesn't bring discarded edits back;
+  // otherwise any unsaved sections are kept in the card draft for the next time this card's editor opens.
   const discardOnHide = useRef(false);
-  const latest = useRef({ health, massage, skin });
+  const latest = useRef({ server: { health, massage, skin }, answers, saved });
   useEffect(() => {
-    latest.current = { health, massage, skin };
-  }, [health, massage, skin]);
+    latest.current = { server: { health, massage, skin }, answers, saved };
+  }, [health, massage, skin, answers, saved]);
   useLayoutEffect(
     () => () => {
       setErrors({ health: null, massage: null, skin: null });
@@ -118,13 +137,37 @@ export function CardWizard({
       setDoing(null);
       if (discardOnHide.current) {
         discardOnHide.current = false;
-        const fresh = initialAnswers(latest.current);
+        const fresh = initialAnswers(latest.current.server);
         setAnswers(fresh);
         setSaved(fingerprints(fresh));
+        setFromDraft(false);
+        cardDrafts.clear(client.id);
+        return;
       }
+      const { answers: now, saved: was } = latest.current;
+      const changed = (s: Section) => fingerprint(s, now) !== was[s];
+      cardDrafts.update(client.id, {
+        health: changed("health") ? now.health : undefined,
+        massage: changed("massage") ? now.massage : undefined,
+        skin: changed("skin") ? now.skin : undefined,
+      });
     },
+    // Runs only when hidden or unmounted; client.id is fixed for the editor's life (FreshOnOpen keys it per visit).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+
+  /** The "changes from earlier" note's Discard: back to the saved answers now, and the draft is dropped. */
+  function discardDraft() {
+    cardDrafts.clear(client.id);
+    const fresh = initialAnswers({ health, massage, skin });
+    setAnswers(fresh);
+    setSaved(fingerprints(fresh));
+    setErrors({ health: null, massage: null, skin: null });
+    setDetailsError(null);
+    details.current?.resetNow();
+    setFromDraft(false);
+  }
 
   function update<S extends Section>(section: S, value: Answers[S]) {
     setAnswers((prev) => ({ ...prev, [section]: value }));
@@ -140,6 +183,7 @@ export function CardWizard({
     try {
       const res = await saveSection(section, {}, fd);
       if (res.ok) {
+        cardDrafts.update(client.id, { [section]: undefined });
         setSaved((prev) => ({ ...prev, [section]: print }));
         setTicked((prev) => ({ ...prev, [section]: print }));
         return true;
@@ -166,6 +210,7 @@ export function CardWizard({
     for (const s of SECTIONS) {
       if (fingerprint(s, answers) !== saved[s] && !(await save(s))) ok = false;
     }
+    if (ok) cardDrafts.clear(client.id);
     return ok;
   }
 
@@ -224,20 +269,35 @@ export function CardWizard({
         <LeavePrompt
           target={guard.target}
           backHref={cardHref}
+          pending={pending && doing === "prompt"}
+          startTransition={startTransition}
+          onStart={() => setDoing("prompt")}
           onSave={saveAll}
           onDiscard={() => {
             discardOnHide.current = true;
             details.current?.discard();
+            cardDrafts.clear(client.id);
           }}
           onClose={guard.close}
         />
       )}
       {heading}
 
+      {fromDraft && (dirtySections.length > 0 || detailsInDraft) && (
+        <div role="status" className="flex flex-col gap-3 rounded-[3px] border-4 border-amber-500 bg-amber-50 p-4 text-amber-950 sm:p-5">
+          <p className="m-0 font-semibold">You have changes from earlier that aren&rsquo;t saved yet.</p>
+          <p className="m-0 text-[15px]">Check them, then save as usual.</p>
+          <button type="button" disabled={busy} onClick={discardDraft} className="btn btn-line min-h-12 px-5 sm:self-start">
+            Discard changes
+          </button>
+        </div>
+      )}
+
       <p className="m-0 text-sm font-medium text-ink-muted lg:hidden" aria-live="polite">
         Step {stepIndex + 1} of {TOTAL_STEPS} · {TITLES[step]}
       </p>
 
+      <div inert={locked} className="flex flex-col gap-6">
       {STEPS.map((s) => (
         <section
           key={s}
@@ -248,7 +308,7 @@ export function CardWizard({
             {s === "details" ? "Client details" : TITLES[s]}
           </h2>
           {s === "details" ? (
-            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} handle={details} />
+            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} handle={details} draftId={client.id} draft={draft?.details} />
           ) : (
             <>
               {forms[s]}
@@ -272,6 +332,7 @@ export function CardWizard({
           )}
         </section>
       ))}
+      </div>
 
       {/* Wide screens: the end of the one-page card. */}
       <div className="hidden flex-col gap-3 lg:flex">

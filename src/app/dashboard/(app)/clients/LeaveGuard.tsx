@@ -1,12 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState, type TransitionStartFunction } from "react";
+import { isSigningOut, registerSignOutGuard, requestSignOut } from "../../sign-out";
+
+/** The prompt's target when the user pressed Sign out rather than a link. */
+export const SIGN_OUT = "sign-out";
 
 /**
- * Stops a link from silently leaving a form with unsaved edits. While `hasUnsaved()` is true, a click on any link
- * to another dashboard page is held and an inline prompt is shown instead (see LeavePrompt); closing or reloading
- * the tab asks the browser's own "Leave site?" question. Only active while the form is on screen.
+ * Stops a link, or Sign out, from silently leaving a form with unsaved edits. While `hasUnsaved()` is true, a click
+ * on any link to another dashboard page is held and an inline prompt is shown instead (see LeavePrompt); Sign out
+ * shows the same prompt; closing or reloading the tab asks the browser's own "Leave site?" question (except on the
+ * way out after signing out). Only active while the form is on screen.
  */
 export function useLeaveGuard(hasUnsaved: () => boolean) {
   const [target, setTarget] = useState<string | null>(null);
@@ -27,59 +32,83 @@ export function useLeaveGuard(hasUnsaved: () => boolean) {
       hold(url.pathname + url.search);
     };
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (unsaved()) e.preventDefault();
+      if (!isSigningOut() && unsaved()) e.preventDefault();
     };
     window.addEventListener("click", onClick, true);
     window.addEventListener("beforeunload", onBeforeUnload);
+    const unregister = registerSignOutGuard({ unsaved: () => unsaved(), askBeforeSignOut: () => hold(SIGN_OUT) });
     return () => {
       window.removeEventListener("click", onClick, true);
       window.removeEventListener("beforeunload", onBeforeUnload);
+      unregister();
     };
   }, []);
 
   // A prompt left open when the page was hidden shouldn't greet the user when they come back.
   useLayoutEffect(() => () => setTarget(null), []);
 
-  return { target, hold: setTarget, close: () => setTarget(null) };
+  return { target, close: () => setTarget(null) };
 }
 
 /**
- * The inline "unsaved changes" prompt. Save runs `onSave` (true when everything saved) and then goes to the
- * target; Discard runs `onDiscard` and goes. Errors from a failed save are shown by the form itself.
+ * The inline "unsaved changes" prompt. Save runs `onSave` (true when everything saved) and then goes to the target
+ * (or signs out); Discard runs `onDiscard` and goes. It runs in the form's own transition (`pending`,
+ * `startTransition`), so the form's buttons and inputs are disabled while it saves. Errors from a failed save are
+ * shown by the form itself.
  */
 export function LeavePrompt({
   target,
   backHref,
+  pending,
+  startTransition,
+  onStart,
   onSave,
   onDiscard,
   onClose,
 }: {
   target: string;
   backHref?: string;
+  pending: boolean;
+  startTransition: TransitionStartFunction;
+  onStart?: () => void;
   onSave: () => Promise<boolean>;
   onDiscard: () => void;
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<"save" | "signout" | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const signOut = target === SIGN_OUT;
 
   useEffect(() => {
     ref.current?.scrollIntoView({ block: "center", behavior: "smooth" });
     ref.current?.querySelector("button")?.focus({ preventScroll: true });
   }, [target]);
 
-  const go = () => startTransition(() => router.push(target));
+  /** Goes on to the target. Sign-out skips the guards: this form has just been saved or discarded. */
+  async function proceed() {
+    if (!signOut) {
+      startTransition(() => router.push(target));
+      return;
+    }
+    const outcome = await requestSignOut({ skipGuards: true });
+    if (outcome === "failed") setFailed("signout");
+    else if (outcome === "asked") onClose(); // drafts on other cards: the sign-out button asks about those
+  }
 
   return (
     <div ref={ref} role="alertdialog" aria-labelledby="leave-prompt-title" className="note flex flex-col gap-3">
       <p id="leave-prompt-title" className="m-0 font-semibold">
         You have changes that aren&rsquo;t saved yet.
       </p>
-      {failed && (
+      {failed === "save" && (
         <p role="alert" className="m-0 text-sm font-medium text-red-700">
           Not saved, so you&rsquo;re still here. See the message on the form. Nothing you typed has been lost.
+        </p>
+      )}
+      {failed === "signout" && (
+        <p role="alert" className="m-0 text-sm font-medium text-red-700">
+          Not signed out. Check your connection and try again.
         </p>
       )}
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -87,29 +116,32 @@ export function LeavePrompt({
           type="button"
           disabled={pending}
           onClick={() => {
-            setFailed(false);
+            setFailed(null);
+            onStart?.();
             startTransition(async () => {
               if (!(await onSave())) {
-                setFailed(true);
+                setFailed("save");
                 return;
               }
-              startTransition(() => router.push(target));
+              await proceed();
             });
           }}
           className="btn btn-solid min-h-12 px-5"
         >
-          {pending ? "Saving…" : target === backHref ? "Save and go back" : "Save and leave"}
+          {pending ? "Saving…" : signOut ? "Save and sign out" : target === backHref ? "Save and go back" : "Save and leave"}
         </button>
         <button
           type="button"
           disabled={pending}
           onClick={() => {
+            setFailed(null);
             onDiscard();
-            go();
+            onStart?.();
+            startTransition(proceed);
           }}
           className="btn btn-line min-h-12 px-5"
         >
-          Discard changes
+          {signOut ? "Discard and sign out" : "Discard changes"}
         </button>
         <button type="button" disabled={pending} onClick={onClose} className="min-h-11 cursor-pointer px-2 text-sm font-medium text-gold-deep underline">
           Keep editing
