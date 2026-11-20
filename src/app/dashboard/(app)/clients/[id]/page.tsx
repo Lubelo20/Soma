@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
 import { getCard, listTherapists } from "@/lib/clients";
+import { sameName, unansweredHealthCount } from "@/lib/record-card";
 import { clinicDate, formatDate, formatDateTime } from "@/lib/slots";
 import { deleteClient, deleteEntry } from "../../../clients-actions";
 import { StatusPill, whatsappLink, type BookingStatus } from "../../BookingActions";
@@ -16,7 +17,6 @@ export const instant = false;
 const SHORT_DATE: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
 // Consent rows come from jsonb: only string statements are shown, so a malformed row can't break the page.
 const statementsOf = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
-const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 function Section({ title, edit, updated, children }: { title: string; edit?: string; updated?: Date; children: React.ReactNode }) {
   return (
@@ -47,6 +47,9 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
   const today = clinicDate(new Date());
   const consent = card.consents[0];
   const hasWarnings = card.warnings.length > 0;
+  // A saved health section can still have conditions answered neither Yes nor No (Next pressed on an untouched
+  // step): that must not look like "no conditions".
+  const unanswered = card.health ? unansweredHealthCount(card.health) : 0;
   const sectionSaved = card.sectionsSavedAt;
 
   return (
@@ -65,7 +68,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
         </p>
       </div>
 
-      {hasWarnings ? (
+      {hasWarnings && (
         <section role="region" aria-label="Health warnings" className="rounded-[3px] border-4 border-red-700 bg-red-50 p-4 sm:p-5">
           <h2 className="m-0 mb-2 text-lg font-bold tracking-wide text-red-900 uppercase">
             <span aria-hidden="true">⚠ </span>Health warnings
@@ -76,14 +79,25 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
             ))}
           </ul>
         </section>
+      )}
+      {!card.health ? (
+        <section role="region" aria-label="Health history" className="rounded-[3px] border-4 border-amber-500 bg-amber-50 p-4 sm:p-5">
+          <h2 className="m-0 mb-1 text-lg font-bold text-amber-950">Health history not filled in yet</h2>
+          <p className="m-0 text-[15px] text-amber-950">
+            This does not mean the client has no conditions.{" "}
+            <Link href={`${base}/edit?step=health`} className="font-semibold underline">
+              Fill in the health history
+            </Link>
+          </p>
+        </section>
       ) : (
-        !card.health && (
+        unanswered > 0 && (
           <section role="region" aria-label="Health history" className="rounded-[3px] border-4 border-amber-500 bg-amber-50 p-4 sm:p-5">
-            <h2 className="m-0 mb-1 text-lg font-bold text-amber-950">Health history not filled in yet</h2>
+            <h2 className="m-0 mb-1 text-lg font-bold text-amber-950">Health history incomplete: {unanswered} not answered</h2>
             <p className="m-0 text-[15px] text-amber-950">
-              This does not mean the client has no conditions.{" "}
+              An unanswered question does not mean the client doesn&rsquo;t have that condition.{" "}
               <Link href={`${base}/edit?step=health`} className="font-semibold underline">
-                Fill in the health history
+                Finish the health history
               </Link>
             </p>
           </section>
@@ -94,6 +108,14 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
         {consent ? (
           <p className="m-0 text-[15px] font-medium text-brand-dark">
             Consent on file, signed {formatDateTime(consent.signedAt)}
+            {!card.changedSinceSigned && (
+              <>
+                {" · "}
+                <Link href={signSoon} className="font-normal text-ink-muted underline">
+                  Sign again
+                </Link>
+              </>
+            )}
           </p>
         ) : (
           <div className="flex flex-wrap items-center gap-3">
@@ -189,8 +211,8 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
                   <StatusPill status={b.status as BookingStatus} />
                 </div>
                 <span className="text-[15px] text-ink-body">
-                  {b.treatmentName} · {b.clientName}
-                  {!same(b.clientName, client.fullName) && <span className="text-ink-muted"> (booked as {b.clientName})</span>}
+                  {b.treatmentName}
+                  {!sameName(b.clientName, client.fullName) && <span className="text-ink-muted"> (booked as {b.clientName})</span>}
                 </span>
               </li>
             ))}

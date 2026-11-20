@@ -1,5 +1,5 @@
 import { HEALTH_CONDITIONS, SKIN_ROWS, areaLabels } from "@/lib/record-card";
-import { SIGNATURE_VIEWBOX, isValidSignaturePath } from "@/lib/signature";
+import { SIGNATURE_VIEWBOX, isValidSignaturePath, pathToStrokes } from "@/lib/signature";
 import { formatDate } from "@/lib/slots";
 
 // Read-only summaries of a record card, shared by the card page, the history page and the consent viewer.
@@ -14,7 +14,7 @@ const DETAIL_FIELDS: readonly [string, string][] = [
   ["fullName", "Name"],
   ["phone", "Phone"],
   ["email", "Email"],
-  ["idNumber", "ID number"],
+  ["idNumber", "ID / passport number"],
   ["dateOfBirth", "Date of birth"],
   ["gender", "Gender"],
   ["address", "Address"],
@@ -118,9 +118,10 @@ export function SkinSummary({ answers }: { answers: unknown }) {
   return rows.length === 0 ? <Empty>Nothing selected.</Empty> : <Grid rows={rows} />;
 }
 
-/** A stored signature, drawn only if it passes the path check. */
+/** A stored signature, drawn only if it passes the path check. Taps (a lone M: the dot on an i) are drawn as dots. */
 export function SignatureView({ path }: { path: string }) {
   if (!isValidSignaturePath(path)) return <p className="m-0 text-sm text-ink-muted">Signature unavailable</p>;
+  const dots = pathToStrokes(path).filter((s) => s.length === 1);
   return (
     <svg
       viewBox={`0 0 ${SIGNATURE_VIEWBOX.width} ${SIGNATURE_VIEWBOX.height}`}
@@ -129,6 +130,9 @@ export function SignatureView({ path }: { path: string }) {
       className="h-auto w-full max-w-md rounded-[3px] border border-line bg-white"
     >
       <path d={path} fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      {dots.map(([[x, y]], i) => (
+        <circle key={i} cx={x} cy={y} r="1.5" fill="#1a1a1a" />
+      ))}
     </svg>
   );
 }

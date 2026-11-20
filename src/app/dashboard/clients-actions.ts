@@ -4,7 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
 import { SIGNED_OUT, requireStaff, staffCheck } from "@/lib/auth";
-import { bookingBelongsToClient, findDuplicates, getCard } from "@/lib/clients";
+import { bookingBelongsToClient, findDuplicates, getCard, searchClients, type ClientListItem } from "@/lib/clients";
 import { sql } from "@/lib/db";
 import {
   BODY_AREAS,
@@ -12,6 +12,9 @@ import {
   HEALTH_CONDITIONS,
   REQUIRED_CONSENT_COUNT,
   SKIN_ROWS,
+  isRealDate,
+  isValidInitials,
+  normalizeInitials,
   normalizePhone,
   parseHealth,
   parseMassage,
@@ -22,7 +25,7 @@ import {
 } from "@/lib/record-card";
 import { isValidSignaturePath } from "@/lib/signature";
 import { clinicDate } from "@/lib/slots";
-import { EMAIL_RE, PHONE_RE } from "@/lib/validation";
+import { EMAIL_RE, INT_ID_RE, PHONE_RE, UUID_RE as UUID } from "@/lib/validation";
 
 export type ClientResult = {
   error?: string;
@@ -40,7 +43,9 @@ export async function saveTherapist(_prev: ClientResult, fd: FormData): Promise<
   const name = String(fd.get("name") ?? "").trim().replace(/\s+/g, " ");
   const values = { name };
   if (!(await staffCheck())) return { error: SIGNED_OUT, values };
-  const id = Number(fd.get("id")) || null;
+  const rawId = String(fd.get("id") ?? "").trim();
+  if (rawId && !INT_ID_RE.test(rawId)) return { error: "That therapist no longer exists." };
+  const id = rawId ? Number(rawId) : null;
 
   if (name.length < 2 || name.length > 60) return { error: "Name must be 2–60 characters.", values };
   const [clash] = await sql`select 1 from therapists where active and lower(name) = lower(${name}) and id is distinct from ${id}`;
@@ -62,24 +67,27 @@ export async function saveTherapist(_prev: ClientResult, fd: FormData): Promise<
 
 export async function setTherapistActive(fd: FormData) {
   await requireStaff();
-  const id = Number(fd.get("id"));
+  const rawId = String(fd.get("id") ?? "").trim();
   const active = fd.get("active") === "true";
-  if (!Number.isInteger(id)) return;
+  if (!INT_ID_RE.test(rawId)) return;
+  const id = Number(rawId);
   const [row] = await sql<{ id: number }[]>`update therapists set active = ${active} where id = ${id} returning id`;
   if (row) audit(active ? "therapist restored" : "therapist removed", { id: row.id });
   refresh();
 }
 
-// ---------- Client details ----------
+// ---------- Client list ----------
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** A real YYYY-MM-DD calendar date (rejects 2026-02-31). */
-function isRealDate(s: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
-  const d = new Date(`${s}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+/**
+ * Searches the client list by name or phone. A server action rather than a ?q= link, so a name or phone number
+ * never appears in a URL (or the browser history). The term is never logged.
+ */
+export async function searchClientsAction(q: string): Promise<{ error?: string; clients?: ClientListItem[] }> {
+  if (!(await staffCheck())) return { error: SIGNED_OUT };
+  return { clients: await searchClients(String(q ?? "").slice(0, 100)) };
 }
+
+// ---------- Client details ----------
 
 const text = (fd: FormData, name: string) => String(fd.get(name) ?? "");
 // Single-line fields: control characters (including line breaks) are removed.
@@ -110,9 +118,11 @@ export async function saveDetails(_prev: ClientResult, fd: FormData): Promise<Cl
 
   let error: string | null = null;
   if (v.fullName.length < 2 || v.fullName.length > 120) error = "Please enter the client's full name.";
-  else if (v.phone.length > 30 || !PHONE_RE.test(v.phone)) error = "Please enter a valid phone number.";
+  else if (v.phone.length > 30 || !PHONE_RE.test(v.phone) || normalizePhone(v.phone).length < 7) {
+    error = "Please enter a valid phone number.";
+  }
   else if (v.email.length > 200 || (v.email && !EMAIL_RE.test(v.email))) error = "Please enter a valid email address.";
-  else if (v.idNumber.length > 30) error = "The ID number is too long (30 characters at most).";
+  else if (v.idNumber.length > 30) error = "The ID / passport number is too long (30 characters at most).";
   else if (v.dateOfBirth && (!isRealDate(v.dateOfBirth) || v.dateOfBirth > today)) error = "Please enter a valid date of birth.";
   else if (v.gender.length > 30) error = "Gender is too long (30 characters at most).";
   else if (v.address.length > 300) error = "The address is too long (300 characters at most).";
@@ -242,8 +252,6 @@ export async function saveSection(section: Section, _prev: ClientResult, fd: For
 
 // ---------- Consent ----------
 
-const INITIALS_RE = /^\p{L}{1,6}$/u;
-
 /**
  * Saves a signed consent. The row keeps exactly what the client saw and confirmed: the statement texts, the
  * photo choice, initials, signature and a snapshot of the card's answers at that moment. Consents are never
@@ -261,13 +269,13 @@ export async function signConsent(_prev: ClientResult, fd: FormData): Promise<Cl
       .map((v) => Number(v.trim()))
       .filter((n) => n >= 0 && n < CONSENT_STATEMENTS.length),
   );
-  const initials = text(fd, "initials").trim().normalize("NFC");
+  const initials = normalizeInitials(text(fd, "initials"));
   const signature = text(fd, "signature");
 
   for (let i = 0; i < REQUIRED_CONSENT_COUNT; i++) {
     if (!agreed.has(i)) return { error: `Please tick statements 1 to ${REQUIRED_CONSENT_COUNT}.` };
   }
-  if (!INITIALS_RE.test(initials)) return { error: "Please enter your initials." };
+  if (!isValidInitials(initials)) return { error: "Please enter your initials." };
   if (!isValidSignaturePath(signature)) return { error: "Please sign in the box." };
 
   const card = await getCard(clientId);
@@ -324,7 +332,7 @@ export async function saveEntry(_prev: ClientResult, fd: FormData): Promise<Clie
 
   if (!UUID.test(clientId)) return { error: "That record card no longer exists." };
   const entryId = rawId ? Number(rawId) : null;
-  if (rawId && (!/^\d{1,9}$/.test(rawId) || !entryId)) return { error: "That entry no longer exists." };
+  if (rawId && (!INT_ID_RE.test(rawId) || !entryId)) return { error: "That entry no longer exists." };
 
   if (!isRealDate(day)) return { error: "Please enter a valid date." };
   if (day > today) return { error: "The date can't be in the future." };
@@ -333,7 +341,7 @@ export async function saveEntry(_prev: ClientResult, fd: FormData): Promise<Clie
   if (products.length > 1000) return { error: "Products/tools used is too long (1000 characters at most)." };
   if (notes.length > 2000) return { error: "Notes are too long (2000 characters at most)." };
   if (!products && !notes) return { error: "Add the products used or a note." };
-  if (rawTherapist && !/^\d{1,9}$/.test(rawTherapist)) return { error: "Please choose a therapist from the list." };
+  if (rawTherapist && !INT_ID_RE.test(rawTherapist)) return { error: "Please choose a therapist from the list." };
   const therapistId = rawTherapist ? Number(rawTherapist) : null;
   if (bookingId && !UUID.test(bookingId)) return { error: "Please choose a booking from the list." };
 
@@ -375,8 +383,9 @@ export async function saveEntry(_prev: ClientResult, fd: FormData): Promise<Clie
 async function setEntryDeleted(fd: FormData, deleted: boolean) {
   await requireStaff();
   const clientId = text(fd, "clientId").trim();
-  const id = Number(text(fd, "id"));
-  if (!UUID.test(clientId) || !Number.isInteger(id)) return;
+  const rawId = text(fd, "id").trim();
+  if (!UUID.test(clientId) || !INT_ID_RE.test(rawId)) return;
+  const id = Number(rawId);
   const [row] = await sql`
     update treatment_entries set deleted_at = ${deleted ? sql`now()` : null}
     where id = ${id} and client_id = ${clientId} and (deleted_at is null) = ${deleted} returning id`;

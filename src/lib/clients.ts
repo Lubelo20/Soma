@@ -1,12 +1,15 @@
 import "server-only";
 import { sql } from "./db";
 import {
+  cardForBooking,
   healthWarnings,
   normalizePhone,
+  unansweredHealthCount,
   type HealthAnswers,
   type MassageAnswers,
   type SkinAnswers,
 } from "./record-card";
+import { UUID_RE as UUID } from "./validation";
 
 // Read-only access to client record cards. Health information is special personal information under POPIA,
 // so every page or action that calls this must be behind the staff sign-in. Writes live in server actions.
@@ -84,12 +87,12 @@ export type ClientListItem = {
   phone: string;
   lastVisit: string | null;
   warnings: string[];
+  // No health section saved, or the newest one has a condition answered neither Yes nor No.
+  healthIncomplete: boolean;
 };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 /** SQL that mirrors normalizePhone for a text column or expression: digits only, a leading 0 becomes 27. */
-export function phoneDigitsSql(column: ReturnType<typeof sql>) {
+function phoneDigitsSql(column: ReturnType<typeof sql>) {
   return sql`regexp_replace(regexp_replace(${column}, '[^0-9]', '', 'g'), '^0', '27')`;
 }
 
@@ -121,8 +124,11 @@ async function newestSections(ids: string[], sections: Section[]) {
 
 export async function searchClients(q: string): Promise<ClientListItem[]> {
   const term = q.trim();
+  // Both the digits as typed and their normalised form, so "0821" finds a number starting 0821 (stored as 27821)
+  // and also one with 0821 in the middle.
+  const raw = term.replace(/\D/g, "");
   const digits = normalizePhone(term);
-  const byPhone = term.replace(/\D/g, "").length >= 4;
+  const byPhone = raw.length >= 4;
   const pattern = `%${term.replace(/[\\%_]/g, "\\$&")}%`;
 
   const rows = await sql<{ id: string; fullName: string; phone: string; lastVisit: string | null }[]>`
@@ -134,7 +140,7 @@ export async function searchClients(q: string): Promise<ClientListItem[]> {
       term === ""
         ? sql``
         : byPhone
-          ? sql`where c.full_name ilike ${pattern} or c.phone_digits like ${`%${digits}%`}`
+          ? sql`where c.full_name ilike ${pattern} or c.phone_digits like ${`%${digits}%`} or c.phone_digits like ${`%${raw}%`}`
           : sql`where c.full_name ilike ${pattern}`
     }
     order by c.updated_at desc
@@ -146,8 +152,10 @@ export async function searchClients(q: string): Promise<ClientListItem[]> {
   );
   return rows.map((r) => {
     const mine = (s: Section) => sections.find((x) => x.clientId === r.id && x.section === s)?.answers;
+    const health = mine("health");
     return {
       ...r,
+      healthIncomplete: health === undefined || unansweredHealthCount(health) > 0,
       warnings: healthWarnings({
         health: mine("health") as HealthAnswers | undefined,
         skin: mine("skin") as SkinAnswers | undefined,
@@ -232,14 +240,19 @@ export async function findDuplicates(input: { phone: string; idNumber: string; e
     order by created_at desc`;
 }
 
-/** The card (newest if several) that belongs to a booking, or null if there is none. */
+/**
+ * The card a booking opens, or null to start a new one. Several cards can share a phone (a family), so the one
+ * with the booking's name wins; else the only matching card; else null (see cardForBooking).
+ */
 export async function clientForBooking(bookingId: string): Promise<string | null> {
   if (!UUID.test(bookingId)) return null;
-  const [row] = await sql<{ id: string }[]>`
-    select c.id from bookings b join clients c on ${BOOKING_MATCHES_CLIENT}
+  const rows = await sql<{ id: string; fullName: string; bookingName: string }[]>`
+    select c.id, c.full_name, b.client_name as booking_name
+    from bookings b join clients c on ${BOOKING_MATCHES_CLIENT}
     where b.id = ${bookingId}
-    order by c.created_at desc limit 1`;
-  return row?.id ?? null;
+    order by c.created_at desc, c.id`;
+  if (rows.length === 0) return null;
+  return cardForBooking(rows[0].bookingName, rows);
 }
 
 /** Whether a booking belongs to a client, by the same phone/email matching getCard uses. */

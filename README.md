@@ -4,7 +4,8 @@ Next.js 16 (App Router, Cache Components) + Tailwind CSS v4 + Postgres (Neon in 
 
 - **Public site:** Home, Treatments, Skincare, Corporate, Training, About, Contact, Book
 - **Online booking:** clients pick a treatment, date and time; the slot is held as *pending* until staff confirm
-- **Staff dashboard** (`/dashboard`): confirm/decline/cancel bookings, enquiries, treatments & prices, opening hours & closed days, one shared staff password
+- **Staff dashboard** (`/dashboard`): confirm/decline/cancel bookings, enquiries, treatments & prices, opening hours & closed days, one shared staff password. A session ends after 60 minutes without activity, and an open screen locks itself after the same hour.
+- **Clients / record cards** (`/dashboard/clients`): each client's details, health history (with warnings), massage profile with a body map, skincare profile, treatment log, and a consent the client signs with a finger on the signing screen (`/dashboard/sign/<id>`). Health information is special personal information under POPIA: none of it goes in URLs, logs, emails or browser storage.
 - **Emails via Resend:** request received (client), new booking (staff), confirmed / declined / cancelled (client), new enquiry (staff)
 
 ## Local development
@@ -16,7 +17,7 @@ npm run db:migrate                # create tables (safe to re-run)
 npm run db:seed                   # treatments + placeholder opening hours (never overwrites edits)
 npm run password:set                                 # prompts for the shared staff password
 npm run dev                       # http://localhost:3000, dashboard at /dashboard
-npm test                          # slot-availability tests
+npm test                          # unit tests (slots, prices, emails, record card, signatures)
 ```
 
 ## Going live (Vercel + Neon)
@@ -40,5 +41,8 @@ npm test                          # slot-availability tests
 - `src/lib/data.ts`: cached reads of treatments and hours (refreshed when staff edit them)
 - `src/app/actions.ts`: public booking + enquiry server actions
 - `src/app/dashboard/`: staff dashboard and its server actions
+- `src/app/dashboard/clients-actions.ts`, `src/app/dashboard/(app)/clients/`, `src/app/dashboard/sign/`: client record cards, their server actions and the signing screen
+- `src/lib/record-card.ts`: record card fields, parsers and health warnings; `src/lib/clients.ts`: record card reads; `src/lib/signature.ts`: signature path rules
+- `src/lib/session-rules.ts`: the 60-minute idle limit, shared by the session check and the screen lock
 - `db/schema.sql`: database schema. The `bookings_no_overlap` constraint makes double-booking impossible.
 - `docs/superpowers/specs/`: design notes
