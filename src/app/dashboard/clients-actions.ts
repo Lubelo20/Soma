@@ -4,11 +4,13 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit } from "@/lib/audit";
 import { SIGNED_OUT, requireStaff, staffCheck } from "@/lib/auth";
-import { bookingBelongsToClient, findDuplicates } from "@/lib/clients";
+import { bookingBelongsToClient, findDuplicates, getCard } from "@/lib/clients";
 import { sql } from "@/lib/db";
 import {
   BODY_AREAS,
+  CONSENT_STATEMENTS,
   HEALTH_CONDITIONS,
+  REQUIRED_CONSENT_COUNT,
   SKIN_ROWS,
   normalizePhone,
   parseHealth,
@@ -18,6 +20,7 @@ import {
   type MassageAnswers,
   type SkinAnswers,
 } from "@/lib/record-card";
+import { isValidSignaturePath } from "@/lib/signature";
 import { clinicDate } from "@/lib/slots";
 import { EMAIL_RE, PHONE_RE } from "@/lib/validation";
 
@@ -235,6 +238,74 @@ export async function saveSection(section: Section, _prev: ClientResult, fd: For
     refresh();
   }
   return { ok: true, id };
+}
+
+// ---------- Consent ----------
+
+const INITIALS_RE = /^\p{L}{1,6}$/u;
+
+/**
+ * Saves a signed consent. The row keeps exactly what the client saw and confirmed: the statement texts, the
+ * photo choice, initials, signature and a snapshot of the card's answers at that moment. Consents are never
+ * edited; signing again adds a new row. Nothing about the consent is logged.
+ */
+export async function signConsent(_prev: ClientResult, fd: FormData): Promise<ClientResult> {
+  if (!(await staffCheck())) return { error: SIGNED_OUT };
+  const clientId = text(fd, "clientId").trim();
+  if (!UUID.test(clientId)) return { error: "That record card no longer exists." };
+
+  const agreed = new Set(
+    fd
+      .getAll("agree")
+      .filter((v): v is string => typeof v === "string" && /^\d$/.test(v.trim()))
+      .map((v) => Number(v.trim()))
+      .filter((n) => n >= 0 && n < CONSENT_STATEMENTS.length),
+  );
+  const initials = text(fd, "initials").trim().normalize("NFC");
+  const signature = text(fd, "signature");
+
+  for (let i = 0; i < REQUIRED_CONSENT_COUNT; i++) {
+    if (!agreed.has(i)) return { error: `Please tick statements 1 to ${REQUIRED_CONSENT_COUNT}.` };
+  }
+  if (!INITIALS_RE.test(initials)) return { error: "Please enter your initials." };
+  if (!isValidSignaturePath(signature)) return { error: "Please sign in the box." };
+
+  const card = await getCard(clientId);
+  if (!card) return { error: "That record card no longer exists." };
+
+  const c = card.client;
+  const snapshot = {
+    details: {
+      fullName: c.fullName,
+      phone: c.phone,
+      email: c.email,
+      idNumber: c.idNumber,
+      dateOfBirth: c.dateOfBirth,
+      gender: c.gender,
+      address: c.address,
+      emergencyContact: c.emergencyContact,
+      occupation: c.occupation,
+      initialAppointment: c.initialAppointment,
+      clientType: c.clientType,
+    },
+    health: card.health,
+    massage: card.massage,
+    skin: card.skin,
+  };
+  const photoConsent = agreed.has(REQUIRED_CONSENT_COUNT);
+
+  // Only inserted if the card still exists: it may have been deleted since getCard.
+  const [row] = await sql<{ id: number }[]>`
+    insert into consents (client_id, statements, photo_consent, initials, signature_path, snapshot)
+    select ${clientId}, ${sql.json([...CONSENT_STATEMENTS])}, ${photoConsent}, ${initials.toUpperCase()},
+      ${signature}, ${sql.json(snapshot)}
+    where exists (select 1 from clients where id = ${clientId})
+    returning id`;
+  if (!row) return { error: "That record card no longer exists." };
+
+  audit("consent signed", { id: clientId });
+  refresh();
+  return { ok: true, id: clientId };
 }
 
 // ---------- Treatment log ----------

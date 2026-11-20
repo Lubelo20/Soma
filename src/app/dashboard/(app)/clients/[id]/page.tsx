@@ -14,6 +14,8 @@ export const metadata: Metadata = { title: "Record card" };
 export const instant = false;
 
 const SHORT_DATE: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+// Consent rows come from jsonb: only string statements are shown, so a malformed row can't break the page.
+const statementsOf = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 function Section({ title, edit, updated, children }: { title: string; edit?: string; updated?: Date; children: React.ReactNode }) {
@@ -208,12 +210,14 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
                 <details>
                   <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-gold-deep">View</summary>
                   <div className="flex flex-col gap-4 pt-2">
-                    <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-[15px]">
-                      {c.statements.map((s, i) => (
-                        <li key={i}>{s}</li>
-                      ))}
-                    </ol>
-                    <p className="m-0 text-[15px]">Initials: {c.initials}</p>
+                    {statementsOf(c.statements).length > 0 && (
+                      <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-[15px]">
+                        {statementsOf(c.statements).map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ol>
+                    )}
+                    <p className="m-0 text-[15px]">Initials: {typeof c.initials === "string" ? c.initials : ""}</p>
                     <SignatureView path={c.signaturePath} />
                     <div className="border-t border-line-soft pt-3">
                       <p className="m-0 mb-3 text-sm font-semibold text-ink-strong">The card as signed</p>
