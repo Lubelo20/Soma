@@ -4,6 +4,7 @@ import { timingSafeEqual } from "node:crypto";
 import { del } from "@vercel/blob";
 import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { audit } from "@/lib/audit";
 import { MIN_PASSWORD, changePassword, endSession, requireStaff, setPassword, startSession, verifyPassword } from "@/lib/auth";
 import { formatPrice } from "@/lib/data";
 import { sql } from "@/lib/db";
@@ -21,9 +22,6 @@ export type FormResult = {
 };
 
 const str = (fd: FormData, name: string, max = 500) => String(fd.get(name) ?? "").trim().slice(0, max);
-
-// Audit trail in the hosting logs (Vercel → Logs): sign-ins and every staff change, with no client details.
-const audit = (event: string, detail: Record<string, string | number | boolean> = {}) => console.info(`[audit] ${event}`, JSON.stringify(detail));
 
 // ---------- Auth ----------
 
