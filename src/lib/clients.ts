@@ -96,6 +96,11 @@ function phoneDigitsSql(column: ReturnType<typeof sql>) {
   return sql`regexp_replace(regexp_replace(${column}, '[^0-9]', '', 'g'), '^0', '27')`;
 }
 
+/** SQL that mirrors nameKey in src/lib/record-card.ts: outer whitespace trimmed, inner runs as one space, lower case. */
+function nameKeySql(column: ReturnType<typeof sql>) {
+  return sql`lower(regexp_replace(regexp_replace(${column}, '^[[:space:]]+|[[:space:]]+$', '', 'g'), '[[:space:]]+', ' ', 'g'))`;
+}
+
 const CLIENT_COLUMNS = sql`
   c.id, c.full_name, c.phone, c.phone_digits, c.email, c.id_number,
   to_char(c.date_of_birth, 'YYYY-MM-DD') as date_of_birth, c.gender, c.address, c.emergency_contact,
@@ -108,14 +113,18 @@ const ENTRY_COLUMNS = sql`
 
 // The bookings that belong to a client. A booking for the booker themselves (for_name empty): same phone number in
 // any format, or same email when there is one. A booking made for someone else belongs to the person treated, never
-// to the booker: it matches only by the phone given for them (for_phone), and with none it matches no card.
+// to the booker: it matches only by the phone given for them (for_phone), and with none it matches no card. When
+// that phone is the booker's own number (a parent booking for a child), the card must also carry the treated
+// person's name, so the booking can never land on the booker's card.
 const BOOKING_MATCHES_CLIENT = sql`(
   (b.for_name = '' and (
     ${phoneDigitsSql(sql`b.client_phone`)} = c.phone_digits
     or (c.email <> '' and lower(b.client_email) = lower(c.email))
   ))
   or (b.for_name <> '' and b.for_phone <> '' and c.phone_digits <> ''
-    and ${phoneDigitsSql(sql`b.for_phone`)} = c.phone_digits)
+    and ${phoneDigitsSql(sql`b.for_phone`)} = c.phone_digits
+    and (${phoneDigitsSql(sql`b.for_phone`)} <> ${phoneDigitsSql(sql`b.client_phone`)}
+      or ${nameKeySql(sql`c.full_name`)} = ${nameKeySql(sql`b.for_name`)}))
 )`;
 
 /** Newest health, massage and skin answers for each of the given clients, in one query. */

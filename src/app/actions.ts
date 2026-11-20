@@ -118,6 +118,7 @@ export async function createBooking(_prev: BookingState, fd: FormData): Promise<
     forName: line(fd, "forName"),
     forPhone: line(fd, "forPhone", 30),
     bookerName: name,
+    bookerPhone: phone,
   });
   const { forName, forPhone } = forOther;
 

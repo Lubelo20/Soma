@@ -254,26 +254,27 @@ export function BookingForm({
             </div>
           )}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {/* With the box ticked these are clearly the booker's own details; unticked, the labels are as they always were. */}
             <label className={labelClass}>
-              Full name
+              {forOther ? "Your full name" : "Full name"}
               <input type="text" {...bind("name")} autoComplete="name" className="field" aria-invalid={!!err.name} />
               {err.name && <span className={fieldError}>{err.name}</span>}
             </label>
             <label className={labelClass}>
-              Phone / WhatsApp
+              {forOther ? "Your phone / WhatsApp" : "Phone / WhatsApp"}
               <input type="tel" {...bind("phone")} autoComplete="tel" className="field" aria-invalid={!!err.phone} />
               {err.phone && <span className={fieldError}>{err.phone}</span>}
             </label>
             <label className={`${labelClass} sm:col-span-2`}>
               <span>
-                Email <span className={hint}>(we&rsquo;ll send your confirmation here)</span>
+                {forOther ? "Your email" : "Email"} <span className={hint}>(we&rsquo;ll send your confirmation here)</span>
               </span>
               <input type="email" {...bind("email")} autoComplete="email" className="field" aria-invalid={!!err.email} />
               {err.email && <span className={fieldError}>{err.email}</span>}
             </label>
             <label className={`${labelClass} sm:col-span-2`}>
               <span>
-                Anything we should know?{" "}
+                {forOther ? "Anything we should know about them?" : "Anything we should know?"}{" "}
                 <span className={hint}>(optional: pregnancy, injuries, allergies, skin concerns)</span>
               </span>
               <textarea {...bind("notes")} rows={3} maxLength={1000} className="field resize-y py-3" />

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { bookingFor, treatedName } from "./booking-for";
 import { cardForBooking } from "./record-card";
 
-const base = { ticked: true, forName: "Zanele Dube", forPhone: "", bookerName: "Thandi Mokoena" };
+const base = { ticked: true, forName: "Zanele Dube", forPhone: "", bookerName: "Thandi Mokoena", bookerPhone: "082 123 4567" };
 
 describe("bookingFor", () => {
   it("ignores the for-fields when the box is not ticked, whatever was posted", () => {
@@ -24,8 +24,24 @@ describe("bookingFor", () => {
     expect(bookingFor({ ...base, forPhone: "12ab" }).errors.forPhone).toBe("Please enter a valid phone number for them.");
   });
 
-  it("treats the booker's own name as booking for themselves", () => {
-    expect(bookingFor({ ...base, forName: "  thandi MOKOENA ", forPhone: "0715550152" })).toEqual({ forName: "", forPhone: "", errors: {} });
+  it("treats the booker's own name with no phone, or with the booker's own phone, as booking for themselves", () => {
+    const self = { forName: "", forPhone: "", errors: {} };
+    expect(bookingFor({ ...base, forName: "  thandi MOKOENA " })).toEqual(self);
+    expect(bookingFor({ ...base, forName: "Thandi Mokoena", forPhone: "+27 82 123 4567" })).toEqual(self);
+  });
+
+  it("keeps a same-name booking for someone else when they have their own phone (father and son)", () => {
+    expect(bookingFor({ ...base, forName: "thandi mokoena", forPhone: "0715550152" })).toEqual({
+      forName: "thandi mokoena",
+      forPhone: "0715550152",
+      errors: {},
+    });
+  });
+
+  it("still rejects an invalid phone when the names are the same", () => {
+    expect(bookingFor({ ...base, forName: "Thandi Mokoena", forPhone: "12ab" }).errors).toEqual({
+      forPhone: "Please enter a valid phone number for them.",
+    });
   });
 });
 
