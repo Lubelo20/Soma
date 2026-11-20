@@ -10,6 +10,7 @@ import {
   type SkinAnswers,
 } from "./record-card";
 import { UUID_RE as UUID } from "./validation";
+import { treatedName } from "./booking-for";
 
 // Read-only access to client record cards. Health information is special personal information under POPIA,
 // so every page or action that calls this must be behind the staff sign-in. Writes live in server actions.
@@ -63,7 +64,8 @@ export type MatchedBooking = {
   treatmentName: string;
   startsAt: Date;
   status: string;
-  clientName: string;
+  clientName: string; // the booker
+  forName: string; // the person treated, when booked for someone else; else ''
 };
 
 export type Card = {
@@ -104,10 +106,16 @@ const ENTRY_COLUMNS = sql`
   e.id, e.client_id, e.booking_id, to_char(e.day, 'YYYY-MM-DD') as day, e.kind, e.products, e.notes,
   e.created_at, e.edited_at, e.deleted_at`;
 
-// The bookings that belong to a client: same phone number in any format, or same email when there is one.
+// The bookings that belong to a client. A booking for the booker themselves (for_name empty): same phone number in
+// any format, or same email when there is one. A booking made for someone else belongs to the person treated, never
+// to the booker: it matches only by the phone given for them (for_phone), and with none it matches no card.
 const BOOKING_MATCHES_CLIENT = sql`(
-  ${phoneDigitsSql(sql`b.client_phone`)} = c.phone_digits
-  or (c.email <> '' and lower(b.client_email) = lower(c.email))
+  (b.for_name = '' and (
+    ${phoneDigitsSql(sql`b.client_phone`)} = c.phone_digits
+    or (c.email <> '' and lower(b.client_email) = lower(c.email))
+  ))
+  or (b.for_name <> '' and b.for_phone <> '' and c.phone_digits <> ''
+    and ${phoneDigitsSql(sql`b.for_phone`)} = c.phone_digits)
 )`;
 
 /** Newest health, massage and skin answers for each of the given clients, in one query. */
@@ -176,7 +184,7 @@ export async function getCard(id: string): Promise<Card | null> {
       where e.client_id = ${id} and e.deleted_at is null
       order by e.day desc, e.id desc`,
     sql<MatchedBooking[]>`
-      select b.id, b.ref, b.treatment_name, b.starts_at, b.status, b.client_name
+      select b.id, b.ref, b.treatment_name, b.starts_at, b.status, b.client_name, b.for_name
       from bookings b join clients c on c.id = ${id}
       where ${BOOKING_MATCHES_CLIENT}
       order by b.starts_at desc`,
@@ -240,20 +248,21 @@ export async function findDuplicates(input: { phone: string; idNumber: string; e
 
 /**
  * The card a booking opens, or null to start a new one. Several cards can share a phone (a family), so the one
- * with the booking's name wins; else the only matching card; else null (see cardForBooking).
+ * with the treated person's name (for_name when booked for someone else, else client_name) wins; else the only
+ * matching card; else null (see cardForBooking).
  */
 export async function clientForBooking(bookingId: string): Promise<string | null> {
   if (!UUID.test(bookingId)) return null;
-  const rows = await sql<{ id: string; fullName: string; bookingName: string }[]>`
-    select c.id, c.full_name, b.client_name as booking_name
+  const rows = await sql<{ id: string; fullName: string; clientName: string; forName: string }[]>`
+    select c.id, c.full_name, b.client_name, b.for_name
     from bookings b join clients c on ${BOOKING_MATCHES_CLIENT}
     where b.id = ${bookingId}
     order by c.created_at desc, c.id`;
   if (rows.length === 0) return null;
-  return cardForBooking(rows[0].bookingName, rows);
+  return cardForBooking(treatedName(rows[0]), rows);
 }
 
-/** Whether a booking belongs to a client, by the same phone/email matching getCard uses. */
+/** Whether a booking belongs to a client, by the same matching getCard uses (BOOKING_MATCHES_CLIENT). */
 export async function bookingBelongsToClient(bookingId: string, clientId: string): Promise<boolean> {
   if (!UUID.test(bookingId) || !UUID.test(clientId)) return false;
   const [row] = await sql`

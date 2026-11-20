@@ -246,8 +246,9 @@ const nameKey = (name: string) => name.trim().replace(/\s+/g, " ").toLowerCase()
 export const sameName = (a: string, b: string) => nameKey(a) === nameKey(b);
 
 /**
- * Which card a booking opens, from the cards whose phone or email match it (newest first): the first card with
- * the booking's name; else the only card; else none, so staff start a new card and see the duplicate warning.
+ * Which card a booking opens, from the cards that match it (newest first): the first card with the booking's name
+ * (the treated person's: see treatedName in booking-for.ts); else the only card; else none, so staff start a new
+ * card and see the duplicate warning.
  */
 export function cardForBooking(bookingName: string, cards: { id: string; fullName: string }[]): string | null {
   const byName = cards.find((c) => sameName(c.fullName, bookingName));

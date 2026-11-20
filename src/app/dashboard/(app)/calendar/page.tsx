@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { getWeeklyHours } from "@/lib/data";
+import { treatedName } from "@/lib/booking-for";
 import { sql } from "@/lib/db";
 import { TIME_ZONE, clinicDate, clinicTime, formatDate, weekday } from "@/lib/slots";
 import { BookingActions, StatusPill, statusStyle, whatsappLink, type BookingStatus } from "../BookingActions";
@@ -20,6 +21,7 @@ type Row = {
   clientName: string;
   clientPhone: string;
   clientEmail: string;
+  forName: string; // the person treated when booked for someone else; client_* are then the booker's
   notes: string;
 };
 
@@ -52,7 +54,7 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
   const [weekly, bookings, closures] = await Promise.all([
     getWeeklyHours(),
     sql<Row[]>`
-      select id, ref, treatment_name, starts_at, ends_at, status, client_name, client_phone, client_email, notes
+      select id, ref, treatment_name, starts_at, ends_at, status, client_name, client_phone, client_email, for_name, notes
       from bookings
       where starts_at >= ${clinicTime(dates[0], "00:00")} and starts_at < ${clinicTime(`${shiftMonth(ym, 1)}-01`, "00:00")}
         and status in ('pending', 'confirmed', 'completed')
@@ -147,7 +149,7 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
                   <span className="hidden flex-col gap-1 md:flex">
                     {items.slice(0, 3).map((b) => (
                       <span key={b.id} className={`truncate px-1.5 py-0.5 text-[11px] leading-snug ${statusStyle[b.status]}`}>
-                        <span className="font-semibold">{clock.format(b.startsAt)}</span> {b.clientName.split(" ")[0]}
+                        <span className="font-semibold">{clock.format(b.startsAt)}</span> {treatedName(b).split(" ")[0]}
                       </span>
                     ))}
                     {items.length > 3 && <span className="px-1.5 text-[11px] text-ink-subtle">+{items.length - 3} more</span>}
@@ -204,7 +206,8 @@ export default async function CalendarPage(props: PageProps<"/dashboard/calendar
                         <StatusPill status={b.status} />
                       </div>
                       <div className="flex flex-col gap-0.5 text-sm">
-                        <span className="font-semibold text-ink-strong">{b.clientName}</span>
+                        <span className="font-semibold text-ink-strong">{treatedName(b)}</span>
+                        {b.forName && <span className="text-ink-muted">Booked by {b.clientName}</span>}
                         <span>
                           <a href={`tel:${b.clientPhone}`}>{b.clientPhone}</a> ·{" "}
                           <a href={whatsappLink(b.clientPhone)} target="_blank" rel="noopener noreferrer">

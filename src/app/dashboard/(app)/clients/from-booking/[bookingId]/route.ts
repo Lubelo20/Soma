@@ -4,9 +4,9 @@ import { clientForBooking } from "@/lib/clients";
 import { sql } from "@/lib/db";
 import { UUID_RE } from "@/lib/validation";
 
-// Opens the record card for a booking's client, or starts a new card prefilled from the booking. Among cards with
-// the booking's phone or email, the one with the booking's name wins; else the only one; else a new card, where
-// saving lists the existing cards (see clientForBooking).
+// Opens the record card for a booking's client (the person treated, when booked for someone else), or starts a new
+// card prefilled from the booking. Among matching cards, the one with the treated person's name wins; else the only
+// one; else a new card, where saving lists the existing cards (see clientForBooking and BOOKING_MATCHES_CLIENT).
 // Reading the session cookie makes this handler dynamic, so the redirect is never cached.
 export async function GET(request: Request, ctx: RouteContext<"/dashboard/clients/from-booking/[bookingId]">) {
   const go = (path: string) => NextResponse.redirect(new URL(path, request.url));

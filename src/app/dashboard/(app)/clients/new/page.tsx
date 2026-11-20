@@ -15,11 +15,17 @@ export default async function NewRecordCardPage(props: PageProps<"/dashboard/cli
   const requested = (await props.searchParams).booking;
   const bookingId = typeof requested === "string" && UUID_RE.test(requested) ? requested : null;
 
-  // From a booking, the name, phone and email are filled in; a booking that isn't found is ignored.
-  const [booking] = bookingId
-    ? await sql<{ clientName: string; clientPhone: string; clientEmail: string }[]>`
-        select client_name, client_phone, client_email from bookings where id = ${bookingId}`
+  // From a booking, the name, phone and email are filled in; a booking that isn't found is ignored. A booking made
+  // for someone else fills in the treated person's name and phone (if given) and no email: the email is the booker's.
+  const [row] = bookingId
+    ? await sql<{ clientName: string; clientPhone: string; clientEmail: string; forName: string; forPhone: string }[]>`
+        select client_name, client_phone, client_email, for_name, for_phone from bookings where id = ${bookingId}`
     : [];
+  const booking = row
+    ? row.forName
+      ? { clientName: row.forName, clientPhone: row.forPhone, clientEmail: "" }
+      : { clientName: row.clientName, clientPhone: row.clientPhone, clientEmail: row.clientEmail }
+    : undefined;
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">

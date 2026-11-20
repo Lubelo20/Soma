@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { formatPrice } from "@/lib/data";
+import { treatedName } from "@/lib/booking-for";
 import { bookingsWithCards } from "@/lib/clients";
 import { sql } from "@/lib/db";
 import { formatDateTime } from "@/lib/slots";
@@ -19,9 +20,12 @@ type Booking = {
   startsAt: Date;
   endsAt: Date;
   status: BookingStatus;
+  // The booker's contact details. When booked for someone else, forName (and optional forPhone) is the person treated.
   clientName: string;
   clientPhone: string;
   clientEmail: string;
+  forName: string;
+  forPhone: string;
   notes: string;
   staffNote: string;
   createdAt: Date;
@@ -110,9 +114,13 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-line-soft pt-4 text-[15px] sm:gap-x-8">
                 <span className="text-ink-subtle">Client</span>
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="font-semibold text-ink-strong">{b.clientName}</span>
+                  <span className="font-semibold text-ink-strong">{treatedName(b)}</span>
+                  {b.forName && <span className="text-[14px] text-ink-muted">Booked by {b.clientName}</span>}
                   {withCards.has(b.id) ? (
                     <span className="pill bg-mint text-brand-dark">Existing client</span>
+                  ) : b.forName ? (
+                    // Booked for someone else with no card on their phone: they may still have one under another number.
+                    <span className="pill border border-line bg-white text-ink-muted">For someone else</span>
                   ) : (
                     <span className="pill bg-slate-100 text-slate-700">New client</span>
                   )}
@@ -132,6 +140,17 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
                 <a href={`mailto:${b.clientEmail}`} className="break-all">
                   {b.clientEmail}
                 </a>
+                {b.forPhone && (
+                  <>
+                    <span className="text-ink-subtle">Their phone</span>
+                    <span>
+                      <a href={`tel:${b.forPhone}`}>{b.forPhone}</a> ·{" "}
+                      <a href={whatsappLink(b.forPhone)} target="_blank" rel="noopener noreferrer">
+                        WhatsApp
+                      </a>
+                    </span>
+                  </>
+                )}
                 {b.notes && (
                   <>
                     <span className="text-ink-subtle">Client notes</span>

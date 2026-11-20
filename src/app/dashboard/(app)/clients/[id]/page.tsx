@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "@/lib/auth";
-import { getCard } from "@/lib/clients";
+import { treatedName } from "@/lib/booking-for";
+import { getCard, type MatchedBooking } from "@/lib/clients";
 import { sameName, unansweredHealthCount } from "@/lib/record-card";
 import { clinicDate, formatDate, formatDateTime } from "@/lib/slots";
 import { deleteClient, deleteEntry } from "../../../clients-actions";
@@ -34,6 +35,17 @@ function Section({ title, edit, updated, children }: { title: string; edit?: str
       {updated && <p className="m-0 text-xs text-ink-subtle">Last updated {formatDateTime(updated)}</p>}
     </section>
   );
+}
+
+// "(booked as Thandi)" when the treated person's name on the booking differs from the card's, and "booked by Sipho"
+// when someone else made the booking for them.
+function BookedAs({ booking, cardName }: { booking: MatchedBooking; cardName: string }) {
+  const name = treatedName(booking);
+  const parts = [
+    ...(sameName(name, cardName) ? [] : [`booked as ${name}`]),
+    ...(booking.forName ? [`booked by ${booking.clientName}`] : []),
+  ];
+  return parts.length ? <span className="text-ink-muted"> ({parts.join(", ")})</span> : null;
 }
 
 export default async function RecordCardPage(props: PageProps<"/dashboard/clients/[id]">) {
@@ -213,7 +225,7 @@ export default async function RecordCardPage(props: PageProps<"/dashboard/client
                 </div>
                 <span className="text-[15px] text-ink-body">
                   {b.treatmentName}
-                  {!sameName(b.clientName, client.fullName) && <span className="text-ink-muted"> (booked as {b.clientName})</span>}
+                  <BookedAs booking={b} cardName={client.fullName} />
                 </span>
               </li>
             ))}
