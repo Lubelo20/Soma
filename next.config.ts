@@ -18,6 +18,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Hide the Next.js "N" dev-tools badge (development only; it overlaps the dashboard sidebar).
   devIndicators: false,
+  // The dev server logs each server function call with its arguments by default; a client search term must never
+  // be printed. (Production doesn't log these.)
+  logging: { serverFunctions: false },
   // Posters for specials, uploaded by staff.
   images: { remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }] },
   async headers() {

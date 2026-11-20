@@ -7,7 +7,8 @@ import { sessionActive } from "./actions";
 
 const IDLE_MS = IDLE_MINUTES * 60_000;
 const IDLE_TEXT = IDLE_MINUTES === 60 ? "an hour" : `${IDLE_MINUTES} minutes`;
-const ACTIVITY = ["pointerdown", "pointermove", "keydown", "touchstart", "wheel"] as const;
+// "input" is the only event voice dictation fires.
+const ACTIVITY = ["pointerdown", "pointermove", "keydown", "touchstart", "wheel", "input"] as const;
 
 // Shared by every IdleLock in the page (the dashboard and the signing screen each have one), so moving between
 // them neither resets nor loses the idle time.
