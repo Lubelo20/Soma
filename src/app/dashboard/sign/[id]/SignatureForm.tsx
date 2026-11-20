@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { CONSENT_STATEMENTS, REQUIRED_CONSENT_COUNT } from "@/lib/record-card";
-import { SIGNATURE_VIEWBOX, strokesToPath, type Point } from "@/lib/signature";
+import { SIGNATURE_VIEWBOX, isValidSignaturePath, strokesToPath, type Point } from "@/lib/signature";
 import { signConsent } from "../../clients-actions";
 
 const CONNECTION_ERROR = "Couldn't save. Check your connection and try again.";
@@ -15,7 +15,6 @@ const INITIALS_RE = /^\p{L}{1,6}$/u;
 
 const VW = SIGNATURE_VIEWBOX.width;
 const VH = SIGNATURE_VIEWBOX.height;
-const MIN_POINTS = 10; // the server's isValidSignaturePath needs at least this many
 const MAX_POINTS = 4000; // keeps the stored path well under its 60,000-character limit
 const MIN_STEP = 1; // viewbox units; closer points add nothing visible
 const BASELINE = 150;
@@ -28,6 +27,14 @@ function inkStyle(ctx: CanvasRenderingContext2D) {
   ctx.lineWidth = 3;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+}
+
+/** A one-point stroke (a tap: the dot on an i, a full stop) shown as a dot the width of the line. */
+function dot(ctx: CanvasRenderingContext2D, [x, y]: Point) {
+  ctx.beginPath();
+  ctx.arc(x, y, ctx.lineWidth / 2, 0, Math.PI * 2);
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.fill();
 }
 
 /**
@@ -65,7 +72,11 @@ function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Po
     ctx.fillText("×", 30, BASELINE - 12);
     inkStyle(ctx);
     for (const stroke of strokesRef.current) {
-      if (stroke.length < 2) continue;
+      if (stroke.length === 0) continue;
+      if (stroke.length === 1) {
+        dot(ctx, stroke[0]);
+        continue;
+      }
       ctx.beginPath();
       ctx.moveTo(stroke[0][0], stroke[0][1]);
       for (const [x, y] of stroke.slice(1)) ctx.lineTo(x, y);
@@ -100,7 +111,13 @@ function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Po
     // Capture keeps the stroke going if the finger slides out of the box.
     e.currentTarget.setPointerCapture(e.pointerId);
     activePointer.current = e.pointerId;
-    strokesRef.current.push([toPoint(e, e.currentTarget.getBoundingClientRect())]);
+    const p = toPoint(e, e.currentTarget.getBoundingClientRect());
+    strokesRef.current.push([p]);
+    const ctx = e.currentTarget.getContext("2d");
+    if (ctx) {
+      inkStyle(ctx);
+      dot(ctx, p);
+    }
   }
 
   function move(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -134,7 +151,7 @@ function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Po
   }
 
   function clear() {
-    strokesRef.current = [];
+    strokesRef.current.splice(0);
     activePointer.current = null;
     redraw();
   }
@@ -189,7 +206,8 @@ export function SignatureForm({ clientId, today }: { clientId: string; today: st
     let error: string | null = null;
     if (ticked.slice(0, REQUIRED_CONSENT_COUNT).some((t) => !t)) error = TICK_ERROR;
     else if (!INITIALS_RE.test(typed)) error = INITIALS_ERROR;
-    else if (countPoints(strokesRef.current) < MIN_POINTS) error = SIGN_ERROR;
+    // The server's own rule: taps and tiny scribbles don't count as a signature.
+    else if (!isValidSignaturePath(strokesToPath(strokesRef.current))) error = SIGN_ERROR;
     if (error) {
       setMessage(error);
       return;

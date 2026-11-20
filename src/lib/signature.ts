@@ -3,7 +3,10 @@ export const SIGNATURE_VIEWBOX = { width: 600, height: 200 } as const;
 export type Point = [number, number];
 
 const MAX_PATH_LENGTH = 60_000;
-const MIN_POINTS = 10;
+/** Points needed, counting only strokes of 2 or more points: taps (a lone M) draw nothing and don't count. */
+export const MIN_SIGNATURE_POINTS = 10;
+/** The drawn strokes must span at least this many viewbox units across or down, so a tiny scribble doesn't count. */
+export const MIN_SIGNATURE_EXTENT = 30;
 
 function clamp(n: number, max: number): number {
   return Math.min(max, Math.max(0, n));
@@ -32,10 +35,20 @@ const COMMAND_RE = new RegExp(`([ML])(${NUM}) (${NUM})`, "g");
 export function isValidSignaturePath(path: string): boolean {
   if (path.length === 0 || path.length > MAX_PATH_LENGTH) return false;
   if (!PATH_RE.test(path)) return false;
-  let points = 0;
+  // Group the points into strokes: each M starts a new one.
+  const strokes: Point[][] = [];
   for (const m of path.matchAll(COMMAND_RE)) {
-    if (Number(m[2]) > SIGNATURE_VIEWBOX.width || Number(m[3]) > SIGNATURE_VIEWBOX.height) return false;
-    points++;
+    const x = Number(m[2]);
+    const y = Number(m[3]);
+    if (x > SIGNATURE_VIEWBOX.width || y > SIGNATURE_VIEWBOX.height) return false;
+    if (m[1] === "M") strokes.push([]);
+    strokes[strokes.length - 1].push([x, y]);
   }
-  return points >= MIN_POINTS;
+  const drawn = strokes.filter((s) => s.length >= 2).flat();
+  if (drawn.length < MIN_SIGNATURE_POINTS) return false;
+  const xs = drawn.map(([x]) => x);
+  const ys = drawn.map(([, y]) => y);
+  return (
+    Math.max(...xs) - Math.min(...xs) >= MIN_SIGNATURE_EXTENT || Math.max(...ys) - Math.min(...ys) >= MIN_SIGNATURE_EXTENT
+  );
 }
