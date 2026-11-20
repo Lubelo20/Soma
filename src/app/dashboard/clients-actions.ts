@@ -5,7 +5,18 @@ import { audit } from "@/lib/audit";
 import { SIGNED_OUT, requireStaff, staffCheck } from "@/lib/auth";
 import { findDuplicates } from "@/lib/clients";
 import { sql } from "@/lib/db";
-import { normalizePhone } from "@/lib/record-card";
+import {
+  BODY_AREAS,
+  HEALTH_CONDITIONS,
+  SKIN_ROWS,
+  normalizePhone,
+  parseHealth,
+  parseMassage,
+  parseSkin,
+  type HealthAnswers,
+  type MassageAnswers,
+  type SkinAnswers,
+} from "@/lib/record-card";
 import { clinicDate } from "@/lib/slots";
 import { EMAIL_RE, PHONE_RE } from "@/lib/validation";
 
@@ -146,4 +157,81 @@ export async function saveDetails(_prev: ClientResult, fd: FormData): Promise<Cl
   audit(id ? "client details updated" : "client added", { id: savedId });
   refresh();
   return { ok: true, id: savedId };
+}
+
+// ---------- Health, massage and skin sections ----------
+
+type Section = "health" | "massage" | "skin";
+const SECTIONS: readonly Section[] = ["health", "massage", "skin"];
+
+const PARSERS = { health: parseHealth, massage: parseMassage, skin: parseSkin } as const;
+
+/**
+ * Stored answers written back as form fields, with ticked options in their defined order, so they can be run
+ * through the same parser as a fresh save. Anything unexpected in an older row is simply dropped.
+ */
+function asFormData(section: Section, answers: unknown): FormData {
+  const fd = new FormData();
+  const a = (answers ?? {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  if (section === "health") {
+    const h = a as Partial<HealthAnswers>;
+    for (const { key } of HEALTH_CONDITIONS) {
+      const entry = h[key];
+      if (entry?.answer) fd.set(`health.${key}`, str(entry.answer));
+      fd.set(`health.${key}.note`, str(entry?.note));
+    }
+  } else if (section === "skin") {
+    const sk = a as Partial<SkinAnswers>;
+    for (const row of SKIN_ROWS) {
+      const entry = sk[row.key];
+      const picked = new Set(Array.isArray(entry?.selected) ? entry.selected : []);
+      for (const o of row.options) if (picked.has(o.value)) fd.append(`skin.${row.key}`, o.value);
+      fd.set(`skin.${row.key}.note`, str(entry?.note));
+      fd.set(`skin.${row.key}.other`, str(entry?.other));
+    }
+  } else {
+    const m = a as Partial<MassageAnswers>;
+    const picked = new Set(Array.isArray(m.areas) ? m.areas : []);
+    for (const area of BODY_AREAS) if (picked.has(area.id)) fd.append("massage.areas", area.id);
+    fd.set("massage.notes", str(m.notes));
+  }
+  return fd;
+}
+
+/** Parsed answers in one fixed shape and key order, so equal answers always give equal JSON. */
+const canonical = (section: Section, answers: unknown) => PARSERS[section](asFormData(section, answers));
+
+/**
+ * Saves one section of a record card. Sections are append-only: a new version is added only when the answers
+ * differ from the newest saved version, so pressing Next without changes adds nothing. Answers are never logged.
+ */
+export async function saveSection(section: Section, _prev: ClientResult, fd: FormData): Promise<ClientResult> {
+  if (!(await staffCheck())) return { error: SIGNED_OUT };
+  if (!SECTIONS.includes(section)) return { error: "That section doesn't exist." };
+  const id = String(fd.get("clientId") ?? "").trim();
+  if (!UUID.test(id)) return { error: "That record card no longer exists." };
+
+  const answers = canonical(section, PARSERS[section](fd));
+  const json = JSON.stringify(answers);
+
+  const outcome = await sql.begin(async (tx) => {
+    // Locks the card so two saves of the same section can't both add a version.
+    const [client] = await tx`select id from clients where id = ${id} for update`;
+    if (!client) return "missing" as const;
+    const [newest] = await tx<{ answers: unknown }[]>`
+      select answers from client_sections where client_id = ${id} and section = ${section}
+      order by saved_at desc, id desc limit 1`;
+    if (newest && JSON.stringify(canonical(section, newest.answers)) === json) return "unchanged" as const;
+    await tx`insert into client_sections (client_id, section, answers) values (${id}, ${section}, ${tx.json(JSON.parse(json))})`;
+    await tx`update clients set updated_at = now() where id = ${id}`;
+    return "saved" as const;
+  });
+
+  if (outcome === "missing") return { error: "That record card no longer exists." };
+  if (outcome === "saved") {
+    audit("client section saved", { id, section });
+    refresh();
+  }
+  return { ok: true, id };
 }

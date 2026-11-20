@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useRef, useState, useTransition } from "react";
+import { Icon } from "@/components/Icon";
 import type { ClientDetails } from "@/lib/clients";
 import { isUnder18 } from "@/lib/record-card";
 import { clinicDate } from "@/lib/slots";
@@ -27,9 +28,17 @@ const CONNECTION_ERROR = "Couldn't save. Check your connection and try again.";
 /**
  * The client details section of a record card. Every value lives in React state, so a failed save
  * (signed out, offline, validation) never clears what was typed. Nothing is kept in browser storage.
+ * After saving: "card" opens the card, "next" moves on to the health section, "stay" shows a Saved tick.
  */
-export function DetailsForm({ initial, onSaved = "next" }: { initial: Partial<ClientDetails>; onSaved?: "card" | "next" }) {
+export function DetailsForm({
+  initial,
+  onSaved = "next",
+}: {
+  initial: Partial<ClientDetails>;
+  onSaved?: "card" | "next" | "stay";
+}) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const [v, setV] = useState<Values>({
     fullName: initial.fullName ?? "",
@@ -47,8 +56,14 @@ export function DetailsForm({ initial, onSaved = "next" }: { initial: Partial<Cl
   const [result, setResult] = useState<ClientResult | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [tick, setTick] = useState(false);
+  const edits = useRef(0); // counts edits, so a save that finishes after more typing doesn't claim "Saved"
 
-  const set = <K extends keyof Values>(key: K, value: Values[K]) => setV((prev) => ({ ...prev, [key]: value }));
+  const set = <K extends keyof Values>(key: K, value: Values[K]) => {
+    edits.current += 1;
+    setTick(false);
+    setV((prev) => ({ ...prev, [key]: value }));
+  };
   const under18 = isUnder18(v.dateOfBirth, clinicDate(new Date()));
   const duplicates = result?.error === "duplicate" ? (result.duplicates ?? []) : [];
   const message = failed ?? (result?.error && result.error !== "duplicate" ? result.error : null);
@@ -59,13 +74,23 @@ export function DetailsForm({ initial, onSaved = "next" }: { initial: Partial<Cl
     for (const [k, val] of Object.entries(v)) fd.set(k, val);
     if (differentPerson) fd.set("differentPerson", "on");
     setFailed(null);
+    const editsAtSubmit = edits.current;
     startTransition(async () => {
       try {
         const res = await saveDetails({}, fd);
         setResult(res);
         if (res.ok && res.id) {
-          setSaved(true);
-          router.push(onSaved === "card" ? `/dashboard/clients/${res.id}` : `/dashboard/clients/${res.id}/edit?step=health`);
+          if (onSaved === "stay") {
+            setTick(edits.current === editsAtSubmit);
+          } else if (onSaved === "next" && pathname === `/dashboard/clients/${res.id}/edit`) {
+            // Already inside the card's step-by-step editor: change step in place so unsaved answers in the
+            // other sections are kept.
+            window.history.pushState(null, "", "?step=health");
+            window.scrollTo(0, 0);
+          } else {
+            setSaved(true);
+            router.push(onSaved === "card" ? `/dashboard/clients/${res.id}` : `/dashboard/clients/${res.id}/edit?step=health`);
+          }
         }
       } catch {
         setFailed(CONNECTION_ERROR);
@@ -256,9 +281,17 @@ export function DetailsForm({ initial, onSaved = "next" }: { initial: Partial<Cl
         </p>
       )}
 
-      <button type="submit" disabled={busy} className="btn btn-solid min-h-12 px-6 sm:self-start">
-        {busy ? "Saving…" : onSaved === "next" ? "Save and continue" : "Save"}
-      </button>
+      <div className="flex flex-wrap items-center gap-4">
+        <button type="submit" disabled={busy} className="btn btn-solid min-h-12 px-6 max-sm:w-full">
+          {busy ? "Saving…" : onSaved === "next" ? "Save and continue" : "Save"}
+        </button>
+        {tick && !busy && (
+          <span role="status" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand">
+            <Icon name="check" size={16} strokeWidth={2} />
+            Saved
+          </span>
+        )}
+      </div>
     </form>
   );
 }
