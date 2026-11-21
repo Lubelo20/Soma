@@ -8,7 +8,7 @@ export const business = {
   legalName: "Infinity Soma Wellness Clinic (Pty) Ltd",
   registration: "2023/958227/07",
   url: "https://www.infinitysoma.co.za",
-  email: "info@infinitysoma.co.za",
+  email: "bookings@infinitysoma.co.za",
   phoneDisplay: "+27 63 880 4946",
   phoneE164: "+27638804946",
   whatsapp: "https://wa.me/27638804946",
