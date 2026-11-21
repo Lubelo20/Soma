@@ -43,6 +43,19 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 88px;
 }
+/* Dashboard phones: a field scrolled into view (on focus, or by the keyboard opening) stops clear of the bar fixed at
+   the bottom of the screen: the bottom bar (BottomNav) or, on the card editor, its sticky Back / Next bar. Only pages
+   that show one of these bars match, so the public site is unaffected. */
+@media (width < 64rem) {
+  html:has(.dashboard-bottom-bar) {
+    scroll-padding-bottom: calc(3.5rem + 1px + env(safe-area-inset-bottom) + 12px);
+  }
+  /* The editor's bar with Back / Next (113px plus its bottom padding); the details step has no Back / Next and a
+     shorter bar, where this only leaves a little extra room. */
+  html:has(.card-editor-bar) {
+    scroll-padding-bottom: calc(113px + max(12px, env(safe-area-inset-bottom)) + 12px);
+  }
+}
 
 body {
   background: var(--color-cream);
@@ -111,7 +124,7 @@ body {
     @apply inline-flex min-h-10 items-center rounded-[2px] border border-line bg-white px-3.5 text-[11.5px] font-medium tracking-[.16em] text-ink uppercase no-underline transition-colors hover:border-brand hover:text-brand-dark max-sm:text-[13px] max-sm:tracking-[.12em];
   }
   .tab-underline {
-    @apply -mb-px border-b-2 border-transparent px-1 py-3 text-center text-[11.5px] font-medium tracking-[.16em] text-ink-muted uppercase no-underline transition-colors hover:text-ink-strong aria-[current=page]:border-brand aria-[current=page]:text-ink-strong max-lg:min-w-11 max-sm:text-[13px] max-sm:tracking-[.1em];
+    @apply -mb-px border-b-2 border-transparent px-1 py-3 text-center text-[11.5px] font-medium tracking-[.16em] text-ink-muted uppercase no-underline transition-colors hover:text-ink-strong aria-[current=page]:border-brand aria-[current=page]:text-ink-strong max-lg:min-w-11 max-sm:px-0.5 max-sm:text-[12px] max-sm:tracking-[.06em];
   }
   /* A small text link, toggle or checkbox label made a 44px-tall tap target without moving anything around it. */
   .tap-y {

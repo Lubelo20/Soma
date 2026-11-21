@@ -77,7 +77,7 @@ export default async function BookingsPage(props: PageProps<"/dashboard">) {
         </div>
       </div>
 
-      <nav aria-label="Booking filters" className="flex flex-wrap gap-1 border-b border-line">
+      <nav aria-label="Booking filters" className="flex flex-wrap gap-1 border-b border-line max-sm:justify-between max-sm:gap-0">
         {(Object.keys(views) as View[]).map((v) => (
           <Link key={v} href={`/dashboard?view=${v}`} aria-current={v === view ? "page" : undefined} className="tab-underline">
             {views[v].label}

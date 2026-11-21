@@ -43,8 +43,10 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
   const button = useRef<HTMLButtonElement>(null);
   const bar = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  // Set when a menu link is tapped. The link is hidden as the menu closes, which would leave focus on <body>.
-  const leftByMenu = useRef(false);
+  // The path a tapped menu link is navigating to. The link is hidden as the menu closes, which would leave focus on
+  // <body>; when that navigation lands, focus goes back to the Menu button. Not set when the card editor's leave guard
+  // holds the tap, so a later, unrelated navigation (bottom bar, back or forward) never moves focus.
+  const leftByMenu = useRef<string | null>(null);
 
   const [openedOn, setOpenedOn] = useState(pathname);
   if (openedOn !== pathname) {
@@ -58,10 +60,14 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
     // On window in the capture phase, added after the card editor's leave guard: it still runs when the guard holds
     // the link (the guard stops the click reaching the link, not other listeners on window).
     const onClick = (e: MouseEvent) => {
-      if (e.target instanceof Element && e.target.closest("a[href]") && inside(e.target)) {
-        leftByMenu.current = true;
-        setOpen(false);
-      }
+      const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href]") : null;
+      if (!link || !inside(link)) return;
+      // The leave guard listens on window in the capture phase too, registered earlier, and prevents the default
+      // when it holds the link.
+      const url = new URL(link.href, window.location.href);
+      const leaves = !e.defaultPrevented && url.origin === window.location.origin && url.pathname !== window.location.pathname;
+      leftByMenu.current = leaves ? url.pathname : null;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -84,8 +90,9 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
   // After navigating from the menu, focus goes back to the Menu button (unless something, such as the card editor's
   // unsaved-changes prompt, has taken it).
   useEffect(() => {
-    if (!leftByMenu.current) return;
-    leftByMenu.current = false;
+    const target = leftByMenu.current;
+    leftByMenu.current = null;
+    if (target !== pathname) return;
     const active = document.activeElement;
     if (!active || active === document.body || panel.current?.contains(active)) button.current?.focus({ preventScroll: true });
   }, [pathname]);

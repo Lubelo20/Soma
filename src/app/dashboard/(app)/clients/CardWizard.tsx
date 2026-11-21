@@ -391,7 +391,7 @@ export function CardWizard({
       </div>
 
       {/* Phones: Back, Next and "Save and back to card" stay in reach at the bottom of the screen. */}
-      <div className="sticky bottom-0 z-10 -mx-5 flex flex-col gap-2 border-t border-line bg-cream/95 px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+      <div className="card-editor-bar sticky bottom-0 z-10 -mx-5 flex flex-col gap-2 border-t border-line bg-cream/95 px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
         {allErrors.length > 0 && (
           <div role="alert" className="flex flex-col gap-1 text-sm font-medium text-red-700">
             {allErrors.map((e) => (

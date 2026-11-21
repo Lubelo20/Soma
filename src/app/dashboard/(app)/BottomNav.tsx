@@ -28,7 +28,7 @@ export function BottomNav({ pending }: { pending: number }) {
       <div aria-hidden="true" className="h-[calc(3.5rem+env(safe-area-inset-bottom))] flex-none lg:hidden" />
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-forest-deep pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] shadow-[0_-6px_18px_rgba(0,0,0,.12)] lg:hidden"
+        className="dashboard-bottom-bar fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-forest-deep pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] shadow-[0_-6px_18px_rgba(0,0,0,.12)] lg:hidden"
       >
         <ul className="m-0 grid list-none grid-cols-3 p-0">
           {links.map((l) => {
