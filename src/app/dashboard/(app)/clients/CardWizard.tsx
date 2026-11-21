@@ -184,12 +184,15 @@ export function CardWizard({
         next.origins[sec] = undefined;
       }
     };
+    // A section whose fingerprint matches its last save has no unsaved edits, even if a raw value differs in a way
+    // nothing saves (Other text left after unticking Other): it is reconciled as its base, so it simply adopts.
+    const clean = (sec: Section) => fingerprint(sec, answers) === saved[sec];
     for (const sec of SECTIONS) {
       const fresh = serverNow[sec];
       if (sent[sec] === stablePrint(fresh)) continue; // our own save; save() sets the base
-      if (sec === "health") apply("health", reconcileSection(answers.health, bases.health, serverNow.health, origins.health));
-      if (sec === "massage") apply("massage", reconcileSection(answers.massage, bases.massage, serverNow.massage, origins.massage));
-      if (sec === "skin") apply("skin", reconcileSection(answers.skin, bases.skin, serverNow.skin, origins.skin));
+      if (sec === "health") apply("health", reconcileSection(clean(sec) ? bases.health : answers.health, bases.health, serverNow.health, origins.health));
+      if (sec === "massage") apply("massage", reconcileSection(clean(sec) ? bases.massage : answers.massage, bases.massage, serverNow.massage, origins.massage));
+      if (sec === "skin") apply("skin", reconcileSection(clean(sec) ? bases.skin : answers.skin, bases.skin, serverNow.skin, origins.skin));
     }
     setAnswers(next.answers);
     setBases(next.bases);
@@ -285,6 +288,14 @@ export function CardWizard({
     const savedForm = asSaved(answers)[section];
     setSent((prev) => ({ ...prev, [section]: stablePrint(savedForm) }));
     setErrors((prev) => ({ ...prev, [section]: null }));
+    // Once this save has answered, its refresh has been seen or will match the base: forget what was sent, so a
+    // later server version that happens to equal it (saved again elsewhere) is reconciled like any other.
+    const forgetSent = () =>
+      setSent((prev) => {
+        const rest = { ...prev };
+        delete rest[section];
+        return rest;
+      });
     try {
       const res = await saveSection(section, {}, fd);
       if (res.ok) {
@@ -296,10 +307,13 @@ export function CardWizard({
         setConflicts((prev) => ({ ...prev, [section]: [] }));
         setSaved((prev) => ({ ...prev, [section]: print }));
         setTicked((prev) => ({ ...prev, [section]: print }));
+        forgetSent();
         return true;
       }
+      forgetSent();
       setErrors((prev) => ({ ...prev, [section]: res.error ?? CONNECTION_ERROR }));
     } catch {
+      forgetSent();
       setErrors((prev) => ({ ...prev, [section]: CONNECTION_ERROR }));
     }
     return false;

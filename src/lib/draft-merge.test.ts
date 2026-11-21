@@ -151,3 +151,34 @@ describe("makeSectionDraft with the draft it was opened from (M2)", () => {
     expect(reopen.conflicts).toEqual([]);
   });
 });
+
+describe("makeSectionDraft with a tidied base (details saved raw, stored normalised)", () => {
+  const tidy = (v: { fullName: string; email: string; occupation: string }) => ({
+    fullName: v.fullName.trim().replace(/\s+/g, " "),
+    email: v.email.trim().toLowerCase(),
+    occupation: v.occupation.trim(),
+  });
+  const sentRaw = { fullName: "Jane  Doe ", email: "Jane@X.com", occupation: "Nurse" };
+  const server = tidy(sentRaw);
+
+  it("after a save the server tidied, a further edit drafts only that edit, against the server's details", () => {
+    const d = makeSectionDraft({ ...sentRaw, occupation: "Teacher" }, sentRaw, undefined, tidy)!;
+    expect(d.fields).toEqual({ occupation: "Teacher" });
+    expect(d.base).toBe(stablePrint(server));
+    expect(d.baseFields).toEqual({ occupation: "Nurse" });
+    const open = applySectionDraft(server, d);
+    expect(open.serverChanged).toBe(false);
+    expect(open.conflicts).toEqual([]);
+  });
+
+  it("a re-edited tidied field is drafted without a false conflict", () => {
+    const d = makeSectionDraft({ ...sentRaw, email: "jane@y.com" }, sentRaw, undefined, tidy)!;
+    expect(d.baseFields).toEqual({ email: "jane@x.com" });
+    expect(applySectionDraft(server, d)).toMatchObject({ serverChanged: false, conflicts: [] });
+  });
+
+  it("still sees a real change made elsewhere", () => {
+    const d = makeSectionDraft({ ...sentRaw, occupation: "Teacher" }, sentRaw, undefined, tidy)!;
+    expect(applySectionDraft({ ...server, fullName: "Jane Smith" }, d).serverChanged).toBe(true);
+  });
+});

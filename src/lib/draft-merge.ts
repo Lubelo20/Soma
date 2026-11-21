@@ -28,17 +28,25 @@ const same = (a: unknown, b: unknown) => stablePrint(a) === stablePrint(b);
  * re-merge after newer answers arrived). Its fingerprint and the base values of the fields it carried are kept,
  * so a second Back without saving still knows those fields were changed against older answers.
  */
-export function makeSectionDraft<T extends object>(current: T, base: T, origin?: SectionDraft<T>): SectionDraft<T> | undefined {
+export function makeSectionDraft<T extends object>(
+  current: T,
+  base: T,
+  origin?: SectionDraft<T>,
+  tidy?: (v: T) => T,
+): SectionDraft<T> | undefined {
+  // `tidy`: the base as the server stores it (a just-saved base holds what was sent, which the server may have
+  // tidied). Which fields changed is still decided against the base as it is on screen.
+  const stored = tidy ? tidy(base) : base;
   const fields: Partial<T> = {};
   const baseFields: Partial<T> = {};
   for (const key of Object.keys(current) as (keyof T)[]) {
     if (same(current[key], base[key])) continue;
     fields[key] = current[key];
     const carried = origin !== undefined && Object.prototype.hasOwnProperty.call(origin.fields, key);
-    baseFields[key] = carried ? origin.baseFields[key] : base[key];
+    baseFields[key] = carried ? origin.baseFields[key] : stored[key];
   }
   if (Object.keys(fields).length === 0) return undefined;
-  return { base: origin?.base ?? stablePrint(base), fields, baseFields };
+  return { base: origin?.base ?? stablePrint(stored), fields, baseFields };
 }
 
 /**

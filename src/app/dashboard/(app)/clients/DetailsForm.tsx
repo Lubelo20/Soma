@@ -168,8 +168,9 @@ export function DetailsForm({
       if (draftId) {
         const { v: now, savedValues: was, origin: from } = latest.current;
         const dirtyNow = JSON.stringify(now) !== JSON.stringify(was);
-        // Only the inputs that differ from the details this form was built from, keeping what its origin draft knew.
-        cardDrafts.update(draftId, { details: dirtyNow ? makeSectionDraft(now, was, from) : undefined });
+        // Only the inputs that differ from the details this form was built from, keeping what its origin draft knew;
+        // the base is recorded as the server stores it (after a save, `was` holds the untidied values sent).
+        cardDrafts.update(draftId, { details: dirtyNow ? makeSectionDraft(now, was, from, detailsAsSaved) : undefined });
       }
     },
     // Runs only when hidden or unmounted; the draft id is fixed for the form's life (FreshOnOpen keys the editor).
