@@ -6,5 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardRootLayout({ children }: LayoutProps<"/dashboard">) {
-  return <div className="min-h-screen bg-cream">{children}</div>;
+  return <div className="dashboard min-h-screen bg-cream">{children}</div>;
 }
