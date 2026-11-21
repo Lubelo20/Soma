@@ -1,11 +1,11 @@
 "use client";
 
-import { useId, type KeyboardEvent } from "react";
+import { useId, useState, type KeyboardEvent } from "react";
 import { BODY_AREAS, areaLabels } from "@/lib/record-card";
-import { VIEWS, VIEW_BOX, poly, type ViewDef } from "./body-map-shapes";
+import { VIEWS, VIEW_BOX, poly, type View, type ViewDef } from "./body-map-shapes";
 
-// The three figures share one row at every width. On a 360px phone each is about 90px wide (0.58px per
-// drawing unit); on larger screens they grow to at most 230px each.
+// Phones (below sm): a Front / Back / Side switch above one figure about 200px wide, so the areas are big enough
+// for a thumb. From sm up the three figures share one row and grow to at most 230px each.
 
 const LABEL = new Map(BODY_AREAS.map((a) => [a.id, a.label]));
 
@@ -31,12 +31,49 @@ export function BodyMap({ value, onChange }: { value: string[]; onChange: (ids: 
     }
   };
   const ordered = BODY_AREAS.filter((a) => selected.has(a.id)).map((a) => a.id);
+  // The figure shown on phones. Plain state: tapping areas or saving never changes it.
+  const [view, setView] = useState<View>("front");
 
   return (
     <div className="flex flex-col gap-4">
+      <div role="group" aria-label="Body view" className="flex border border-line sm:hidden">
+        {VIEWS.map((v) => {
+          const on = v.view === view;
+          const n = BODY_AREAS.filter((a) => a.view === v.view && selected.has(a.id)).length;
+          return (
+            <button
+              key={v.view}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setView(v.view)}
+              className={`inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 border-l border-line text-[12px] font-semibold tracking-[.14em] uppercase transition-colors first:border-l-0 ${
+                on ? "bg-forest-deep text-white" : "bg-white text-ink hover:bg-mint-soft"
+              }`}
+            >
+              {v.title}
+              {n > 0 && (
+                <>
+                  <span aria-hidden="true" className="min-w-[18px] rounded-full bg-[#b3261e] px-1.5 py-px text-center text-[11px] tracking-normal text-white">
+                    {n}
+                  </span>
+                  <span className="sr-only">, {n} marked</span>
+                </>
+              )}
+            </button>
+          );
+        })}
+      </div>
       <div className="flex justify-center gap-2 sm:gap-4">
         {VIEWS.map((v) => (
-          <Figure key={v.view} def={v} clipId={`${uid}-${v.view}`} selected={selected} toggle={toggle} onKey={onKey} />
+          <Figure
+            key={v.view}
+            def={v}
+            clipId={`${uid}-${v.view}`}
+            phoneHidden={v.view !== view}
+            selected={selected}
+            toggle={toggle}
+            onKey={onKey}
+          />
         ))}
       </div>
 
@@ -107,18 +144,21 @@ export function BodyMap({ value, onChange }: { value: string[]; onChange: (ids: 
 function Figure({
   def,
   clipId,
+  phoneHidden,
   selected,
   toggle,
   onKey,
 }: {
   def: ViewDef;
   clipId: string;
+  /** Below sm only one figure is shown at a time. */
+  phoneHidden: boolean;
   selected: Set<string>;
   toggle: (id: string) => void;
   onKey: (id: string) => (e: KeyboardEvent) => void;
 }) {
   return (
-    <figure className="m-0 flex max-w-[230px] min-w-0 flex-1 flex-col items-center gap-0.5">
+    <figure className={`m-0 flex max-w-[230px] min-w-0 flex-1 flex-col items-center gap-0.5 max-sm:max-w-[200px] ${phoneHidden ? "max-sm:hidden" : ""}`}>
       <figcaption className="text-[10.5px] font-medium tracking-[.2em] text-gold-deep uppercase sm:text-[11.5px]">
         {def.title}
       </figcaption>
