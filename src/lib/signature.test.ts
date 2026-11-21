@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_SIGNATURE_EXTENT, MIN_SIGNATURE_POINTS, isValidSignaturePath, pathToStrokes, strokesToPath, type Point } from "./signature";
+import { MIN_SIGNATURE_EXTENT, MIN_SIGNATURE_POINTS, SIGNATURE_VIEWBOX, isValidSignaturePath, pathToStrokes, strokesToPath, type Point } from "./signature";
 
 const line = (n: number): Point[] => Array.from({ length: n }, (_, i) => [i * 10, 50] as Point);
 
@@ -12,7 +12,7 @@ describe("strokesToPath", () => {
     expect(strokesToPath([[], [[5, 6]], []])).toBe("M5 6");
   });
   it("clamps y to the viewbox height", () => {
-    expect(strokesToPath([[[1, 999]]])).toBe("M1 200");
+    expect(strokesToPath([[[1, 999]]])).toBe("M1 360");
   });
 });
 
@@ -38,9 +38,16 @@ describe("isValidSignaturePath", () => {
     expect(isValidSignaturePath(base + " L1e2 5")).toBe(false);
     expect(isValidSignaturePath(base + " L-1 5")).toBe(false);
     expect(isValidSignaturePath(base + " L601 5")).toBe(false);
-    expect(isValidSignaturePath(base + " L5 201")).toBe(false);
+    expect(isValidSignaturePath(base + " L5 361")).toBe(false);
     expect(isValidSignaturePath(base + " L1.25 5")).toBe(false);
-    expect(isValidSignaturePath(base + " L600 200")).toBe(true);
+    expect(isValidSignaturePath(base + " L600 360")).toBe(true);
+  });
+  it("uses a 600 x 360 box", () => {
+    const base = strokesToPath([line(12)]);
+    expect(SIGNATURE_VIEWBOX).toEqual({ width: 600, height: 360 });
+    expect(isValidSignaturePath(base + " L5 300")).toBe(true);
+    expect(isValidSignaturePath(base + " L5 361")).toBe(false);
+    expect(isValidSignaturePath(base + " L601 300")).toBe(false);
   });
 });
 

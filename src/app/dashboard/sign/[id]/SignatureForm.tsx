@@ -17,7 +17,7 @@ const VW = SIGNATURE_VIEWBOX.width;
 const VH = SIGNATURE_VIEWBOX.height;
 const MAX_POINTS = 4000; // keeps the stored path well under its 60,000-character limit
 const MIN_STEP = 1; // viewbox units; closer points add nothing visible
-const BASELINE = 150;
+const BASELINE = 270; // three quarters of the way down the box
 
 const countPoints = (strokes: Point[][]) => strokes.reduce((n, s) => n + s.length, 0);
 const clamp = (n: number, max: number) => Math.min(max, Math.max(0, n));
@@ -38,7 +38,7 @@ function dot(ctx: CanvasRenderingContext2D, [x, y]: Point) {
 }
 
 /**
- * A finger signature box. Strokes are kept in viewbox coordinates (600×200) in the parent's ref, so the drawing
+ * A finger signature box (5:3). Strokes are kept in viewbox coordinates (600×360) in the parent's ref, so the drawing
  * survives a failed save and is redrawn at the new size when the phone rotates.
  */
 function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Point[][]>; disabled: boolean }) {
@@ -159,7 +159,7 @@ function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Po
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full max-w-[420px] flex-col gap-2">
       <span id="signature-label" className="text-[16px] font-semibold text-ink-strong">
         Sign here with your finger
       </span>
@@ -173,7 +173,7 @@ function SignaturePad({ strokesRef, disabled }: { strokesRef: React.RefObject<Po
           onPointerUp={end}
           onPointerCancel={end}
           onLostPointerCapture={end}
-          className="block aspect-[3/1] w-full cursor-crosshair touch-none bg-white select-none"
+          className="block aspect-[5/3] w-full cursor-crosshair touch-none bg-white select-none"
         />
       </div>
       <button

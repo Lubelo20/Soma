@@ -1,4 +1,4 @@
-export const SIGNATURE_VIEWBOX = { width: 600, height: 200 } as const;
+export const SIGNATURE_VIEWBOX = { width: 600, height: 360 } as const;
 
 export type Point = [number, number];
 
