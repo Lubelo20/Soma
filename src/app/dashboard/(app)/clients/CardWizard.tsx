@@ -16,7 +16,7 @@ import {
 } from "@/lib/record-card";
 import { saveSection } from "../../clients-actions";
 import { DetailsForm, valuesFrom, type DetailsHandle } from "./DetailsForm";
-import { applySectionDraft, makeSectionDraft } from "@/lib/draft-merge";
+import { applySectionDraft, makeSectionDraft, reconcileSection, stablePrint, type SectionDraft } from "@/lib/draft-merge";
 import { cardDrafts } from "./card-drafts";
 import { LeavePrompt, useLeaveGuard } from "./LeaveGuard";
 import { HealthForm, MassageForm, SkinForm, sectionFormData } from "./SectionForms";
@@ -59,6 +59,16 @@ const fingerprints = (a: Answers): Record<Section, string> => ({
 
 const fingerprint = (section: Section, a: Answers) => JSON.stringify([...sectionFormData(section, a[section]).entries()]);
 
+const PARSERS = { health: parseHealth, massage: parseMassage, skin: parseSkin } as const;
+/** Every section in the form saveSection stores it (trimmed notes, options in order), for comparing saved answers. */
+const asSaved = (a: Answers): Answers => ({
+  health: PARSERS.health(sectionFormData("health", a.health)),
+  massage: PARSERS.massage(sectionFormData("massage", a.massage)),
+  skin: PARSERS.skin(sectionFormData("skin", a.skin)),
+});
+type Origins = { health?: SectionDraft<HealthAnswers>; massage?: SectionDraft<MassageAnswers>; skin?: SectionDraft<SkinAnswers> };
+const NO_FLAGS: Record<Section, boolean> = { health: false, massage: false, skin: false };
+
 /**
  * Edits a record card. Below lg: one section per screen with Back and Next (Next saves first, Back doesn't) and
  * "Save and back to card"; the step is kept in ?step= so a reload stays put. From lg: every section on one page,
@@ -93,13 +103,16 @@ export function CardWizard({
   // merged over the newest saved answers, with the sections saved elsewhere since and the fields changed in both.
   const [restored] = useState(() => {
     const draft = cardDrafts.get(client.id);
-    const server = initialAnswers({ health, massage, skin });
+    const server = asSaved(initialAnswers({ health, massage, skin }));
     const h = applySectionDraft(server.health, draft?.health);
     const m = applySectionDraft(server.massage, draft?.massage);
     const sk = applySectionDraft(server.skin, draft?.skin);
     const d = applySectionDraft(valuesFrom(client), draft?.details);
     return {
       hasDraft: draft !== undefined,
+      server,
+      origins: { health: draft?.health, massage: draft?.massage, skin: draft?.skin } as Origins,
+      detailsOrigin: draft?.details,
       answers: { health: h.value, massage: m.value, skin: sk.value },
       details: draft?.details ? d.value : undefined,
       updatedElsewhere: { health: h.serverChanged, massage: m.serverChanged, skin: sk.serverChanged, details: d.serverChanged },
@@ -115,6 +128,23 @@ export function CardWizard({
     () => false,
   );
   const [answers, setAnswers] = useState<Answers>(restored.answers);
+  // Per section, the saved answers this screen was built from (its base): the saved answers when the editor opened
+  // (those a reopened draft was merged over), replaced only when that section itself saves, or when newer saved
+  // answers are adopted or merged below. A refresh after another section's save never moves it. Diffs for the
+  // draft are made against this, never against the latest props.
+  const [bases, setBases] = useState<Answers>(restored.server);
+  // Per section, the draft its screen was built from (reopened, or made when newer answers were merged in), so a
+  // second Back without saving still keeps the other-device information.
+  const [origins, setOrigins] = useState<Origins>(restored.origins);
+  // Sections whose saved answers changed on another device while these unsaved edits were on screen or in a draft.
+  const [elsewhere, setElsewhere] = useState<Record<Section, boolean>>({
+    health: restored.updatedElsewhere.health,
+    massage: restored.updatedElsewhere.massage,
+    skin: restored.updatedElsewhere.skin,
+  });
+  // What this editor last sent for each section, in saved form: its own save arriving back as new props isn't a
+  // change made elsewhere.
+  const [sent, setSent] = useState<Partial<Record<Section, string>>>({});
   // Fingerprint of each section as last saved, and of the save that earned a "Saved" tick.
   const [saved, setSaved] = useState<Record<Section, string>>(() => fingerprints(initialAnswers({ health, massage, skin })));
   const [ticked, setTicked] = useState<Record<Section, string | null>>({ health: null, massage: null, skin: null });
@@ -129,6 +159,46 @@ export function CardWizard({
   const cardHref = `/dashboard/clients/${client.id}`;
   const signHref = `/dashboard/sign/${client.id}`;
 
+  // Newer saved answers in the props (a refresh after any save in this editor). For each section: still its base,
+  // or its own save coming back: nothing; no unsaved edits: adopt them; unsaved edits: re-merge them over the newer
+  // answers exactly as a reopened draft is, name the section and mark fields changed in both places. Done while
+  // rendering (React's "adjust state when props change"), keyed by the props, so it runs once per new props.
+  const serverNow = asSaved(initialAnswers({ health, massage, skin }));
+  const serverKey = stablePrint(serverNow);
+  const [seenServer, setSeenServer] = useState(serverKey);
+  if (seenServer !== serverKey) {
+    setSeenServer(serverKey);
+    const next = { answers: { ...answers }, bases: { ...bases }, origins: { ...origins }, saved: { ...saved } };
+    const flags = { ...elsewhere };
+    const marks = { ...conflicts };
+    const apply = <S extends Section>(sec: S, r: ReturnType<typeof reconcileSection<Answers[S]>>) => {
+      if (r.kind === "same") return;
+      next.bases[sec] = serverNow[sec];
+      next.answers[sec] = r.value;
+      next.saved[sec] = fingerprint(sec, { ...next.answers, [sec]: serverNow[sec] });
+      if (r.kind === "merged") {
+        (next.origins as Record<Section, unknown>)[sec] = r.origin;
+        flags[sec] = true;
+        marks[sec] = [...new Set([...marks[sec], ...r.conflicts])];
+      } else {
+        next.origins[sec] = undefined;
+      }
+    };
+    for (const sec of SECTIONS) {
+      const fresh = serverNow[sec];
+      if (sent[sec] === stablePrint(fresh)) continue; // our own save; save() sets the base
+      if (sec === "health") apply("health", reconcileSection(answers.health, bases.health, serverNow.health, origins.health));
+      if (sec === "massage") apply("massage", reconcileSection(answers.massage, bases.massage, serverNow.massage, origins.massage));
+      if (sec === "skin") apply("skin", reconcileSection(answers.skin, bases.skin, serverNow.skin, origins.skin));
+    }
+    setAnswers(next.answers);
+    setBases(next.bases);
+    setOrigins(next.origins);
+    setSaved(next.saved);
+    setElsewhere(flags);
+    setConflicts(marks);
+  }
+
   const dirtySections = SECTIONS.filter((s) => fingerprint(s, answers) !== saved[s]);
   const guard = useLeaveGuard(() => dirtySections.length > 0 || Boolean(details.current?.isDirty()));
 
@@ -139,10 +209,10 @@ export function CardWizard({
   // "Discard changes", the answers go back to the newest saved ones, so Back doesn't bring discarded edits back;
   // otherwise any unsaved sections are kept in the card draft for the next time this card's editor opens.
   const discardOnHide = useRef(false);
-  const latest = useRef({ server: { health, massage, skin }, answers, saved });
+  const latest = useRef({ server: { health, massage, skin }, answers, saved, bases, origins });
   useEffect(() => {
-    latest.current = { server: { health, massage, skin }, answers, saved };
-  }, [health, massage, skin, answers, saved]);
+    latest.current = { server: { health, massage, skin }, answers, saved, bases, origins };
+  }, [health, massage, skin, answers, saved, bases, origins]);
   useLayoutEffect(
     () => () => {
       setErrors({ health: null, massage: null, skin: null });
@@ -151,22 +221,25 @@ export function CardWizard({
       setDoing(null);
       if (discardOnHide.current) {
         discardOnHide.current = false;
-        const fresh = initialAnswers(latest.current.server);
+        const fresh = asSaved(initialAnswers(latest.current.server));
         setAnswers(fresh);
         setSaved(fingerprints(fresh));
+        setBases(fresh);
+        setOrigins({});
+        setElsewhere(NO_FLAGS);
         setFromDraft(false);
         setConflicts({ health: [], massage: [], skin: [] });
         cardDrafts.clear(client.id);
         return;
       }
-      // Only the fields that differ from the newest saved answers, with what those were.
-      const { answers: now, saved: was, server } = latest.current;
-      const base = initialAnswers(server);
+      // Only the fields that differ from each section's own base (the saved answers its screen was built from),
+      // keeping what the screen's own origin draft knew about older answers.
+      const { answers: now, saved: was, bases: base, origins: from } = latest.current;
       const changed = (s: Section) => fingerprint(s, now) !== was[s];
       cardDrafts.update(client.id, {
-        health: changed("health") ? makeSectionDraft(now.health, base.health) : undefined,
-        massage: changed("massage") ? makeSectionDraft(now.massage, base.massage) : undefined,
-        skin: changed("skin") ? makeSectionDraft(now.skin, base.skin) : undefined,
+        health: changed("health") ? makeSectionDraft(now.health, base.health, from.health) : undefined,
+        massage: changed("massage") ? makeSectionDraft(now.massage, base.massage, from.massage) : undefined,
+        skin: changed("skin") ? makeSectionDraft(now.skin, base.skin, from.skin) : undefined,
       });
     },
     // Runs only when hidden or unmounted; client.id is fixed for the editor's life (FreshOnOpen keys it per visit).
@@ -177,9 +250,12 @@ export function CardWizard({
   /** The "changes from earlier" note's Discard: back to the saved answers now, and the draft is dropped. */
   function discardDraft() {
     cardDrafts.clear(client.id);
-    const fresh = initialAnswers({ health, massage, skin });
+    const fresh = asSaved(initialAnswers({ health, massage, skin }));
     setAnswers(fresh);
     setSaved(fingerprints(fresh));
+    setBases(fresh);
+    setOrigins({});
+    setElsewhere(NO_FLAGS);
     setErrors({ health: null, massage: null, skin: null });
     setDetailsError(null);
     details.current?.resetNow();
@@ -206,11 +282,17 @@ export function CardWizard({
     const print = fingerprint(section, answers);
     const fd = sectionFormData(section, answers[section]);
     fd.set("clientId", client.id);
+    const savedForm = asSaved(answers)[section];
+    setSent((prev) => ({ ...prev, [section]: stablePrint(savedForm) }));
     setErrors((prev) => ({ ...prev, [section]: null }));
     try {
       const res = await saveSection(section, {}, fd);
       if (res.ok) {
         cardDrafts.update(client.id, { [section]: undefined });
+        // What was just saved is now this section's base: no stale other-device note or marker afterwards.
+        setBases((prev) => ({ ...prev, [section]: savedForm }));
+        setOrigins((prev) => ({ ...prev, [section]: undefined }));
+        setElsewhere((prev) => ({ ...prev, [section]: false }));
         setConflicts((prev) => ({ ...prev, [section]: [] }));
         setSaved((prev) => ({ ...prev, [section]: print }));
         setTicked((prev) => ({ ...prev, [section]: print }));
@@ -283,6 +365,11 @@ export function CardWizard({
     skin: <SkinForm value={answers.skin} onChange={(v) => update("skin", v)} flagged={conflicts.skin} />,
   };
   const stepIndex = STEPS.indexOf(step);
+  // Named in the note while that section still has unsaved edits. (Details updated elsewhere while the editor is
+  // open are named by the details form itself.)
+  const updatedElsewhere = (["details", ...SECTIONS] as const).filter((s) =>
+    s === "details" ? restored.updatedElsewhere.details && detailsInDraft : elsewhere[s] && dirtySections.includes(s),
+  );
   const allErrors = [
     ...(detailsError ? [`Client details: ${detailsError}`] : []),
     ...SECTIONS.filter((s) => errors[s] !== null).map((s) => `${TITLES[s]}: ${errors[s]}`),
@@ -313,12 +400,10 @@ export function CardWizard({
       )}
       {heading}
 
-      {fromDraft && (dirtySections.length > 0 || detailsInDraft) && (
+      {((fromDraft && (dirtySections.length > 0 || detailsInDraft)) || updatedElsewhere.length > 0) && (
         <div role="status" className="flex flex-col gap-3 rounded-[3px] border-4 border-amber-500 bg-amber-50 p-4 text-amber-950 sm:p-5">
-          <p className="m-0 font-semibold">You have changes from earlier that aren&rsquo;t saved yet.</p>
-          {(["details", ...SECTIONS] as const)
-            .filter((s) => restored.updatedElsewhere[s] && (s === "details" ? detailsInDraft : dirtySections.includes(s)))
-            .map((s) => (
+          {fromDraft && <p className="m-0 font-semibold">You have changes from earlier that aren&rsquo;t saved yet.</p>}
+          {updatedElsewhere.map((s) => (
               <p key={s} className="m-0 text-[15px] font-semibold">
                 {s === "details" ? "Client details" : TITLES[s]} was updated on another device after these changes were made. Check every
                 answer before saving.
@@ -346,7 +431,12 @@ export function CardWizard({
             {s === "details" ? "Client details" : TITLES[s]}
           </h2>
           {s === "details" ? (
-            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} handle={details} draftId={client.id} draft={restored.details} flagged={restored.conflicts.details} />
+            <DetailsForm initial={client} onSaved={wide ? "stay" : "next"} handle={details}
+              draftId={client.id}
+              draft={restored.details}
+              origin={restored.detailsOrigin}
+              flagged={restored.conflicts.details}
+            />
           ) : (
             <>
               {forms[s]}

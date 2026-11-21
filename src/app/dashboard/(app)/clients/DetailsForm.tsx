@@ -6,11 +6,11 @@ import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, useT
 import { Icon } from "@/components/Icon";
 import type { ClientDetails } from "@/lib/clients";
 import { CONNECTION_ERROR } from "@/lib/form-messages";
-import { isUnder18 } from "@/lib/record-card";
+import { detailsAsSaved, isUnder18 } from "@/lib/record-card";
 import { clinicDate } from "@/lib/slots";
 import { saveDetails, type ClientResult } from "../../clients-actions";
 import { useHydrated } from "../../useHydrated";
-import { makeSectionDraft } from "@/lib/draft-merge";
+import { makeSectionDraft, reconcileSection, stablePrint, type SectionDraft } from "@/lib/draft-merge";
 import { cardDrafts } from "./card-drafts";
 import { ChangedElsewhere } from "./SectionForms";
 import { LeavePrompt, useLeaveGuard } from "./LeaveGuard";
@@ -70,7 +70,9 @@ export const valuesFrom = (initial: Partial<ClientDetails>): Values => ({
  * when hidden, so Back never shows one client's details in a blank new card.
  * In CardWizard (`draftId` = the card's id), unsaved values are kept in the in-memory card draft when the form is
  * hidden (only the changed inputs), and `draft` (those earlier changes merged over the newest saved details) is
- * where it starts; `flagged` inputs were changed on another device too. The new-card page has no drafts.
+ * where it starts; `origin` is that draft and `flagged` inputs were changed on another device too. The new-card
+ * page has no drafts. The draft is always made against `savedValues` (the details this form was built from, replaced
+ * only by its own save or by newer details taken in below), never against the latest props.
  */
 export function DetailsForm({
   initial,
@@ -78,6 +80,7 @@ export function DetailsForm({
   handle,
   draftId,
   draft,
+  origin: originFromDraft,
   flagged: flaggedFromDraft = [],
 }: {
   initial: Partial<ClientDetails>;
@@ -85,6 +88,7 @@ export function DetailsForm({
   handle?: Ref<DetailsHandle>;
   draftId?: string;
   draft?: Values;
+  origin?: SectionDraft<Values>;
   flagged?: string[];
 }) {
   const router = useRouter();
@@ -99,15 +103,46 @@ export function DetailsForm({
   const [tick, setTick] = useState(false);
   const [flagged, setFlagged] = useState<string[]>(flaggedFromDraft);
   const flag = (key: keyof Values) => <ChangedElsewhere show={flagged.includes(key)} />;
+  // The draft this form was built from (reopened, or made when newer details were merged in below), so a second
+  // Back without saving keeps knowing which inputs were changed against older details.
+  const [origin, setOrigin] = useState<SectionDraft<Values> | undefined>(originFromDraft);
+  // Newer details saved elsewhere arrived while this form had unsaved edits (named in a note until saved).
+  const [elsewhere, setElsewhere] = useState(false);
+
+  // Newer saved details in the props while open in the card editor (a refresh after a save of another section):
+  // no unsaved edits: take them; unsaved edits: merge those over them, as a reopened draft is. Done while
+  // rendering ("adjust state when props change"), keyed by the props, so it runs once per new props; the form's
+  // own save comes back equal to `savedValues` and changes nothing.
+  const initialKey = stablePrint(detailsAsSaved(valuesFrom(initial)));
+  const [seenInitial, setSeenInitial] = useState(initialKey);
+  if (draftId && seenInitial !== initialKey) {
+    setSeenInitial(initialKey);
+    const fresh = detailsAsSaved(valuesFrom(initial));
+    const r = reconcileSection(detailsAsSaved(v), detailsAsSaved(savedValues), fresh, origin);
+    if (r.kind !== "same") {
+      setSavedValues(fresh);
+      // Merged: the newer details with the inputs changed here on top, as typed.
+      const merged = { ...fresh };
+      if (r.kind === "merged") for (const k of Object.keys(r.origin.fields) as (keyof Values)[]) Object.assign(merged, { [k]: v[k] });
+      setV(merged);
+      if (r.kind === "merged") {
+        setOrigin(r.origin);
+        setElsewhere(true);
+        setFlagged([...new Set([...flagged, ...r.conflicts])]);
+      } else {
+        setOrigin(undefined);
+      }
+    }
+  }
   const edits = useRef(0); // counts edits, so a save that finishes after more typing doesn't claim "Saved"
   // Set once a save has sent us to another page, or edits were discarded: the form resets when it is hidden.
   const resetOnHide = useRef(false);
   const latestInitial = useRef(initial);
-  const latest = useRef({ v, savedValues });
+  const latest = useRef({ v, savedValues, origin });
   useEffect(() => {
     latestInitial.current = initial;
-    latest.current = { v, savedValues };
-  }, [initial, v, savedValues]);
+    latest.current = { v, savedValues, origin };
+  }, [initial, v, savedValues, origin]);
 
   function resetToSaved() {
     const fresh = valuesFrom(latestInitial.current);
@@ -117,6 +152,8 @@ export function DetailsForm({
     setFailed(null);
     setTick(false);
     setFlagged([]);
+    setOrigin(undefined);
+    setElsewhere(false);
   }
 
   useLayoutEffect(
@@ -129,10 +166,10 @@ export function DetailsForm({
       }
       // Left with unsaved details (Back, a swipe): keep them for the next time this card's editor opens.
       if (draftId) {
-        const { v: now, savedValues: was } = latest.current;
+        const { v: now, savedValues: was, origin: from } = latest.current;
         const dirtyNow = JSON.stringify(now) !== JSON.stringify(was);
-        // Only the inputs that differ from the newest saved details, with what those were.
-        cardDrafts.update(draftId, { details: dirtyNow ? makeSectionDraft(now, valuesFrom(latestInitial.current)) : undefined });
+        // Only the inputs that differ from the details this form was built from, keeping what its origin draft knew.
+        cardDrafts.update(draftId, { details: dirtyNow ? makeSectionDraft(now, was, from) : undefined });
       }
     },
     // Runs only when hidden or unmounted; the draft id is fixed for the form's life (FreshOnOpen keys the editor).
@@ -165,6 +202,8 @@ export function DetailsForm({
       if (res.ok) {
         setSavedValues(sent);
         setFlagged([]);
+        setOrigin(undefined);
+        setElsewhere(false);
         if (draftId) cardDrafts.update(draftId, { details: undefined });
       }
       return res;
@@ -257,6 +296,11 @@ export function DetailsForm({
           }}
           onClose={guard.close}
         />
+      )}
+      {elsewhere && dirty && (
+        <p role="status" className="m-0 rounded-[3px] border-4 border-amber-500 bg-amber-50 p-4 text-[15px] font-semibold text-amber-950">
+          Client details was updated on another device after these changes were made. Check every answer before saving.
+        </p>
       )}
       <div inert={locked} className="grid gap-5 sm:grid-cols-2">
         <label className="label sm:col-span-2">

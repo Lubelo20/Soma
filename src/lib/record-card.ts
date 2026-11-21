@@ -255,3 +255,17 @@ export function cardForBooking(bookingName: string, cards: { id: string; fullNam
   if (byName) return byName.id;
   return cards.length === 1 ? cards[0].id : null;
 }
+
+const oneLineText = (s: string) => s.replace(/[\x00-\x1f\x7f]+/g, " ").trim();
+
+/**
+ * Client details as saveDetails stores them (single-line fields, name spacing, lower-case email), so the editor can
+ * tell newer saved details apart from its own just-saved ones.
+ */
+export function detailsAsSaved<T extends Record<string, string>>(v: T): T {
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(v)) out[k] = oneLineText(val);
+  if (typeof out.fullName === "string") out.fullName = out.fullName.replace(/\s+/g, " ");
+  if (typeof out.email === "string") out.email = out.email.toLowerCase();
+  return out as T;
+}

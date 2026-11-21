@@ -3,6 +3,7 @@ import {
   areaLabels,
   BODY_AREAS,
   cardForBooking,
+  detailsAsSaved,
   CONSENT_STATEMENTS,
   HEALTH_CONDITIONS,
   isRealDate,
@@ -197,5 +198,36 @@ describe("sameName", () => {
   it("compares trimmed, case-insensitive, with inner spaces collapsed", () => {
     expect(sameName("Thandi  Mokoena", " thandi mokoena")).toBe(true);
     expect(sameName("Thandi", "Thando")).toBe(false);
+  });
+});
+
+describe("detailsAsSaved", () => {
+  it("normalises details the way saveDetails stores them", () => {
+    const v = detailsAsSaved({
+      fullName: "  Thandi \t Mokoena ",
+      phone: " 082 123 4567 ",
+      email: " Thandi@Example.COM ",
+      idNumber: "A1\n23 ",
+      dateOfBirth: " 1990-01-02 ",
+      gender: " Female",
+      address: "1 Main\r\nRoad",
+      emergencyContact: " Sipho ",
+      occupation: " Nurse ",
+      initialAppointment: " 2026-11-20 ",
+      clientType: "returning",
+    });
+    expect(v).toEqual({
+      fullName: "Thandi Mokoena",
+      phone: "082 123 4567",
+      email: "thandi@example.com",
+      idNumber: "A1 23",
+      dateOfBirth: "1990-01-02",
+      gender: "Female",
+      address: "1 Main Road",
+      emergencyContact: "Sipho",
+      occupation: "Nurse",
+      initialAppointment: "2026-11-20",
+      clientType: "returning",
+    });
   });
 });

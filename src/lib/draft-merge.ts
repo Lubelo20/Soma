@@ -22,17 +22,23 @@ export function stablePrint(v: unknown): string {
 
 const same = (a: unknown, b: unknown) => stablePrint(a) === stablePrint(b);
 
-/** The changes between what is on screen and the saved answers, or undefined when there are none. */
-export function makeSectionDraft<T extends object>(current: T, saved: T): SectionDraft<T> | undefined {
+/**
+ * The changes between what is on screen and the section's base (the saved answers the screen was built from), or
+ * undefined when there are none. `origin`: the draft the screen was itself built from (a reopened draft, or a
+ * re-merge after newer answers arrived). Its fingerprint and the base values of the fields it carried are kept,
+ * so a second Back without saving still knows those fields were changed against older answers.
+ */
+export function makeSectionDraft<T extends object>(current: T, base: T, origin?: SectionDraft<T>): SectionDraft<T> | undefined {
   const fields: Partial<T> = {};
   const baseFields: Partial<T> = {};
   for (const key of Object.keys(current) as (keyof T)[]) {
-    if (same(current[key], saved[key])) continue;
+    if (same(current[key], base[key])) continue;
     fields[key] = current[key];
-    baseFields[key] = saved[key];
+    const carried = origin !== undefined && Object.prototype.hasOwnProperty.call(origin.fields, key);
+    baseFields[key] = carried ? origin.baseFields[key] : base[key];
   }
   if (Object.keys(fields).length === 0) return undefined;
-  return { base: stablePrint(saved), fields, baseFields };
+  return { base: origin?.base ?? stablePrint(base), fields, baseFields };
 }
 
 /**
@@ -53,4 +59,24 @@ export function applySectionDraft<T extends object>(
     if (!same(saved[key], draft.baseFields[key])) conflicts.push(String(key));
   }
   return { value, serverChanged: stablePrint(saved) !== draft.base, conflicts };
+}
+
+export type Reconciled<T extends object> =
+  | { kind: "same" }
+  | { kind: "adopt"; value: T }
+  | { kind: "merged"; value: T; origin: SectionDraft<T>; conflicts: string[] };
+
+/**
+ * Newer saved answers (`fresh`) arrived while a section is open, for example after another section's save
+ * refreshed the page. If they are still the section's base: nothing to do. If the section has no unsaved edits:
+ * adopt them. Otherwise the unsaved edits are re-merged over them exactly as a reopened draft is, and `origin`
+ * (the edits as a draft against the old base) becomes the section's origin, with `fresh` as its new base.
+ * All values must be in their saved form, so the section's own save never looks like a change elsewhere.
+ */
+export function reconcileSection<T extends object>(current: T, base: T, fresh: T, origin?: SectionDraft<T>): Reconciled<T> {
+  if (same(base, fresh)) return { kind: "same" };
+  const draft = makeSectionDraft(current, base, origin);
+  if (!draft) return { kind: "adopt", value: fresh };
+  const merged = applySectionDraft(fresh, draft);
+  return { kind: "merged", value: merged.value, origin: draft, conflicts: merged.conflicts };
 }
