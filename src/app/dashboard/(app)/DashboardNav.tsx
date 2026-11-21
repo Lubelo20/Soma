@@ -43,6 +43,8 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
   const button = useRef<HTMLButtonElement>(null);
   const bar = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
+  // Set when a menu link is tapped. The link is hidden as the menu closes, which would leave focus on <body>.
+  const leftByMenu = useRef(false);
 
   const [openedOn, setOpenedOn] = useState(pathname);
   if (openedOn !== pathname) {
@@ -56,7 +58,10 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
     // On window in the capture phase, added after the card editor's leave guard: it still runs when the guard holds
     // the link (the guard stops the click reaching the link, not other listeners on window).
     const onClick = (e: MouseEvent) => {
-      if (e.target instanceof Element && e.target.closest("a[href]") && inside(e.target)) setOpen(false);
+      if (e.target instanceof Element && e.target.closest("a[href]") && inside(e.target)) {
+        leftByMenu.current = true;
+        setOpen(false);
+      }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -75,6 +80,15 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
       document.removeEventListener("focusin", onFocus);
     };
   }, [open]);
+
+  // After navigating from the menu, focus goes back to the Menu button (unless something, such as the card editor's
+  // unsaved-changes prompt, has taken it).
+  useEffect(() => {
+    if (!leftByMenu.current) return;
+    leftByMenu.current = false;
+    const active = document.activeElement;
+    if (!active || active === document.body || panel.current?.contains(active)) button.current?.focus({ preventScroll: true });
+  }, [pathname]);
 
   const current = links.find((l) => isActive(l.href, pathname));
 
@@ -123,7 +137,7 @@ export function DashboardNav({ counts }: { counts: { pending: number; enquiries:
       <div
         ref={panel}
         id={PANEL_ID}
-        className={`max-lg:absolute max-lg:inset-x-0 max-lg:top-full max-lg:border-t max-lg:border-white/10 max-lg:bg-forest-deep max-lg:px-4 max-lg:pt-3 max-lg:pb-2 max-lg:shadow-[0_12px_24px_rgba(0,0,0,.25)] lg:contents ${
+        className={`max-lg:absolute max-lg:inset-x-0 max-lg:top-full max-lg:border-t max-lg:border-white/10 max-lg:bg-forest-deep max-lg:pt-3 max-lg:pr-[max(1rem,env(safe-area-inset-right))] max-lg:pl-[max(1rem,env(safe-area-inset-left))] max-lg:pb-2 max-lg:shadow-[0_12px_24px_rgba(0,0,0,.25)] lg:contents ${
           open ? "" : "max-lg:hidden"
         }`}
       >
